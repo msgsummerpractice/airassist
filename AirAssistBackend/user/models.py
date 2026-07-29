@@ -39,8 +39,8 @@ class Role(models.Model):
 
 class User(models.Model):
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
-    firstName = models.CharField(max_length=20)
-    lastName = models.CharField(max_length = 20)
+    first_Name = models.CharField(max_length=20)
+    last_Name = models.CharField(max_length = 20)
     email = models.EmailField(max_length = 50, unique = True)
     password = models.CharField(max_length = 255)
 
