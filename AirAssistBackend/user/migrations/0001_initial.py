@@ -15,16 +15,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Role',
             fields=[
-                ('roleId', models.AutoField(primary_key=True, serialize=False)),
-                ('role', models.CharField(max_length=50)),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('role', models.CharField(max_length=50, unique=True)),
             ],
         ),
         migrations.CreateModel(
             name='User',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('firstName', models.CharField(max_length=20)),
-                ('lastName', models.CharField(max_length=20)),
+                ('firstname', models.CharField(max_length=20)),
+                ('lastname', models.CharField(max_length=20)),
                 ('email', models.EmailField(max_length=50, unique=True)),
                 ('password', models.CharField(max_length=255)),
                 ('role', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user.role')),
