@@ -19,8 +19,8 @@ class UserService:
 
         user = User.objects.create(
             role=role,
-            firstName=firstname,
-            lastName=lastname,
+            firstname=firstname,
+            lastname=lastname,
             email=email,
             password=password
         )
@@ -29,9 +29,9 @@ class UserService:
     @staticmethod
     def get_user_role(user_id):
         try:
-            user = User.objects.get(pk = user_id)
+            user = User.objects.get(pk=user_id)
             role = user.role
             return role
-        except ValueError: 
+        except User.DoesNotExist:
             raise ValueError("user not found")
 

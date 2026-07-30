@@ -21,8 +21,8 @@ class UserServiceTests(TestCase):
         # Assert
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(user.role, role)
-        self.assertEqual(user.firstName, "Jane")
-        self.assertEqual(user.lastName, "Doe")
+        self.assertEqual(user.firstname, "Jane")
+        self.assertEqual(user.lastname, "Doe")
         self.assertEqual(user.email, "jane.doe@example.com")
         self.assertEqual(user.password, "plain-password")
 
@@ -31,8 +31,8 @@ class UserServiceTests(TestCase):
         role = Role.objects.create(role="Passenger")
         User.objects.create(
             role=role,
-            firstName="Existing",
-            lastName="User",
+            firstname="Existing",
+            lastname="User",
             email="existing@example.com",
             password="plain-password",
         )
@@ -75,8 +75,8 @@ class UserServiceTests(TestCase):
         role = Role.objects.create(role="Passenger")
         user = User.objects.create(
             role=role,
-            firstName="Jane",
-            lastName="Doe",
+            firstname="Jane",
+            lastname="Doe",
             email="jane.doe@example.com",
             password="plain-password",
         )
@@ -86,3 +86,10 @@ class UserServiceTests(TestCase):
 
         # Assert
         self.assertEqual(result, role)
+
+    def test_get_user_role_raises_error_when_user_does_not_exist(self):
+        # Act / Assert
+        with self.assertRaises(ValueError) as context:
+            UserService.get_user_role(9999)
+
+        self.assertEqual(str(context.exception), "user not found")
