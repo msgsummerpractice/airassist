@@ -10,7 +10,7 @@ class UserService:
 
         if User.objects.filter(email=email).exists():
             raise ValueError(
-                "There already existis a user with this email address")
+                "There already exists a user with this email address")
 
         try:
             role = Role.objects.get(role=role_name)
@@ -19,9 +19,19 @@ class UserService:
 
         user = User.objects.create(
             role=role,
-            firstname=firstname,
-            lastname=lastname,
+            firstName=firstname,
+            lastName=lastname,
             email=email,
             password=password
         )
         return user
+
+    @staticmethod
+    def get_user_role(user_id):
+        try:
+            user = User.objects.get(pk = user_id)
+            role = user.role
+            return role
+        except ValueError: 
+            raise ValueError("user not found")
+
