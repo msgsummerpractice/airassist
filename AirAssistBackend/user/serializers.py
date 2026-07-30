@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password, check_password
-from .models import User
+from .models import Role, User
 from .service import UserService
 
 class UserSerializer(serializers.ModelSerializer):
@@ -15,10 +15,8 @@ class UserSerializer(serializers.ModelSerializer):
         return User.objects.create(**validated_data)
 
 class UserRoleSerializer(serializers.ModelSerializer):
-    role = serializers.CharField(source='role.role')
-
     class Meta:
-        model = User
+        model = Role
         fields = ['role']
 
 class LoginSerializer(serializers.ModelSerializer):

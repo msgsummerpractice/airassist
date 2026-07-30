@@ -4,11 +4,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .service import UserService
 from .models import User
 from .serializers import UserSerializer, UserRoleSerializer, LoginSerializer
+from .permissions import IsSystemAdmin
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 class UserView(APIView):
+    permission_classes = [IsSystemAdmin]
+
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -18,13 +23,13 @@ class UserView(APIView):
 
 
 class UserRoleView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, user_id):
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = UserRoleSerializer(user)
+        role = UserService.get_user_role(user_id)
+        serializer = UserRoleSerializer(role)
         return Response(serializer.data)
+
 
 class LoginView(APIView):
     def post(self, request):
