@@ -9,3 +9,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
+
+
+class UserRoleSerializer(serializers.ModelSerializer):
+    roleId = serializers.IntegerField(source='role.roleId')
+    role = serializers.CharField(source='role.role')
+
+    class Meta:
+        model = User
+        fields = ['roleId', 'role']
