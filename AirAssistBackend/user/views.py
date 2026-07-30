@@ -21,9 +21,6 @@ class UserRoleView(APIView):
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
-            return Response(
-            {"detail": "User not found"},
-            status=404
-        )
+            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = UserRoleSerializer(user)
         return Response(serializer.data)
