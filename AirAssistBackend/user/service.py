@@ -1,6 +1,7 @@
 from .models import User, Role
 from django.db import transaction
-
+from django.contrib.auth.hashers import check_password
+from .models import User
 
 class UserService:
     @transaction.atomic
@@ -35,3 +36,12 @@ class UserService:
         except User.DoesNotExist:
             raise ValueError("user not found")
 
+    @staticmethod
+    def authenticate_user(email: str, password: str):
+        email = (email or "").lower()
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return None
+        if not check_password(password, user.password):
+            return None
+        return user

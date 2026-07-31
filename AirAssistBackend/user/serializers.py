@@ -1,20 +1,34 @@
 from rest_framework import serializers
-
-from .models import User
+from django.contrib.auth.hashers import make_password, check_password
+from .models import Role, User
+from .service import UserService
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ['id', 'role', 'first_name', 'last_name', 'email']
+        fields = ['id', 'role', 'firstname', 'lastname', 'email', 'password']
 
     def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
-
+        validated_data['password'] = make_password(validated_data['password'])
+        return User.objects.create(**validated_data)
 
 class UserRoleSerializer(serializers.ModelSerializer):
-    roleId = serializers.IntegerField(source='role.roleId')
-    role = serializers.CharField(source='role.role')
+    class Meta:
+        model = Role
+        fields = ['id', 'role']
+
+class LoginSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ['roleId', 'role']
+        fields = ['email', 'password']
+
+    def validate(self, attrs):
+        user = UserService.authenticate_user(email=attrs.get("email"), password=attrs.get("password"))
+        if user is None:
+            raise serializers.ValidationError({"detail":"forbidden"})
+        attrs["user"] = user
+        return attrs
