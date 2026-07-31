@@ -12,3 +12,9 @@ Migrate and create the database using python manage.py migrate.
 2.4(Darius)(Gabi)
 Add a method to create a user
 Add a method to get the role of a specific user
+
+
+3.0 (Calin)
+
+Change the creation endpoint so that the user receives upon creation 
+an email with his details: userId, roleId, firstName, lastName, email and password
