@@ -18,7 +18,7 @@ class UserService:
         except Role.DoesNotExist:
             raise ValueError("This role does not exist")
 
-        user = User.objects.create(
+        user = User.objects.create_user(
             role=role,
             firstname=firstname,
             lastname=lastname,

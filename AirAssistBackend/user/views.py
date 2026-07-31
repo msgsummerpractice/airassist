@@ -17,11 +17,20 @@ class UserView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            try:
+                # Delegate creation to the service layer
+                user = UserService.create_user(
+                    role_name=serializer.validated_data['role'].role,
+                    firstname=serializer.validated_data['firstname'],
+                    lastname=serializer.validated_data['lastname'],
+                    email=serializer.validated_data['email'],
+                    password=serializer.validated_data['password']
+                )
+                return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+            except ValueError as e:
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
+    
 class UserRoleView(APIView):
     permission_classes = [IsAuthenticated]
 
