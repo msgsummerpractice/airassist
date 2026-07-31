@@ -1,7 +1,7 @@
-from .models import User, Role
+from ..models.models import User, Role
 from django.db import transaction
 from django.contrib.auth.hashers import check_password
-from .models import User
+from ..models.models import User
 
 class UserService:
     @transaction.atomic
