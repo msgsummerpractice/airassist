@@ -57,7 +57,11 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
 
     'user',
+    'integrations'
 ]
+
+AIRPORT_GAP_API_TOKEN = os.getenv("AIRPORT_GAP_API_TOKEN")
+AIRPORT_GAP_BASE_URL = os.getenv("AIRPORT_GAP_BASE_URL")
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
