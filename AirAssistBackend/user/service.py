@@ -38,6 +38,7 @@ class UserService:
 
     @staticmethod
     def authenticate_user(email: str, password: str):
+        email = (email or "").lower()
         user = User.objects.filter(email=email).first()
         if not user:
             return None
