@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password, check_password
-from .models import Role, User
-from .service import UserService
+from .models.models import Role, User
+from .service.service import UserService
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

@@ -16,9 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-
+from .views import CaseCreationView
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('user/', include("user.urls")),
-    path('api/', include("case.urls")),
+    path('cases/', CaseCreationView.as_view(), name='case-create'),
 ]
