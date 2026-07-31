@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
+from .case_state import CaseState
 import json
 import uuid
 
@@ -37,15 +38,11 @@ class CaseCreationSerializer(serializers.Serializer):
 
     # GDPR consent
     gdpr_consent = serializers.BooleanField()
+    case_state = serializers.CharField(default=CaseState.NEW, read_only=True)
 
     def validate_date_of_birth(self, value):
         if value >= timezone.now().date():
             raise serializers.ValidationError("Date of birth must be in the past.")
-        return value
-
-    def validate_gdpr_consent(self, value):
-        if not value:
-            raise serializers.ValidationError("GDPR consent is required.")
         return value
 
 
@@ -62,6 +59,21 @@ class CaseCreationSerializer(serializers.Serializer):
         except json.JSONDecodeError:
             raise serializers.ValidationError("Connection flights must be a valid JSON list.")
 
+    def validate_boarding_pass(self, value):
+        if not value.name.lower().endswith(('.pdf', '.jpg', '.jpeg', '.png')):
+            raise serializers.ValidationError("Boarding pass must be a PDF or image file.")
+        return value
+
+    def validate_passport(self, value):
+        if not value.name.lower().endswith(('.pdf', '.jpg', '.jpeg', '.png')):
+            raise serializers.ValidationError("Passport must be a PDF or image file.")
+        return value
+
+    def validate_gdpr_consent(self, value):
+            if not value:
+                raise serializers.ValidationError("GDPR consent is required.")
+            return value
+    
     def validate(self, data):
         # Ensure exactly one problem flight is marked
         # others if necessary 
