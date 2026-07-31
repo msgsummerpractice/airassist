@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
-from serializers import UserSerializer
+from ..serializers import UserSerializer
 
 class AirAssistResponse:
     def status_create(self, data):
