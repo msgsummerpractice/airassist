@@ -2,6 +2,7 @@ from .models import User, Role
 from django.db import transaction
 from django.contrib.auth.hashers import check_password
 from .models import User
+from integrations.email_service import send_user_created_email
 
 class UserService:
     @transaction.atomic
@@ -25,6 +26,8 @@ class UserService:
             email=email,
             password=password
         )
+        send_user_created_email(user,password)
+
         return user
 
     @staticmethod
