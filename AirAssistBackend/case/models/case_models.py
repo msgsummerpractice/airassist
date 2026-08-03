@@ -8,6 +8,14 @@ class Case(models.Model):
         default=State.NEW,
     )
 
+    assigned_colleague = models.ForeignKey(
+        "user.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_cases",
+    )
+
     gdpr_consent = models.BooleanField(default=True)
     gdpr_consent_at = models.DateTimeField(null=True, blank=True)
 
