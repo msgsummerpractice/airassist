@@ -1,14 +1,11 @@
 from django.db import models
-from case_state import CaseState
-
-# Create your models here.
+from .case_state import State
 
 class Case(models.Model):
-    #from case_state enum
     status = models.CharField(
         max_length=20,
-        choices=CaseState.choises,
-        default=CaseState.NEW,
+        choices=State.choices,
+        default=State.NEW,
     )
 
     gdpr_consent = models.BooleanField(default=True)
