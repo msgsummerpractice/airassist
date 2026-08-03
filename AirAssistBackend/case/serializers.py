@@ -21,6 +21,7 @@ class CaseCreationSerializer(serializers.Serializer):
     connection_flights = serializers.CharField(required=False, allow_blank=True)
     planned_departure_time = serializers.TimeField()
     planned_arrival_time = serializers.TimeField()
+    is_problem_flight = serializers.BooleanField()
 
     # passenger details
     first_name = serializers.CharField(max_length=50)
@@ -63,8 +64,21 @@ class CaseCreationSerializer(serializers.Serializer):
             raise serializers.ValidationError("Connection flights must be a valid JSON list.")
 
     def validate(self, data):
-        # Ensure exactly one problem flight is marked
-        # others if necessary 
+        main_flight_problem = data.get("is_problem_flight")
+        connection_flights = data.get("connection_flights", [])
+
+        all_problem_flights = []
+
+        if main_flight_problem:
+            all_problem_flights.append("main_flight")
+
+        for flight in connection_flights:
+            if flight.get("is_problem_flight"):
+                all_problem_flights.append(flight)
+
+        if len(all_problem_flights) != 1:
+            raise serializers.ValidationError("Exactly one flight (main or connecting) must be marked as a problem flight.")
+        
         return data
 
     def create(self, validated_data):
