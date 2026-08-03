@@ -1,6 +1,5 @@
 from enum import Enum
 
-from django.db import models
 
 
 class DisruptionMotive(Enum):
