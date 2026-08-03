@@ -3,8 +3,17 @@
 
 from django.conf import settings
 from django.core.mail import EmailMessage
-from .email_service import send_basic_email
 
+
+def send_basic_email(to_email, subject, body):
+    email = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[to_email],
+    )
+
+    return email.send()
 
 def send_user_created_email(user,plain_password):
     body = f"""
