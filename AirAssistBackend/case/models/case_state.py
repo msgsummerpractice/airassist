@@ -1,7 +1,8 @@
-from enum import Enum
+from django.db import models
 
-class CaseState(Enum):
-    NEW = "New"
-    VALID = "Eligible"
-    ASSIGNED = "Assigned"
-    INVALID = "Invalid"
+
+class State(models.TextChoices):
+    NEW = "NEW", "New"
+    VALID = "VALID", "Eligible"
+    ASSIGNED = "ASSIGNED", "Assigned"
+    INVALID = "INVALID", "Invalid"
