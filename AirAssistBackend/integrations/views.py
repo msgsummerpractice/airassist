@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 
 from .models import Airport
 from .airport_gap_client import AirportGapClient 
+from .distance_service import DistanceService
 
 class PopulateAirportsView(APIView):
     # Set to AllowAny for testing, but consider changing to IsAdminUser for production
@@ -56,3 +57,32 @@ class PopulateAirportsView(APIView):
                 {"success": False, "error": str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class CalculateDistanceView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+
+        from_airport = request.data.get("from")
+        to_airport = request.data.get("to")
+
+        if not from_airport or not to_airport:
+            return Response(
+                {
+                    "error": "Both airports are required"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+        distance = DistanceService.calculate_orthodromic_distance(
+            from_airport,
+            to_airport
+        )
+
+
+        return Response(
+            distance,
+            status=status.HTTP_200_OK
+        )        
