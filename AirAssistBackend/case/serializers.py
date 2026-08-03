@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .case_state import CaseState
+from .models.case_state import CaseState
 import json
 import uuid
 

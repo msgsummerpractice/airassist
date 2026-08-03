@@ -1,24 +1,22 @@
 from django.db import models
+from case_state import CaseState
 
 # Create your models here.
 
 class Case(models.Model):
-
-    class Status(models.TextChoices):
-        NEW = "NEW", "New"
-        INCOMPLETE = "INCOMPLETE", "Incomplete"
-        VALID = "VALID", "Valid"
-        REJECTED = "REJECTED", "Rejected" 
-
+    #from case_state enum
     status = models.CharField(
-        max_length=50,
-        choices=Status.choices,
-        default=Status.NEW,
+        max_length=20,
+        choices=CaseState.choises,
+        default=CaseState.NEW,
     )
+
+    gdpr_consent = models.BooleanField(default=True)
+    gdpr_consent_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     class Meta:
         ordering = ["-created_at"]
 
