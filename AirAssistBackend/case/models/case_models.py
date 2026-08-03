@@ -16,9 +16,9 @@ class Case(models.Model):
         related_name="assigned_cases",
     )
 
-    gdpr_consent = models.BooleanField(default=True)
+    reservation_number = models.CharField(max_length=20, null=True, blank=True)
+    gdpr_consent = models.BooleanField(default=False)
     gdpr_consent_at = models.DateTimeField(null=True, blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
