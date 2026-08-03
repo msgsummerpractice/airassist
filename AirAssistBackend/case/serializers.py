@@ -60,7 +60,7 @@ class CaseCreationSerializer(serializers.Serializer):
 
     # GDPR consent
     gdpr_consent = serializers.BooleanField()
-    case_state = serializers.CharField(default=CaseState.NEW, read_only=True)
+    case_state = serializers.CharField(default=State.NEW, read_only=True)
 
     def validate_date_of_birth(self, value):
         if value >= timezone.now().date():

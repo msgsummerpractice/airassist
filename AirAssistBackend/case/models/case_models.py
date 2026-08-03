@@ -16,6 +16,13 @@ class Case(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    ##CompensationFields
+    departure_airport = models.CharField(max_length=3,null=True,blank=True)
+    arrival_airport = models.CharField(max_length=3,null=True,blank=True)
+    distance_km = models.FloatField(null=True,blank=True)
+    compensation_amount = models.DecimalField(max_digits=4,decimal_places=2,null=True,blank=True)
+
     
     class Meta:
         ordering = ["-created_at"]

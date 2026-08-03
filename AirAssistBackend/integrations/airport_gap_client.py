@@ -15,6 +15,17 @@ class AirportGapClient:
         response = requests.get(url, headers=self.headers)
         response.raise_for_status()
         return response.json()
+
+    def get_airport_distance(self,from_airport, to_airport):
+        url = f"{self.base_url}/airports/distance"
+
+        response = requests.post(url,headers = self.headers,data = {"from":from_airport,"to": to_airport})
+
+        response.raise_for_status()
+
+        
+
+        return response.json()   
     
     def get_all_airports(self): 
         url = f"{self.base_url}/airports"
