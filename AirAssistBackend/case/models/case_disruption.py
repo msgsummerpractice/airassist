@@ -6,6 +6,8 @@ from .cancellation_type import CancellationType
 from .delay_type import DelayType
 from .denied_boarding_type import DeniedBoardingType
 from .denied_boarding_reason_type import DeniedBoardingReasonType
+from .airline_motive_mentioned import AirlineMotiveMentioned
+from .airline_motive import AirlineMotive
 
 
 class Disruption(models.Model):
@@ -42,7 +44,21 @@ class Disruption(models.Model):
         null = True,
         blank = True,
     )
-    
+
+    airline_motive_mentioned = models.CharField(
+        max_length = 15,
+        choices = AirlineMotiveMentioned.choices(),
+        null = True,
+        blank = True,
+    )
+
+    airline_motive = models.CharField(
+        max_length = 30,
+        choices = AirlineMotive.choices(),
+        null = True,
+        blank = True,
+    )
+
     incident_description = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
