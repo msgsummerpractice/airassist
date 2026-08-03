@@ -1,15 +1,12 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models.case_state import State
+from .models.case_models import Case
+from .models.case_passengers import Passenger
 import json
 import uuid
 
 
-class MockCase:
-    def __init__(self):
-        self.id = uuid.uuid4()
-        self.status = 'NEW'
-        self.created_at = timezone.now()
 
 class CaseCreationSerializer(serializers.Serializer):
     # flight itinerary
@@ -100,4 +97,36 @@ class CaseCreationSerializer(serializers.Serializer):
         # 4. Create Main Flight
         # 5. Loop through validated_data['connecting_flights'] and create those Flights
         # 6. Return the created Case
-        return MockCase()
+        passenger_data = {
+            "first_name": validated_data.pop("first_name"),
+            "last_name": validated_data.pop("last_name"),
+            "date_of_birth": validated_data.pop("date_of_birth"),
+            "email": validated_data.pop("email"),
+            "phone": validated_data.pop("phone"),
+            "address": validated_data.pop("address"),
+            "postal_code": validated_data.pop("postal_code"),
+            }
+        
+        validated_data.pop("boarding_pass")
+        validated_data.pop("passport")
+
+        validated_data.pop("flight_date")
+        validated_data.pop("flight_number")
+        validated_data.pop("airline")
+        validated_data.pop("reservation_number")
+        validated_data.pop("departing_airport")
+        validated_data.pop("destination_airport")
+        validated_data.pop("connection_flights", [])
+        validated_data.pop("planned_departure_time")
+        validated_data.pop("planned_arrival_time")
+        validated_data.pop("is_problem_flight")
+
+        gdpr_consent = validated_data.get("gdpr_consent", False)
+
+        case = Case.objects.create(
+            gdpr_consent=gdpr_consent,
+            gdpr_consent_at=timezone.now() if gdpr_consent else None,
+        )
+
+        Passenger.objects.create(case=case, **passenger_data)
+        return case
