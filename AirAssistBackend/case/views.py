@@ -7,6 +7,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 
 from .serializers import CaseCreationSerializer
+from .services.case_service import CaseService
+
+from .serializers import CaseCreationSerializer
 # Create your views here.
 class CaseCreationView(APIView):
     permission_classes = [AllowAny]
@@ -16,6 +19,11 @@ class CaseCreationView(APIView):
         serializer = CaseCreationSerializer(data=request.data)
         if serializer.is_valid():
             case = serializer.save()
+
+            # Calculate compensation
+
+            CaseService.calculate_case_compensation(case)
+            
             return Response(
                 {
                     "success": True,
