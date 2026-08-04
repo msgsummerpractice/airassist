@@ -1,5 +1,8 @@
 from integrations.distance_service import DistanceService
 from .compensation_service import CompensationService
+from user.models.models import User
+from user.service.service import UserService
+
 
 class CaseService:
 
@@ -13,3 +16,21 @@ class CaseService:
 
         case.save()
         return case
+
+    @staticmethod
+    def create_passenger_account(passenger):
+        # Check if a user with the same email already exists
+        if User.objects.filter(email = passenger.email).exists():
+            return
+
+        #Generate initial password
+
+        # Create a new user account for the passenger
+        UserService.create_user_account(
+            email=passenger.email,
+            firstname=passenger.firstname,
+            lastname=passenger.lastname,
+            role_name="Passenger"
+        )
+
+        
