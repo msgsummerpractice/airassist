@@ -2,6 +2,7 @@ from integrations.distance_service import DistanceService
 from .compensation_service import CompensationService
 from user.models.models import User
 from user.service.service import UserService
+import secrets
 
 
 class CaseService:
@@ -23,14 +24,17 @@ class CaseService:
         if User.objects.filter(email = passenger.email).exists():
             return
 
-        #Generate initial password
+        #Generate initial password using Python's secrets module
+        password = secrets.token_urlsafe(12)
 
         # Create a new user account for the passenger
-        UserService.create_user_account(
-            email=passenger.email,
-            firstname=passenger.firstname,
-            lastname=passenger.lastname,
-            role_name="Passenger"
+        UserService.create_user(
+            email = passenger.email,
+            firstname = passenger.first_name,
+            lastname = passenger.last_name,
+            role_name = "PASSENGER",
+            password = password,
+            must_change_password = True
         )
 
         

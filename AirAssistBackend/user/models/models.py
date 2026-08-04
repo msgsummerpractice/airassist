@@ -42,7 +42,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.ForeignKey('Role', on_delete=models.CASCADE)
     firstname = models.CharField(max_length=20)
     lastname = models.CharField(max_length=20)
-    email = models.EmailField(max_length=50, unique=True) 
+    email = models.EmailField(max_length=50, unique=True)
+    must_change_password = models.BooleanField(default = True)
+     
     # AbstractBaseUser automatically provides a properly configured password field
 
     is_staff = models.BooleanField(default=False)

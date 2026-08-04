@@ -1,3 +1,5 @@
+from airassist.AirAssistBackend import user
+
 from ..models.models import User, Role
 from django.db import transaction
 from django.contrib.auth.hashers import check_password
@@ -7,7 +9,7 @@ from integrations.email_service import send_user_created_email
 class UserService:
     @transaction.atomic
     @staticmethod
-    def create_user(role_name: str, firstname: str, lastname: str, email: str, password: str) -> User:
+    def create_user(role_name: str, firstname: str, lastname: str, email: str, password: str, must_change_password = False) -> User:
         email = email.lower()
 
         if User.objects.filter(email=email).exists():
@@ -26,6 +28,9 @@ class UserService:
             email=email,
             password=password
         )
+
+        user.must_change_password = must_change_password
+        user.save(update_fields=["must_change_password"])
         send_user_created_email(user,password)
 
         return user
