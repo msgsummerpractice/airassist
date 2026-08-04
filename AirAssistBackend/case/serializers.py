@@ -125,6 +125,25 @@ class CaseCreationSerializer(serializers.Serializer):
                 "planned_arrival_time": "Arrival date and time must be after departure date and time."
             })
 
+        # connection flights logic
+        # departing airport = connection flight's first flight's departing airport
+        if connection_flights and connection_flights[0]["departing_airport"] != data["departing_airport"]:
+            raise serializers.ValidationError(
+                "The first connection flight must depart from the same airport as the main flight."
+            )
+        # destination airport = connection flight's last flight's destination airport
+        if connection_flights and connection_flights[-1]["destination_airport"] != data["destination_airport"]:
+            raise serializers.ValidationError(
+                "The last connection flight must arrive at the same airport as the main flight."
+            )
+
+        # connection flights are chained
+        for i in range(len(connection_flights) - 1):
+            if connection_flights[i]["destination_airport"] != connection_flights[i + 1]["departing_airport"]:
+                raise serializers.ValidationError(
+                     f"Connection flight {i + 1} destination must match connection flight {i + 2} departure airport."
+                )
+        
         all_problem_flights = []
 
         if main_flight_problem:
