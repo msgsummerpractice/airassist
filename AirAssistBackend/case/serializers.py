@@ -5,7 +5,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models.case_models import Case
-from .models.case_state import CaseState
+from .models.case_state import CaseState as State
 from .models.class_document import CaseDocument
 from .models.document_type import DocumentType
 from .models.flights_models import Flight
@@ -146,7 +146,7 @@ class CaseCreationSerializer(serializers.Serializer):
         connection_flights = validated_data.pop("connection_flights", [])
 
         case = Case.objects.create(
-            status=CaseState.NEW.value,
+            status=State.NEW,
             gdpr_consent=validated_data["gdpr_consent"],
             gdpr_consent_at=timezone.now(),
         )

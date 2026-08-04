@@ -86,3 +86,33 @@ class CalculateDistanceView(APIView):
             distance,
             status=status.HTTP_200_OK
         )        
+
+
+class AirportLookupView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, iata):
+        airport = Airport.objects.filter(iata=iata).first()
+        if airport:
+            return Response(
+                {
+                    "success": True,
+                    "data": {
+                        "iata": airport.iata,
+                        "icao": airport.icao,
+                        "name": airport.name,
+                        "city": airport.city,
+                        "country": airport.country,
+                        "latitude": str(airport.latitude),
+                        "longitude": str(airport.longitude),
+                        "altitude": airport.altitude,
+                        "timezone": airport.timezone,
+                    }
+                },
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"success": False, "error": "Airport not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
