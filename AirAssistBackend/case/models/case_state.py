@@ -1,5 +1,4 @@
-from django.db import models
-
+from enum import Enum
 
 class CaseState(Enum):
     NEW = "NEW"

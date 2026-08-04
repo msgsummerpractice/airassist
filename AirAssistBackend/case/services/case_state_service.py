@@ -5,7 +5,7 @@ from ..models.case_state import CaseState
 class CaseStateService:
     @staticmethod
     def mark_case_as_valid(case: Case) -> Case:
-        if case.status != CaseState.VALID.value:
+        if case.status != CaseState.NEW.value:
             raise ValueError("Only NEW cases can be marked as VALID.")
         case.status = CaseState.VALID.value
         case.save(update_fields=["status", "updated_at"])
@@ -13,7 +13,7 @@ class CaseStateService:
 
     @staticmethod
     def mark_case_as_invalid(case: Case) -> Case:
-        if case.status != CaseState.VALID.value:
+        if case.status != CaseState.NEW.value:
             raise ValueError("Only NEW cases can be marked as INVALID.")
         case.status = CaseState.INVALID.value
         case.save(update_fields=["status", "updated_at"])
