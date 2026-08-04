@@ -8,6 +8,7 @@ from case.models.case_state import CaseState
 from case.models.flights_models import Flight
 from case.serializers import CaseCreationSerializer
 from case.services.case_state_service import CaseStateService
+from user.models.models import Role, User
 
 
 class CaseCreationSerializerTests(TestCase):
@@ -89,15 +90,59 @@ class CaseCreationSerializerTests(TestCase):
 
 
 class CaseStateServiceTests(TestCase):
-	def test_assign_requires_valid_case(self):
-		case = Case.objects.create(gdpr_consent=True)
+    def setUp(self):
+        self.colleague_role = Role.objects.create(role="Colleague")
 
-		with self.assertRaises(ValueError):
-			CaseStateService.assign_case(case)
+    def test_new_case_can_be_marked_valid(self):
+        case = Case.objects.create(gdpr_consent=True)
 
-	def test_set_eligibility_marks_case_valid(self):
-		case = Case.objects.create(gdpr_consent=True)
+        updated_case = CaseStateService.mark_case_as_valid(case)
 
-		updated_case = CaseStateService.set_eligibility(case, is_eligible=True)
+        self.assertEqual(updated_case.status, CaseState.VALID.value)
 
-		self.assertEqual(updated_case.status, CaseState.VALID.value)
+    def test_new_case_can_be_marked_invalid(self):
+        case = Case.objects.create(gdpr_consent=True)
+
+        updated_case = CaseStateService.mark_case_as_invalid(case)
+
+        self.assertEqual(updated_case.status, CaseState.INVALID.value)
+
+    def test_assign_requires_valid_case(self):
+        colleague = User.objects.create_user(
+            role=self.colleague_role,
+            email="colleague@example.com",
+            password="testpass123",
+            firstname="Case",
+            lastname="Worker",
+        )
+        case = Case.objects.create(gdpr_consent=True)
+
+        with self.assertRaises(ValueError):
+            CaseStateService.mark_case_as_assigned(case, colleague)
+
+    def test_valid_case_can_be_assigned(self):
+        colleague = User.objects.create_user(
+            role=self.colleague_role,
+            email="colleague2@example.com",
+            password="testpass123",
+            firstname="Case",
+            lastname="Reviewer",
+        )
+        case = Case.objects.create(
+            gdpr_consent=True,
+            status=CaseState.VALID.value,
+        )
+
+        updated_case = CaseStateService.mark_case_as_assigned(case, colleague)
+
+        self.assertEqual(updated_case.status, CaseState.ASSIGNED.value)
+        self.assertEqual(updated_case.assigned_colleague, colleague)
+
+    def test_only_new_case_can_be_checked_for_eligibility(self):
+        case = Case.objects.create(
+            gdpr_consent=True,
+            status=CaseState.VALID.value,
+        )
+
+        with self.assertRaises(ValueError):
+            CaseStateService.mark_case_as_eligible(case, is_eligible=True)

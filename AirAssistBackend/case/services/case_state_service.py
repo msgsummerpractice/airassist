@@ -20,9 +20,10 @@ class CaseStateService:
         return case
 
     @staticmethod
-    def mark_case_as_assigned(case: Case) -> Case:
+    def mark_case_as_assigned(case: Case, colleague) -> Case:
         if case.status != CaseState.VALID.value:
             raise ValueError("Only VALID cases can be marked as ASSIGNED.")
+        case.assigned_colleague = colleague
         case.status = CaseState.ASSIGNED.value
         case.save(update_fields=["status", "updated_at"])
         return case

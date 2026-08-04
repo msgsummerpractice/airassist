@@ -5,10 +5,11 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models.case_models import Case
-from .models.case_state import CaseState
+from .models.case_state import CaseState as State
 from .models.class_document import CaseDocument
 from .models.document_type import DocumentType
 from .models.flights_models import Flight
+from user.models.models import User
 
 MAX_FILE_SIZE = 5 * 1024 * 1024
 ALLOWED_EXTENSIONS = (".pdf", ".jpg", ".jpeg")
@@ -60,7 +61,7 @@ class CaseCreationSerializer(serializers.Serializer):
 
     # GDPR consent
     gdpr_consent = serializers.BooleanField()
-    case_state = serializers.CharField(default=CaseState.NEW, read_only=True)
+    case_state = serializers.CharField(default=State.NEW.value, read_only=True)
 
     def validate_date_of_birth(self, value):
         if value >= timezone.now().date():
@@ -146,7 +147,7 @@ class CaseCreationSerializer(serializers.Serializer):
         connection_flights = validated_data.pop("connection_flights", [])
 
         case = Case.objects.create(
-            status=CaseState.NEW.value,
+            status=State.NEW.value,
             gdpr_consent=validated_data["gdpr_consent"],
             gdpr_consent_at=timezone.now(),
         )
@@ -200,4 +201,19 @@ class CaseCreationSerializer(serializers.Serializer):
 
         return case
 
+class CaseEligibilitySerializer(serializers.Serializer):
+    is_eligible = serializers.BooleanField()
 
+class CaseAssignmentSerializer(serializers.Serializer):
+    colleague_id = serializers.IntegerField()
+
+    def validate_colleague_id(self, value):
+        try:
+            user = User.objects.select_related("role").get(id=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Colleague does not exist.")
+
+        if getattr(user.role, "role", None) != "Colleague":
+            raise serializers.ValidationError("Selected user cannot be assigned to a case.")
+
+        return value
