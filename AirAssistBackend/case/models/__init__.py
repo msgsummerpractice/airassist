@@ -3,4 +3,4 @@ from .flights_models import Flight
 
 __all__ = ["Case", "Flight"]
 from .case_passengers import Passenger
-from .case_state import State
+from .case_state import CaseState   
