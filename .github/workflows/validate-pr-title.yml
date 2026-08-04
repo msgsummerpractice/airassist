@@ -1,0 +1,50 @@
+name: Validate PR title
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  validate-pr-title:
+    name: PR title format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate pull request title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        shell: bash
+        run: |
+          PATTERN='^(feature|fix)/case_[0-9]+(-task_[0-9]+)+(: .+)?$'
+
+          echo "Checking pull request title:"
+          echo "$PR_TITLE"
+
+          if [[ "$PR_TITLE" =~ $PATTERN ]]; then
+            echo "Pull request title is valid."
+          else
+            echo "::error title=Invalid PR title::The pull request title does not follow the required format."
+            echo ""
+            echo "Required format:"
+            echo "  feature/case_XX-task_XX: message"
+            echo "  fix/case_XX-task_XX: message"
+            echo ""
+            echo "Multiple tasks are allowed:"
+            echo "  feature/case_01-task_01-task_02: added new functionality"
+            echo ""
+            echo "The message is optional:"
+            echo "  feature/case_01-task_01"
+            echo ""
+            echo "Current title:"
+            echo "  $PR_TITLE"
+            exit 1
+          fine
