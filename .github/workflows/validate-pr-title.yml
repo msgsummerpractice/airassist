@@ -47,4 +47,4 @@ jobs:
             echo "Current title:"
             echo "  $PR_TITLE"
             exit 1
-          fine
+          fi
