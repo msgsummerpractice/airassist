@@ -25,8 +25,10 @@ class CaseCreationView(APIView):
             case = serializer.save()
 
             # Calculate compensation
-
             CaseService.calculate_case_compensation(case)
+
+            passenger = case.passengers.first()
+            CaseService.create_passenger_account(passenger)
             
             return Response(
                 {

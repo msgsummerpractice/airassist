@@ -50,6 +50,32 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             refresh = RefreshToken.for_user(user)
-            return airassist_response.status_login_success(refresh)
+
+            # after successful authentication, 
+            # check the flag and return it in the response
+            # so the frontend can redirect to a password-change screen
+            response_data = airassist_response.status_login_success(refresh)
+            if user.must_change_password:
+                response_data["must_change_password"] = True
+
+            return Response(response_data)
         return airassist_response.status_forbidden_with_message("Invalid email or password")
-            
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        new_password = request.data.get("new_password")
+
+        if not new_password:
+            return Response({"error": "New password is required."}, status = status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        user.set_password(new_password)
+
+        # Reset the flag after password change
+        user.must_change_password = False
+        user.save(update_fields = ["password", "must_change_password"])
+
+        return Response({"message": "Password changed successfully."}, status = status.HTTP_200_OK)
