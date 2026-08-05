@@ -53,7 +53,3 @@ class CaseService:
             password = password,
             must_change_password = True
         )
-
-        
-
-        return case
