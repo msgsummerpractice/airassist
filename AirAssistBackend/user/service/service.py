@@ -1,5 +1,3 @@
-from airassist.AirAssistBackend import user
-
 from ..models.models import User, Role
 from django.db import transaction
 from django.contrib.auth.hashers import check_password

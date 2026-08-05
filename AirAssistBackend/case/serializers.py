@@ -4,6 +4,15 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
+from .models.case_disruption import Disruption
+from .models.disruption_type import DisruptionMotive
+from .models.cancellation_type import CancellationType
+from .models.delay_type import DelayType
+from .models.denied_boarding_type import DeniedBoardingType
+from .models.denied_boarding_reason_type import DeniedBoardingReasonType
+from .models.airline_motive_mentioned import AirlineMotiveMentioned
+from .models.airline_motive import AirlineMotive
+
 from .models.case_models import Case
 from .models.case_state import CaseState as State
 from .models.class_document import CaseDocument
@@ -65,6 +74,38 @@ class CaseCreationSerializer(serializers.Serializer):
     gdpr_consent = serializers.BooleanField()
     case_state = serializers.CharField(default=State.NEW.value, read_only=True)
 
+    # disruption details
+    disruption_motive = serializers.ChoiceField(
+        choices=DisruptionMotive.choices(),
+    )
+    cancellation_type = serializers.ChoiceField(
+        choices=CancellationType.choices(),
+        required=False, allow_null=True, allow_blank=True,
+    )
+    delay_type = serializers.ChoiceField(
+        choices=DelayType.choices(),
+        required=False, allow_null=True, allow_blank=True,
+    )
+    denied_boarding_type = serializers.ChoiceField(
+        choices=DeniedBoardingType.choices(),
+        required=False, allow_null=True, allow_blank=True,
+    )
+    denied_boarding_reason = serializers.ChoiceField(
+        choices=DeniedBoardingReasonType.choices(),
+        required=False, allow_null=True, allow_blank=True,
+    )
+    airline_motive_mentioned = serializers.ChoiceField(
+        choices=AirlineMotiveMentioned.choices(),
+        required=False, allow_null=True, allow_blank=True,
+    )
+    airline_motive = serializers.ChoiceField(
+        choices=AirlineMotive.choices(),
+        required=False, allow_null=True, allow_blank=True,
+    )
+    incident_description = serializers.CharField(
+        required=False, allow_blank=True,
+    )
+
     def validate_date_of_birth(self, value):
         if value >= timezone.now().date():
             raise serializers.ValidationError(
@@ -120,6 +161,19 @@ class CaseCreationSerializer(serializers.Serializer):
 
         departure_datetime = data.get("planned_departure_time")
         arrival_datetime = data.get("planned_arrival_time")
+
+        motive = data.get("disruption_motive")
+
+        # validate to ensure that sub-type fields match the disruption motive
+        if motive == DisruptionMotive.CANCELATION.value and not data.get("cancellation_type"):
+            raise serializers.ValidationError({"cancellation_type": "Required for cancellation disruptions."})
+        
+        if motive == DisruptionMotive.DELAY.value and not data.get("delay_type"):
+            raise serializers.ValidationError({"delay_type": "Required for delay disruptions."})
+        
+        if motive == DisruptionMotive.DENIED_BOARDING.value and not data.get("denied_boarding_type"):
+            raise serializers.ValidationError({"denied_boarding_type": "Required for denied boarding disruptions."})
+        
 
         if arrival_datetime <= departure_datetime:
             raise serializers.ValidationError({
@@ -219,6 +273,7 @@ class CaseCreationSerializer(serializers.Serializer):
             content_type=getattr(passport, "content_type", ""),
             file_size=passport.size,
         )
+
         passenger_data = {
             "first_name": validated_data.pop("first_name"),
             "last_name": validated_data.pop("last_name"),
@@ -243,14 +298,21 @@ class CaseCreationSerializer(serializers.Serializer):
         validated_data.pop("planned_arrival_time")
         validated_data.pop("is_problem_flight")
 
-        gdpr_consent = validated_data.get("gdpr_consent", False)
+        Passenger.objects.create(case=case, **passenger_data)
 
-        case = Case.objects.create(
-            gdpr_consent=gdpr_consent,
-            gdpr_consent_at=timezone.now() if gdpr_consent else None,
+        # create disruption record
+        Disruption.objects.create(
+            case=case,
+            motive=validated_data["disruption_motive"],
+            cancellation_type=validated_data.get("cancellation_type") or None,
+            delay_type=validated_data.get("delay_type") or None,
+            denied_boarding_type=validated_data.get("denied_boarding_type") or None,
+            denied_boarding_reason=validated_data.get("denied_boarding_reason") or None,
+            airline_motive_mentioned=validated_data.get("airline_motive_mentioned") or None,
+            airline_motive=validated_data.get("airline_motive") or None,
+            incident_description=validated_data.get("incident_description", ""),
         )
 
-        Passenger.objects.create(case=case, **passenger_data)
         return case
 
 class CaseEligibilitySerializer(serializers.Serializer):

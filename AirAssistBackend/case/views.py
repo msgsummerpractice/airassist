@@ -1,4 +1,6 @@
+from django.db import transaction
 from django.shortcuts import render
+from psycopg2 import DatabaseError
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
@@ -14,6 +16,7 @@ from .models.case_models import Case
 from user.models.models import User
 
 from .serializers import CaseCreationSerializer,CaseEligibilitySerializer,CaseAssignmentSerializer
+
 # Create your views here.
 class CaseCreationView(APIView):
     permission_classes = [AllowAny]
@@ -21,14 +24,27 @@ class CaseCreationView(APIView):
 
     def post(self, request):
         serializer = CaseCreationSerializer(data=request.data)
+
         if serializer.is_valid():
-            case = serializer.save()
+            try:
+                with transaction.atomic():
+                    case = serializer.save()
+                
+                    # Calculate compensation
+                    CaseService.calculate_case_compensation(case)
 
-            # Calculate compensation
-            CaseService.calculate_case_compensation(case)
-
-            passenger = case.passengers.first()
-            CaseService.create_passenger_account(passenger)
+                    # Create passenger account if it doesn't exist
+                    passenger = case.passengers.first()
+                    CaseService.create_passenger_account(passenger)
+            except DatabaseError:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Failed to save case. Please try again."
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
             
             return Response(
                 {
