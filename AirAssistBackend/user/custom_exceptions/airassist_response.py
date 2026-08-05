@@ -39,4 +39,7 @@ class AirAssistResponse:
                         'refresh':str(refresh_token)
                         },
         status=status.HTTP_200_OK)  
+
+    def status_not_found_with_message(self, message):
+        return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
         
