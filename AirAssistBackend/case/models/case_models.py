@@ -29,7 +29,7 @@ class Case(models.Model):
     departure_airport = models.CharField(max_length=3,null=True,blank=True)
     arrival_airport = models.CharField(max_length=3,null=True,blank=True)
     distance_km = models.FloatField(null=True,blank=True)
-    compensation_amount = models.DecimalField(max_digits=4,decimal_places=2,null=True,blank=True)
+    compensation_amount = models.DecimalField(max_digits=6,decimal_places=2,null=True,blank=True)
 
     
     class Meta:

@@ -5,10 +5,12 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models.case_models import Case
-from .models.case_state import CaseState
+from .models.case_state import CaseState as State
 from .models.class_document import CaseDocument
 from .models.document_type import DocumentType
 from .models.flights_models import Flight
+
+from .models.case_passengers import Passenger
 
 MAX_FILE_SIZE = 5 * 1024 * 1024
 ALLOWED_EXTENSIONS = (".pdf", ".jpg", ".jpeg")
@@ -123,6 +125,25 @@ class CaseCreationSerializer(serializers.Serializer):
                 "planned_arrival_time": "Arrival date and time must be after departure date and time."
             })
 
+        # connection flights logic
+        # departing airport = connection flight's first flight's departing airport
+        if connection_flights and connection_flights[0]["departing_airport"] != data["departing_airport"]:
+            raise serializers.ValidationError(
+                "The first connection flight must depart from the same airport as the main flight."
+            )
+        # destination airport = connection flight's last flight's destination airport
+        if connection_flights and connection_flights[-1]["destination_airport"] != data["destination_airport"]:
+            raise serializers.ValidationError(
+                "The last connection flight must arrive at the same airport as the main flight."
+            )
+
+        # connection flights are chained
+        for i in range(len(connection_flights) - 1):
+            if connection_flights[i]["destination_airport"] != connection_flights[i + 1]["departing_airport"]:
+                raise serializers.ValidationError(
+                     f"Connection flight {i + 1} destination must match connection flight {i + 2} departure airport."
+                )
+        
         all_problem_flights = []
 
         if main_flight_problem:
@@ -146,7 +167,7 @@ class CaseCreationSerializer(serializers.Serializer):
         connection_flights = validated_data.pop("connection_flights", [])
 
         case = Case.objects.create(
-            status=CaseState.NEW.value,
+            status=State.NEW,
             gdpr_consent=validated_data["gdpr_consent"],
             gdpr_consent_at=timezone.now(),
         )
@@ -197,7 +218,38 @@ class CaseCreationSerializer(serializers.Serializer):
             content_type=getattr(passport, "content_type", ""),
             file_size=passport.size,
         )
+        passenger_data = {
+            "first_name": validated_data.pop("first_name"),
+            "last_name": validated_data.pop("last_name"),
+            "date_of_birth": validated_data.pop("date_of_birth"),
+            "email": validated_data.pop("email"),
+            "phone": validated_data.pop("phone"),
+            "address": validated_data.pop("address"),
+            "postal_code": validated_data.pop("postal_code"),
+            }
+        
+        validated_data.pop("boarding_pass")
+        validated_data.pop("passport")
 
+        validated_data.pop("flight_date")
+        validated_data.pop("flight_number")
+        validated_data.pop("airline")
+        validated_data.pop("reservation_number")
+        validated_data.pop("departing_airport")
+        validated_data.pop("destination_airport")
+        validated_data.pop("connection_flights", [])
+        validated_data.pop("planned_departure_time")
+        validated_data.pop("planned_arrival_time")
+        validated_data.pop("is_problem_flight")
+
+        gdpr_consent = validated_data.get("gdpr_consent", False)
+
+        case = Case.objects.create(
+            gdpr_consent=gdpr_consent,
+            gdpr_consent_at=timezone.now() if gdpr_consent else None,
+        )
+
+        Passenger.objects.create(case=case, **passenger_data)
         return case
 
 
