@@ -7,6 +7,7 @@ from rest_framework import serializers
 from airassist.AirAssistBackend.case.models.airline_motive import AirlineMotive
 from airassist.AirAssistBackend.case.models.airline_motive_mentioned import AirlineMotiveMentioned
 from airassist.AirAssistBackend.case.models.cancellation_type import CancellationType
+from airassist.AirAssistBackend.case.models.case_disruption import Disruption
 from airassist.AirAssistBackend.case.models.delay_type import DelayType
 from airassist.AirAssistBackend.case.models.denied_boarding_reason_type import DeniedBoardingReasonType
 from airassist.AirAssistBackend.case.models.denied_boarding_type import DeniedBoardingType
@@ -273,6 +274,7 @@ class CaseCreationSerializer(serializers.Serializer):
             content_type=getattr(passport, "content_type", ""),
             file_size=passport.size,
         )
+        
         passenger_data = {
             "first_name": validated_data.pop("first_name"),
             "last_name": validated_data.pop("last_name"),
@@ -297,14 +299,21 @@ class CaseCreationSerializer(serializers.Serializer):
         validated_data.pop("planned_arrival_time")
         validated_data.pop("is_problem_flight")
 
-        gdpr_consent = validated_data.get("gdpr_consent", False)
+        Passenger.objects.create(case=case, **passenger_data)
 
-        case = Case.objects.create(
-            gdpr_consent=gdpr_consent,
-            gdpr_consent_at=timezone.now() if gdpr_consent else None,
+        # create disruption record
+        Disruption.objects.create(
+            case=case,
+            motive=validated_data["disruption_motive"],
+            cancellation_type=validated_data.get("cancellation_type") or None,
+            delay_type=validated_data.get("delay_type") or None,
+            denied_boarding_type=validated_data.get("denied_boarding_type") or None,
+            denied_boarding_reason=validated_data.get("denied_boarding_reason") or None,
+            airline_motive_mentioned=validated_data.get("airline_motive_mentioned") or None,
+            airline_motive=validated_data.get("airline_motive") or None,
+            incident_description=validated_data.get("incident_description", ""),
         )
 
-        Passenger.objects.create(case=case, **passenger_data)
         return case
 
 class CaseEligibilitySerializer(serializers.Serializer):
