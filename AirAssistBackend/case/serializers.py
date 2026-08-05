@@ -4,15 +4,14 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from airassist.AirAssistBackend.case.models.airline_motive import AirlineMotive
-from airassist.AirAssistBackend.case.models.airline_motive_mentioned import AirlineMotiveMentioned
-from airassist.AirAssistBackend.case.models.cancellation_type import CancellationType
-from airassist.AirAssistBackend.case.models.case_disruption import Disruption
-from airassist.AirAssistBackend.case.models.delay_type import DelayType
-from airassist.AirAssistBackend.case.models.denied_boarding_reason_type import DeniedBoardingReasonType
-from airassist.AirAssistBackend.case.models.denied_boarding_type import DeniedBoardingType
-from airassist.AirAssistBackend.case.models.denied_boarding_type import DeniedBoardingType
-from airassist.AirAssistBackend.case.models.disruption_type import DisruptionMotive
+from .models.case_disruption import Disruption
+from .models.disruption_type import DisruptionMotive
+from .models.cancellation_type import CancellationType
+from .models.delay_type import DelayType
+from .models.denied_boarding_type import DeniedBoardingType
+from .models.denied_boarding_reason_type import DeniedBoardingReasonType
+from .models.airline_motive_mentioned import AirlineMotiveMentioned
+from .models.airline_motive import AirlineMotive
 
 from .models.case_models import Case
 from .models.case_state import CaseState as State
@@ -274,7 +273,7 @@ class CaseCreationSerializer(serializers.Serializer):
             content_type=getattr(passport, "content_type", ""),
             file_size=passport.size,
         )
-        
+
         passenger_data = {
             "first_name": validated_data.pop("first_name"),
             "last_name": validated_data.pop("last_name"),
