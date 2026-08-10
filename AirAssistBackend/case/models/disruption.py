@@ -1,13 +1,13 @@
 
 
 from django.db import models
-from .disruption_type import DisruptionMotive
-from .cancellation_type import CancellationType
-from .delay_type import DelayType
-from .denied_boarding_type import DeniedBoardingType
-from .denied_boarding_reason_type import DeniedBoardingReasonType
-from .airline_motive_mentioned import AirlineMotiveMentioned
-from .airline_motive import AirlineMotive
+from ..enums.disruption_type_enum import DisruptionMotive
+from ..enums.cancellation_type_enum import CancellationType
+from ..enums.delay_type_enum import DelayType
+from ..enums.denied_boarding_type_enum import DeniedBoardingType
+from ..enums.denied_boarding_reason_type_enum import DeniedBoardingReasonType
+from ..enums.airline_motive_mentioned_enum import AirlineMotiveMentioned
+from ..enums.airline_motive_enum import AirlineMotive
 
 
 class Disruption(models.Model):

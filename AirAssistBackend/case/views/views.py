@@ -9,13 +9,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 from user.custom_exceptions.airassist_response import AirAssistResponse
 
-from .serializers import CaseCreationSerializer
-from .services.case_service import CaseService
-from .services.case_state_service import CaseStateService
-from .models.case_models import Case
+from ..serializers.case_creation_serializer import CaseCreationSerializer
+from ..serializers.case_eligibility_serializer import CaseEligibilitySerializer
+from ..serializers.case_assigment_serializer import CaseAssignmentSerializer
+from ..services.case_service import CaseService
+from ..services.case_state_service import CaseStateService
+from ..models.case import Case
 from user.models.models import User
-
-from .serializers import CaseCreationSerializer,CaseEligibilitySerializer,CaseAssignmentSerializer
 
 # Create your views here.
 class CaseCreationView(APIView):

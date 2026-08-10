@@ -1,5 +1,5 @@
 from django.db import models
-from .case_models import Case
+from .case import Case
 
 
 class Flight(models.Model):

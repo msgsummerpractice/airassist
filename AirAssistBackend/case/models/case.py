@@ -1,6 +1,6 @@
 from django.db import models
 
-from .case_state import CaseState
+from ..enums.case_state_enum import CaseState
 
 # Create your models here.
 

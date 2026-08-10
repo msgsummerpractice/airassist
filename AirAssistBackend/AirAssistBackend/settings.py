@@ -60,7 +60,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'user',
     'case',
-    'integrations'
+    'integrations',
+    'airports'
 ]
 
 AIRPORT_GAP_API_TOKEN = os.getenv("AIRPORT_GAP_API_TOKEN")

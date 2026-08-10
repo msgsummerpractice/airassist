@@ -1,4 +1,4 @@
-from .airport_gap_client import AirportGapClient
+from .airport_gap_service import AirportGapClient
 
 class DistanceService:
 

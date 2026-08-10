@@ -1,5 +1,5 @@
-from ..models.case_models import Case
-from ..models.case_state import CaseState
+from ..models.case import Case
+from ..enums.case_state_enum import CaseState
 
 
 class CaseStateService:

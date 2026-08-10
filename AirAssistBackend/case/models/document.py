@@ -1,6 +1,6 @@
 from django.db import models
-from .case_models import Case
-from .document_type import DocumentType
+from .case import Case
+from ..enums.document_type_enum import DocumentType
 
 class CaseDocument(models.Model):
     case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name="documents")

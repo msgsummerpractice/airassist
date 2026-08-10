@@ -1,4 +1,4 @@
-from integrations.distance_service import DistanceService
+from airports.services.distance_service import DistanceService
 from .compensation_service import CompensationService
 from user.models.models import User
 from user.service.service import UserService

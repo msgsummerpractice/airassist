@@ -3,10 +3,10 @@ import json
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
-from case.models.case_models import Case
-from case.models.case_state import CaseState
-from case.models.flights_models import Flight
-from case.serializers import CaseCreationSerializer
+from AirAssistBackend.case.models.case import Case
+from AirAssistBackend.case.enums.case_state_enum import CaseState
+from AirAssistBackend.case.models.flights import Flight
+from AirAssistBackend.case.serilizers.serializers import CaseCreationSerializer
 from case.services.case_state_service import CaseStateService
 from user.models.models import Role, User
 

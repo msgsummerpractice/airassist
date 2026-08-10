@@ -3,9 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 
-from .models import Airport
-from .airport_gap_client import AirportGapClient 
-from .distance_service import DistanceService
+from ..models.airport import Airport
+from ..services.airport_gap_service import AirportGapClient 
+from ..services.distance_service import DistanceService
 
 class PopulateAirportsView(APIView):
     # Set to AllowAny for testing, but consider changing to IsAdminUser for production
@@ -15,20 +15,20 @@ class PopulateAirportsView(APIView):
         client = AirportGapClient()
         
         try:
-            # 1. Fetch ALL airports from the API using your client method[cite: 9]
+         
             all_airports_data = client.get_all_airports()
             saved_count = 0
 
-            # 2. Loop through the list and save to the database
+    
             for airport_item in all_airports_data:
                 attrs = airport_item.get('attributes', {})
                 iata = attrs.get('iata')
                 
-                # Some API entries might lack an IATA code; skip those to prevent DB errors
+              
                 if not iata:
                     continue
 
-                # 3. Update or create the database record using the Airport model[cite: 10]
+              
                 Airport.objects.update_or_create(
                     iata=iata,
                     defaults={
