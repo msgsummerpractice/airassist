@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -116,3 +117,16 @@ class AirportLookupView(APIView):
                 {"success": False, "error": "Airport not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+class AirportSearchView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        query = request.query_params.get("q", "").strip()
+        if len(query) < 2:
+            return Response([])
+
+        airports = Airport.objects.filter(
+            Q(iata__icontains=query) | Q(name__icontains=query) | Q(city__icontains=query)
+        ).values("iata", "name", "city")[:10]
+        return Response(list(airports)) 
