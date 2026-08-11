@@ -23,7 +23,8 @@ class UserView(APIView):
                     firstname=serializer.validated_data['firstname'],
                     lastname=serializer.validated_data['lastname'],
                     email=serializer.validated_data['email'],
-                    password=serializer.validated_data['password']
+                    password=serializer.validated_data['password'],
+                    must_change_password=True
                 )
                 user_data = UserSerializer(user).data
                 return airassist_response.status_create(user_data)

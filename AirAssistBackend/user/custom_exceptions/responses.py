@@ -3,7 +3,7 @@ from rest_framework.response import Response
 
 class AirAssistResponse:
     def status_create(self, data):
-        return Response(data,status=status.HTTP_201_CREATED)
+        return Response({"message": "User account created successfully.","data": data},status=status.HTTP_201_CREATED)
 
     def status_bad_request(self, data):
         return Response(data, status=status.HTTP_400_BAD_REQUEST)
@@ -25,4 +25,3 @@ class AirAssistResponse:
             "message": "Successfully logged in",
         }
 
-        
