@@ -1,11 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from AirAssistBackend.user.custom_exceptions.responses import AirAssistResponse
+from user.custom_exceptions.responses import AirAssistResponse
 
 from ..serializers.case_assigment_serializer import CaseAssignmentSerializer
 from ..services.case_state_service import CaseStateService
 from ..models.case import Case
-from AirAssistBackend.user.models.users import User
+from user.models.users import User
 
 class CaseAssignmentView(APIView):
     permission_classes = [IsAuthenticated]

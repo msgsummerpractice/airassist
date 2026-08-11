@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView      # View for refreshing expired access tokens
 )
 
-from .controller import views
+from .views import user_view as views
 
 urlpatterns = [
     path("", views.UserView.as_view(), name="user-create"),

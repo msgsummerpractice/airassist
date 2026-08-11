@@ -1,9 +1,9 @@
 from airports.services.distance_service import DistanceService
 from .compensation_service import CompensationService
-from AirAssistBackend.user.models.users import User
-from AirAssistBackend.user.service.user_service import UserService
+from user.models.users import User
+from user.service.user_service import UserService
 import secrets
-from constants import *
+from ..constants import *
 
 class CaseService:
 

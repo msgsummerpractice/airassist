@@ -10,13 +10,13 @@ from ..models.document import CaseDocument
 from ..enums.document_type_enum import DocumentType
 from ..models.flights import Flight
 from ..models.disruption import Disruption
-from AirAssistBackend.user.models.users import User
+from user.models.users import User
 
 from ..models.passengers import Passenger
 from .disruption_serializer import DisruptionSerializer
 from .flights_serializer import FlightsSerializer
 
-from constants import *
+from ..constants import MAX_FILE_SIZE, ALLOWED_EXTENSIONS, MAX_CONNECTION_FLIGHTS
 
 
 
