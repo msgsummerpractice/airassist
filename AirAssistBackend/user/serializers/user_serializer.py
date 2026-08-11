@@ -4,6 +4,7 @@ from ..models.users import Role, User
 from ..service.user_service import UserService
 
 class UserSerializer(serializers.ModelSerializer):
+    
     password = serializers.CharField(write_only=True)
 
     class Meta:
