@@ -1,19 +1,8 @@
 import "./App.css";
-import { Typography, Button } from "@mui/material";
+import Login from "./components/login/login";
 
 function App() {
-  return (
-    <>
-      <div style={{ padding: 32 }}>
-        <Typography variant="h1">Reliable Claims Navigator</Typography>
-        <Typography variant="body1">Theme check</Typography>
-        <Button variant="contained">Primary Button</Button>
-        <Button variant="outlined" sx={{ ml: 2 }}>
-          Back
-        </Button>
-      </div>
-    </>
-  );
+  return <Login />;
 }
 
 export default App;
