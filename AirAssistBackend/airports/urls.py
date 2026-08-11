@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import AirportLookupView, PopulateAirportsView
-from .views import CalculateDistanceView
+from .views.airport_views import AirportLookupView, PopulateAirportsView
+from .views.airport_views import CalculateDistanceView
 
 urlpatterns = [
     path('airports/populate/', PopulateAirportsView.as_view(), name='airport-populate'),

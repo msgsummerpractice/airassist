@@ -25,11 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)u8sb30r#e8(#)e1*7!d$*rhmh73dte0+h)oj60ipee)5dv$75'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG")
 
 ALLOWED_HOSTS = []
 
@@ -60,7 +58,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'user',
     'case',
-    'integrations'
+    'email',
+    'airports'
 ]
 
 AIRPORT_GAP_API_TOKEN = os.getenv("AIRPORT_GAP_API_TOKEN")

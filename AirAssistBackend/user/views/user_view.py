@@ -1,15 +1,13 @@
-from django.shortcuts import render
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from ..service.service import UserService
-from ..models.models import User
-from ..serializers import UserSerializer, UserRoleSerializer, LoginSerializer
+from ..service.user_service import UserService
+from ..serializers.user_serializer import UserSerializer, UserRoleSerializer, LoginSerializer
 from ..permissions import IsSystemAdmin
 from rest_framework.permissions import IsAuthenticated
-from ..custom_exceptions.airassist_response import AirAssistResponse
+from ..custom_exceptions.responses import AirAssistResponse
 
 # Create your views here.
 class UserView(APIView):
@@ -20,7 +18,6 @@ class UserView(APIView):
         airassist_response = AirAssistResponse()
         if serializer.is_valid():
             try:
-                # Delegate creation to the service layer
                 user = UserService.create_user(
                     role_name=serializer.validated_data['role'].role,
                     firstname=serializer.validated_data['firstname'],
@@ -37,7 +34,7 @@ class UserView(APIView):
 class UserRoleView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, user_id):
+    def get(self, user_id):
         role = UserService.get_user_role(user_id)
         serializer = UserRoleSerializer(role)
         return Response(serializer.data)
@@ -51,9 +48,6 @@ class LoginView(APIView):
             user = serializer.validated_data["user"]
             refresh = RefreshToken.for_user(user)
 
-            # after successful authentication, 
-            # check the flag and return it in the response
-            # so the frontend can redirect to a password-change screen
             response_data = airassist_response.status_login_success(refresh)
             if user.must_change_password:
                 response_data["must_change_password"] = True
@@ -74,7 +68,6 @@ class ChangePasswordView(APIView):
         user = request.user
         user.set_password(new_password)
 
-        # Reset the flag after password change
         user.must_change_password = False
         user.save(update_fields = ["password", "must_change_password"])
 

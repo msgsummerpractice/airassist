@@ -1,7 +1,7 @@
 from django.test import TestCase
 
-from ..models.models import Role, User
-from ..service.service import UserService
+from ..models.users import Role, User
+from ..service.user_service import UserService
 
 
 class UserServiceTests(TestCase):
