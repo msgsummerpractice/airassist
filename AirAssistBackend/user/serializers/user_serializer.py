@@ -16,6 +16,7 @@ class UserRoleSerializer(serializers.ModelSerializer):
         fields = ['id', 'role']
 
 class LoginSerializer(serializers.ModelSerializer):
+    email = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
     class Meta:
