@@ -1,11 +1,5 @@
 from rest_framework import serializers
 
-from ..enums.airline_motive_enum import AirlineMotive
-from ..enums.airline_motive_mentioned_enum import AirlineMotiveMentioned
-from ..enums.cancellation_type_enum import CancellationType
-from ..enums.delay_type_enum import DelayType
-from ..enums.denied_boarding_reason_type_enum import DeniedBoardingReasonType
-from ..enums.denied_boarding_type_enum import DeniedBoardingType
 from ..enums.disruption_type_enum import DisruptionMotive
 from ..models.disruption import Disruption
 

@@ -10,14 +10,13 @@ from ..models.document import CaseDocument
 from ..enums.document_type_enum import DocumentType
 from ..models.flights import Flight
 from ..models.disruption import Disruption
-from user.models.models import User
+from AirAssistBackend.user.models.users import User
 
 from ..models.passengers import Passenger
 from .disruption_serializer import DisruptionSerializer
 from .flights_serializer import FlightsSerializer
 
-MAX_FILE_SIZE = 5 * 1024 * 1024
-ALLOWED_EXTENSIONS = (".pdf", ".jpg", ".jpeg")
+from constants import *
 
 
 
@@ -74,7 +73,7 @@ class CaseCreationSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "Connection flights must be a list.")
 
-        if len(flights) > 4:
+        if len(flights) > MAX_CONNECTION_FLIGHTS:
             raise serializers.ValidationError(
                 "A maximum of 4 connection flights is allowed.")
 

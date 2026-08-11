@@ -1,10 +1,4 @@
-from .compensation_constants import (
-    EU261_FIRST_THRESHOLD,
-    EU261_SECOND_THRESHOLD,
-    EU261_SHORT_COMPENSATION,
-    EU261_MEDIUM_COMPENSATION,
-    EU261_LONG_COMPENSATION,
-)
+from constants import *
 
 
 class CompensationService:

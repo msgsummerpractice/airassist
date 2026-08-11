@@ -1,16 +1,7 @@
 
-from django.db import transaction
-from django.utils import timezone
 from rest_framework import serializers
 
-from ..models.case import Case
-from ..enums.case_state_enum import CaseState as State
-from ..models.document import CaseDocument
-from ..enums.document_type_enum import DocumentType
-from ..models.flights import Flight
-from user.models.models import User
 
-from ..models.passengers import Passenger
 
 class FlightsSerializer(serializers.Serializer):
     flight_number = serializers.CharField(max_length=20)

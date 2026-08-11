@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'user',
     'case',
-    'integrations',
+    'email',
     'airports'
 ]
 

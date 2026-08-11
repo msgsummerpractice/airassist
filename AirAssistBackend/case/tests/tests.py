@@ -8,7 +8,7 @@ from AirAssistBackend.case.enums.case_state_enum import CaseState
 from AirAssistBackend.case.models.flights import Flight
 from AirAssistBackend.case.serilizers.serializers import CaseCreationSerializer
 from case.services.case_state_service import CaseStateService
-from user.models.models import Role, User
+from AirAssistBackend.user.models.users import Role, User
 
 
 class CaseCreationSerializerTests(TestCase):

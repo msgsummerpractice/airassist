@@ -1,8 +1,8 @@
-from ..models.models import User, Role
+from ..models.users import User, Role
 from django.db import transaction
 from django.contrib.auth.hashers import check_password
-from ..models.models import User
-from integrations.email_service import send_user_created_email
+from ..models.users import User
+from AirAssistBackend.email.services.email_service import send_user_created_email
 
 class UserService:
     @transaction.atomic

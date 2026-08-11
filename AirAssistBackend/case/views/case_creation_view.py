@@ -21,10 +21,8 @@ class CaseCreationView(APIView):
                 with transaction.atomic():
                     case = serializer.save()
                 
-                    # Calculate compensation
                     CaseService.calculate_case_compensation(case)
 
-                    # Create passenger account if it doesn't exist
                     passenger = case.passengers.first()
                     CaseService.create_passenger_account(passenger)
             except DatabaseError:

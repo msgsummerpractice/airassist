@@ -1,7 +1,7 @@
 
 from rest_framework.views import APIView
 from rest_framework.permissions import  IsAuthenticated
-from user.custom_exceptions.airassist_response import AirAssistResponse
+from AirAssistBackend.user.custom_exceptions.responses import AirAssistResponse
 
 from ..serializers.case_eligibility_serializer import CaseEligibilitySerializer
 from ..services.case_state_service import CaseStateService

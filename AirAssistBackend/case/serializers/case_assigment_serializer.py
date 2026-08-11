@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from user.models.models import User
+from AirAssistBackend.user.models.users import User
 
 
 class CaseAssignmentSerializer(serializers.Serializer):

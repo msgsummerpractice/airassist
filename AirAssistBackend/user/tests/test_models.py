@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 
-from ..models.models import Role, User
+from ..models.users import Role, User
 
 
 class RoleModelTests(TestCase):
