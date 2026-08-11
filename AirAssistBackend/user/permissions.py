@@ -6,4 +6,4 @@ class IsSystemAdmin(BasePermission):
         if not getattr(user, "is_authenticated", False):
             return False
         role_name = getattr(getattr(user, "role", None), "role", None)
-        return role_name == "System_Admin"
+        return role_name == "SYSTEM_ADMIN"
