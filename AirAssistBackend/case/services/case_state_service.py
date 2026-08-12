@@ -28,12 +28,4 @@ class CaseStateService:
         case.save(update_fields=["status", "updated_at"])
         return case
 
-    @staticmethod
-    def mark_case_as_eligible(case: Case, is_eligible: bool) -> Case:
-        if case.status != CaseState.NEW.value:
-            raise ValueError("Eligibility can only be checked for NEW cases.")
 
-        if is_eligible:
-            return CaseStateService.mark_case_as_valid(case)
-
-        return CaseStateService.mark_case_as_invalid(case)

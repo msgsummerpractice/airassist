@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'user',
     'case',
     'case_email',
+    'colleague_cases',
     'airports'
 ]
 

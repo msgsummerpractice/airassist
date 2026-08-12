@@ -1,12 +1,27 @@
 
 from rest_framework.views import APIView
-from rest_framework.permissions import  IsAuthenticated
-from user.custom_exceptions.responses import AirAssistResponse
+from rest_framework.permissions import  IsAuthenticated, AllowAny
+from AirAssistBackend.user.custom_exceptions.responses import AirAssistResponse
 
 from ..serializers.case_eligibility_serializer import CaseEligibilitySerializer
 from ..services.case_state_service import CaseStateService
+from ..services.case_eligibility_service import CaseEligibilityService
 from ..models.case import Case
 
+class CaseEligibilityView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, case_id):
+        airassist_response = AirAssistResponse()
+        try:
+            case = Case.objects.get(id=case_id)
+        except Case.DoesNotExist:
+            return airassist_response.status_not_found_with_message("Case not found.")
+
+        valid = CaseEligibilityService.check_case_eligibility(case)
+        return airassist_response.status_ok({"is_eligible": valid})
+    
+    
 class CaseEligibilityUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -23,9 +38,8 @@ class CaseEligibilityUpdateView(APIView):
             return airassist_response.status_bad_request(serializer)
 
         try:
-            case = CaseStateService.mark_case_as_eligible(
-                case,
-                serializer.validated_data["is_eligible"],
+            case = CaseStateService.mark_case_as_valid(
+                case
             )
         except ValueError as exc:
             return airassist_response.status_bad_request_with_message(str(exc))

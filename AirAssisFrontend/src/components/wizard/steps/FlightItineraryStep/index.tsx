@@ -12,7 +12,6 @@ import {
 import AirportSelector from "./AirportSelector";
 import FlightTypeToggle from "./FlightTypeToggle";
 import ConnectionsPanel from "./ConnectionsPanel";
-import { type AirportOption } from "./AirportAutoComplete";
 import {
   EU261_FIRST_THRESHOLD,
   EU261_SECOND_THRESHOLD,
@@ -20,6 +19,7 @@ import {
   EU261_MEDIUM_COMPENSATION,
   EU261_LONG_COMPENSATION,
 } from "../../../../constants/eu261";
+import type { Itinerary } from "../../types/wizardTypes";
 
 type DistanceApiResponse =
   | number
@@ -84,18 +84,25 @@ function readCalculationFromResponse(response: DistanceApiResponse): {
   return { distanceKm, compensationAmount };
 }
 
-function FlightItineraryStep() {
-  const [flightType, setFlightType] = useState<"direct" | "connecting">(
-    "direct",
-  );
-  const [departingAirport, setDepartingAirport] =
-    useState<AirportOption | null>(null);
-  const [destinationAirport, setDestinationAirport] =
-    useState<AirportOption | null>(null);
-  const [connections, setConnections] = useState<(AirportOption | null)[]>([
-    null,
-  ]);
-  const [disruptedLeg, setDisruptedLeg] = useState<number | null>(null);
+interface FlightItineraryStepProps {
+  value: Itinerary;
+  onChange: (value: Itinerary) => void;
+  onNext: (confirmed: Itinerary) => void;
+}
+
+function FlightItineraryStep({
+  value,
+  onChange,
+  onNext,
+}: FlightItineraryStepProps) {
+  const {
+    flightType,
+    departingAirport,
+    destinationAirport,
+    connections,
+    disruptedLeg,
+  } = value;
+
   const [submitted, setSubmitted] = useState(false);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [compensationAmount, setCompensationAmount] = useState<number | null>(
@@ -172,7 +179,7 @@ function FlightItineraryStep() {
     };
   }, [departingIata, destinationIata]);
 
-  // errors are derived — they appear after first submit attempt and clear as user fixes each field
+  // errors are derived - they appear after first submit attempt and clear as user fixes each field
   const errors = submitted
     ? {
         departing: !departingAirport
@@ -181,8 +188,8 @@ function FlightItineraryStep() {
         destination: !destinationAirport
           ? "Destination airport is required"
           : undefined,
-        connections: connections.map((c) =>
-          !c ? "Connection airport is required" : undefined,
+        connections: connections.map((connection) =>
+          !connection ? "Connection airport is required" : undefined,
         ),
         disruptedLeg:
           flightType === "connecting" && disruptedLeg === null
@@ -196,17 +203,28 @@ function FlightItineraryStep() {
         disruptedLeg: undefined,
       };
 
-  const isValid =
-    !!departingAirport &&
-    !!destinationAirport &&
-    (flightType === "direct" ||
-      (connections.every((c) => c !== null) && disruptedLeg !== null));
-
   const handleNext = () => {
     setSubmitted(true);
-    if (isValid) {
-      // advance to next wizard step
+
+    if (
+      !departingAirport ||
+      !destinationAirport ||
+      (flightType === "connecting" &&
+        (!connections.every((connection) => connection !== null) ||
+          disruptedLeg === null))
+    ) {
+      return;
     }
+
+    const confirmed: Itinerary = {
+      departingAirport,
+      destinationAirport,
+      flightType,
+      connections,
+      disruptedLeg,
+    };
+
+    onNext(confirmed);
   };
 
   return (
@@ -231,8 +249,12 @@ function FlightItineraryStep() {
           <AirportSelector
             departing={departingAirport}
             destination={destinationAirport}
-            onDepartingChange={setDepartingAirport}
-            onDestinationChange={setDestinationAirport}
+            onDepartingChange={(departingAirport) =>
+              onChange({ ...value, departingAirport })
+            }
+            onDestinationChange={(destinationAirport) =>
+              onChange({ ...value, destinationAirport })
+            }
             errors={errors.departing}
             errorDestination={errors.destination}
           />
@@ -283,10 +305,10 @@ function FlightItineraryStep() {
                   }}
                 >
                   {calculationLoading
-                    ? "…"
+                    ? "..."
                     : displayDistance !== null
                       ? `${displayDistance.toFixed(2)} km`
-                      : "—"}
+                      : "-"}
                 </Typography>
               </Box>
 
@@ -310,10 +332,10 @@ function FlightItineraryStep() {
                   }}
                 >
                   {calculationLoading
-                    ? "…"
+                    ? "..."
                     : displayCompensation !== null
                       ? `€ ${displayCompensation}`
-                      : "—"}
+                      : "-"}
                 </Typography>
               </Box>
             </Box>
@@ -327,16 +349,30 @@ function FlightItineraryStep() {
 
           <Divider sx={{ my: 3 }} />
 
-          <FlightTypeToggle value={flightType} onChange={setFlightType} />
+          <FlightTypeToggle
+            value={flightType}
+            onChange={(flightType) =>
+              onChange({
+                ...value,
+                flightType,
+                connections:
+                  flightType === "connecting" ? value.connections : [null],
+                disruptedLeg:
+                  flightType === "connecting" ? value.disruptedLeg : null,
+              })
+            }
+          />
 
           {flightType === "connecting" && (
             <ConnectionsPanel
               connections={connections}
-              onChange={setConnections}
+              onChange={(connections) => onChange({ ...value, connections })}
               departingAirport={departingAirport?.iata ?? ""}
               destinationAirport={destinationAirport?.iata ?? ""}
               disruptedLeg={disruptedLeg}
-              onDisruptedLegChange={setDisruptedLeg}
+              onDisruptedLegChange={(disruptedLeg) =>
+                onChange({ ...value, disruptedLeg })
+              }
               connectionErrors={errors.connections}
               disruptedLegError={errors.disruptedLeg}
             />
