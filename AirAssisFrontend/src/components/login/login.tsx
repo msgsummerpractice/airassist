@@ -61,12 +61,8 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {
-    snackbar,
-    closeSnackbar,
-    showErrorSnackbar,
-    showSuccessSnackbar,
-  } = useAppSnackbar();
+  const { snackbar, closeSnackbar, showErrorSnackbar, showSuccessSnackbar } =
+    useAppSnackbar();
 
   const fetchTokenPair = async (
     loginEmail: string,

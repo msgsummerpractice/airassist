@@ -1,0 +1,184 @@
+.colleague-dashboard {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(27, 109, 36, 0.1),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0, 49, 120, 0.08) 0%,
+      #f8f9ff 36%,
+      #f8f9ff 100%
+    );
+}
+
+.colleague-dashboard__shell {
+  width: 100%;
+  max-width: 1080px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.colleague-dashboard__profile-card,
+.colleague-dashboard__claims-card {
+  border: 1px solid rgba(195, 198, 212, 0.72);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 30px rgba(18, 28, 42, 0.06);
+}
+
+.colleague-dashboard__profile-card {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.colleague-dashboard__profile-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 220px;
+  height: 220px;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 49, 120, 0.14),
+    rgba(27, 109, 36, 0.08)
+  );
+  border-bottom-right-radius: 999px;
+  pointer-events: none;
+}
+
+.colleague-dashboard__progress {
+  position: absolute;
+  inset: 0 0 auto 0;
+}
+
+.colleague-dashboard__profile-content,
+.colleague-dashboard__claims-content {
+  position: relative;
+  padding: 28px;
+}
+
+.colleague-dashboard__profile-layout {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.colleague-dashboard__identity {
+  align-items: center;
+}
+
+.colleague-dashboard__avatar {
+  width: 92px;
+  height: 92px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #003178;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 49, 120, 0.12),
+    rgba(27, 109, 36, 0.18)
+  );
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 24px rgba(0, 49, 120, 0.12);
+}
+
+.colleague-dashboard__identity-copy {
+  min-width: 0;
+}
+
+.colleague-dashboard__identity-title {
+  color: #121c2a;
+}
+
+.colleague-dashboard__identity-meta {
+  color: #5e6778;
+}
+
+.colleague-dashboard__profile-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.colleague-dashboard__create-button {
+  min-height: 48px;
+  padding-inline: 26px;
+  white-space: nowrap;
+}
+
+.colleague-dashboard__section-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: #003178;
+  background: rgba(0, 49, 120, 0.08);
+}
+
+.colleague-dashboard__claims-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.colleague-dashboard__table-skeleton {
+  width: 100%;
+}
+
+.colleague-dashboard__empty-state {
+  padding: 28px 8px 8px;
+  text-align: center;
+}
+
+.colleague-dashboard__case-id {
+  font-weight: 700;
+  color: #003178;
+}
+
+.colleague-dashboard__passenger-name {
+  font-weight: 600;
+  color: #121c2a;
+}
+
+.colleague-dashboard__action-button {
+  border: 1px solid rgba(195, 198, 212, 0.9);
+}
+
+@media (max-width: 900px) {
+  .colleague-dashboard__profile-layout {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .colleague-dashboard {
+    padding: 24px 12px;
+  }
+
+  .colleague-dashboard__profile-content,
+  .colleague-dashboard__claims-content {
+    padding: 20px;
+  }
+
+  .colleague-dashboard__profile-card::before {
+    width: 120px;
+    height: 120px;
+  }
+
+  .colleague-dashboard__profile-action {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .colleague-dashboard__create-button {
+    width: 100%;
+  }
+}
