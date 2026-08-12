@@ -42,3 +42,15 @@ export const EMPTY_DOCUMENT_UPLOAD: DocumentUploadData = {
 
 export type DocumentUploadField = keyof DocumentUploadData;
 export type DocumentUploadErrors = Partial<Record<DocumentUploadField, string>>;
+export type DisruptionMotive = "CANCELATION" | "DELAY" | "DENIED_BOARDING" | "";
+
+export interface DisruptionFormData {
+  motive: DisruptionMotive;
+  cancellation_type: string;
+  delay_type: string;
+  denied_boarding_type: string;
+  denied_boarding_reason: string;
+  airline_motive_mentioned: string;
+  airline_motive: string;
+  incident_description: string;
+}
