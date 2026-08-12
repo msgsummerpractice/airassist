@@ -19,9 +19,11 @@ from django.urls import include, path
 from .views.case_creation_view import CaseCreationView
 from .views.case_eligibility_update_view import CaseEligibilityUpdateView
 from .views.case_assigment_view import CaseAssignmentView
+from .views.passenger_case_list_view import PassengerCaseListView
 
 urlpatterns = [
     path('cases/', CaseCreationView.as_view(), name='case-create'),
+    path("cases/me/", PassengerCaseListView.as_view(), name="passenger-case-list"),
     path("cases/<int:case_id>/eligibility/", CaseEligibilityUpdateView.as_view(), name="case-eligibility"),
     path("cases/<int:case_id>/assign/", CaseAssignmentView.as_view(), name="case-assign"),
 ]
