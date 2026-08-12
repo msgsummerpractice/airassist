@@ -17,11 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from .views.case_creation_view import CaseCreationView
-from .views.case_eligibility_update_view import CaseEligibilityUpdateView
+from .views.case_eligibility_view import CaseEligibilityUpdateView, CaseEligibilityView
 from .views.case_assigment_view import CaseAssignmentView
 
 urlpatterns = [
     path('cases/', CaseCreationView.as_view(), name='case-create'),
-    path("cases/<int:case_id>/eligibility/", CaseEligibilityUpdateView.as_view(), name="case-eligibility"),
+    path("cases/<int:case_id>/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),
+    path("cases/<int:case_id>/eligibility-update/", CaseEligibilityUpdateView.as_view(), name="case-eligibility-update"),
     path("cases/<int:case_id>/assign/", CaseAssignmentView.as_view(), name="case-assign"),
 ]
