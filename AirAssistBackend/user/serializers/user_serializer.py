@@ -31,9 +31,9 @@ class LoginSerializer(serializers.ModelSerializer):
         attrs["user"] = user
         return attrs
 
-class UserListSerialzizer(serializers.ModelSerializer):
+class UserListSerializer(serializers.ModelSerializer):
     role = serializers.StringRelatedField()
-    assigned_case_count = serializers.IntegerField(read_only = True)
+    assigned_case_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User

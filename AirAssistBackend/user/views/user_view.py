@@ -33,18 +33,19 @@ class UserView(APIView):
             except ValueError as e:
                 return airassist_response.status_bad_request_with_message(str(e))
         return airassist_response.status_bad_request(request.data)
+
+    def get(self, request):
+        airassist_response = AirAssistResponse()
+        users = UserService.get_users_for_admin_list()
+        serializer = UserListSerializer(users, many=True)
+        return airassist_response.status_ok(serializer.data)
     
 class UserRoleView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, user_id):
+    def get(self, request, user_id):
         role = UserService.get_user_role(user_id)
         serializer = UserRoleSerializer(role)
-        return Response(serializer.data)
-
-    def get(self, request):
-        users = UserService.get_users_for_admin_list()
-        serializer = UserListSerializer(users, many=True)
         return Response(serializer.data)
 
 
@@ -55,6 +56,8 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             refresh = RefreshToken.for_user(user)
+            # add role so the frontend can read it without a round-trip
+            refresh["role"] = user.role.role
             response_data = airassist_response.status_login_success()
             response_data["must_change_password"] = user.must_change_password
             response_data["refresh"] = str(refresh)

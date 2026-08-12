@@ -18,10 +18,11 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.3.0",
     "@mui/material": "^9.3.0",
-    "axios": "^1.19.0",
     "@tailwindcss/vite": "^4.3.3",
+    "axios": "^1.19.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
