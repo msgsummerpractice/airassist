@@ -2,9 +2,12 @@ import type { SyntheticEvent, ReactNode } from "react";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Slide from "@mui/material/Slide";
-import type { AlertColor, SlideProps, SnackbarCloseReason } from "@mui/material";
-
-const AUTO_HIDE_DURATION_MS = 5000;
+import type {
+  AlertColor,
+  SlideProps,
+  SnackbarCloseReason,
+} from "@mui/material";
+import { AUTO_HIDE_DURATION_MS } from "../../constants/eu261";
 
 type AppSnackbarState = {
   open: boolean;
