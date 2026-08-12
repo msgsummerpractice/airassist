@@ -13,6 +13,13 @@ import AirportSelector from "./AirportSelector";
 import FlightTypeToggle from "./FlightTypeToggle";
 import ConnectionsPanel from "./ConnectionsPanel";
 import { type AirportOption } from "./AirportAutoComplete";
+import {
+  EU261_FIRST_THRESHOLD,
+  EU261_SECOND_THRESHOLD,
+  EU261_SHORT_COMPENSATION,
+  EU261_MEDIUM_COMPENSATION,
+  EU261_LONG_COMPENSATION,
+} from "../../../../constants/eu261";
 
 type DistanceApiResponse =
   | number
@@ -44,9 +51,9 @@ function toNumber(value: unknown): number | null {
 
 // Mirrors EU261 thresholds from case/constants.py
 function compensationFromDistance(km: number): number {
-  if (km <= 1500) return 250;
-  if (km <= 3500) return 400;
-  return 600;
+  if (km <= EU261_FIRST_THRESHOLD) return EU261_SHORT_COMPENSATION;
+  if (km <= EU261_SECOND_THRESHOLD) return EU261_MEDIUM_COMPENSATION;
+  return EU261_LONG_COMPENSATION;
 }
 
 function readCalculationFromResponse(response: DistanceApiResponse): {
