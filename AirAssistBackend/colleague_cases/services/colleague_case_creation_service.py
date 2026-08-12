@@ -13,6 +13,53 @@ from user.enums.roles import Roles
 
 class ColleagueCaseCreationService:
     @staticmethod
+    def get_assigned_cases_for_colleague(colleague):
+        cases = (
+            Case.objects.filter(assigned_colleague=colleague)
+            .prefetch_related("passengers")
+            .order_by("-created_at")
+        )
+
+        claims = []
+        for case in cases:
+            passenger = case.passengers.first()
+            passenger_name = None
+
+            if passenger is not None:
+                passenger_name = f"{passenger.first_name} {passenger.last_name}"
+
+            claims.append(
+                {
+                    "case_id": case.id,
+                    "status": case.status,
+                    "created_at": case.created_at,
+                    "reservation_number": case.reservation_number,
+                    "passenger_name": passenger_name,
+                }
+            )
+
+        return claims
+
+    @staticmethod
+    def build_dashboard_payload(colleague):
+        role_name = getattr(getattr(colleague, "role", None), "role", None)
+
+        return {
+            "colleague": {
+                "id": colleague.id,
+                "firstname": colleague.firstname,
+                "lastname": colleague.lastname,
+                "full_name": f"{colleague.firstname} {colleague.lastname}".strip(),
+                "email": colleague.email,
+                "role": role_name,
+                "avatar_url": None,
+            },
+            "claims": ColleagueCaseCreationService.get_assigned_cases_for_colleague(
+                colleague
+            ),
+        }
+
+    @staticmethod
     def link_colleague_to_case(case, colleague):
         role_name = getattr(getattr(colleague, "role", None), "role", None)
         if role_name != Roles.COLLEAGUE.value:

@@ -35,7 +35,7 @@ class UserView(APIView):
 class UserRoleView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, user_id):
+    def get(self,request, user_id):
         role = UserService.get_user_role(user_id)
         serializer = UserRoleSerializer(role)
         return Response(serializer.data)
