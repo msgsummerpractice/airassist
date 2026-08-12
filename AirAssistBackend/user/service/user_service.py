@@ -3,6 +3,14 @@ from django.db import transaction
 from django.contrib.auth.hashers import check_password
 from ..models.users import User
 from case_email.services.email_service import send_user_created_email
+from django.db.models import (
+    Count, IntegerField, Subquery, OuterRef, Case as DbCase, When,
+)
+from django.db.models.functions import Coalesce
+from case.models.passengers import Passenger
+from ..enums.roles import Roles
+
+
 
 class UserService:
     @transaction.atomic
@@ -51,3 +59,38 @@ class UserService:
         if not check_password(password, user.password):
             return None
         return user
+
+    
+
+    @staticmethod
+    def get_users_for_admin_list():
+        passenger_case_subq = (
+            Passenger.objects
+            .filter(email=OuterRef("email"))
+            .values("email")
+            .annotate(cnt=Count("id"))
+            .values("cnt")
+        )
+
+        return (
+            User.objects
+            .filter(role__role__in=[Roles.COLLEAGUE.value, Roles.PASSENGER.value])
+            .annotate(
+                assigned_case_count=DbCase(
+                    When(
+                        role__role=Roles.COLLEAGUE.value,
+                        then=Count("assigned_cases"),
+                    ),
+                    When(
+                        role__role=Roles.PASSENGER.value,
+                        then=Coalesce(
+                            Subquery(passenger_case_subq, output_field=IntegerField()),
+                            0,
+                        ),
+                    ),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("lastname", "firstname")
+        )
