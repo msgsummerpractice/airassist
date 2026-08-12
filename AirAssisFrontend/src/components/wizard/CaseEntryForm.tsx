@@ -6,6 +6,7 @@ import {
   type Itinerary,
   type Leg,
   type DisruptionFormData,
+  EMPTY_ITINERARY,
   EMPTY_PASSENGER,
   EMPTY_DOCUMENT_UPLOAD,
   EMPTY_GDPR,
@@ -25,6 +26,8 @@ const wizardSteps = [
   "Consent",
 ];
 
+
+
 const defaultDisruption: DisruptionFormData = {
   motive: "",
   cancellation_type: "",
@@ -40,6 +43,7 @@ const defaultDisruption: DisruptionFormData = {
 
 function CaseEntryForm() {
   const [step, setStep] = useState(0);
+  const [itinerary, setItinerary] = useState<Itinerary>(EMPTY_ITINERARY);
   const [legDetails, setLegDetails] = useState<Leg[]>([]);
   const [disruption, setDisruption] =
     useState<DisruptionFormData>(defaultDisruption);
@@ -48,6 +52,7 @@ function CaseEntryForm() {
   const [gdpr, setGdpr] = useState(EMPTY_GDPR);
 
   const handleItineraryNext = (confirmed: Itinerary) => {
+    setItinerary(confirmed);
     setLegDetails(buildLegs(confirmed));
     setStep(1);
   };
@@ -55,7 +60,13 @@ function CaseEntryForm() {
   return (
     <>
         <WizardProgressBar steps={wizardSteps} activeStep={step} />
-        {step === 0 && <FlightItineraryStep onNext={handleItineraryNext} />}
+        {step === 0 && (
+            <FlightItineraryStep 
+            value={itinerary} 
+            onChange={setItinerary} 
+            onNext={handleItineraryNext} />
+        )}
+
         {step === 1 && (
             <FlightDetailsStep
             legs={legDetails}
