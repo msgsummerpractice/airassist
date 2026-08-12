@@ -1,15 +1,14 @@
 import "./App.css";
-import Login from "./components/login/login";
-import FlightItineraryStep from "./components/wizard/steps/FlightItineraryStep";
+import CaseEntryForm from "./components/wizard/CaseEntryForm";
 
 function App() {
   return (
     <>
       <div>
-        <Login />
-        <FlightItineraryStep />
+        <CaseEntryForm />
       </div>
     </>
   );
 }
+
 export default App;

@@ -20,6 +20,7 @@ import {
   EU261_MEDIUM_COMPENSATION,
   EU261_LONG_COMPENSATION,
 } from "../../../../constants/eu261";
+import type { Itinerary } from "../../types/wizardTypes";
 
 type DistanceApiResponse =
   | number
@@ -84,7 +85,11 @@ function readCalculationFromResponse(response: DistanceApiResponse): {
   return { distanceKm, compensationAmount };
 }
 
-function FlightItineraryStep() {
+interface FlightItineraryStepProps {
+  onNext: (confirmed: Itinerary) => void;
+}
+
+function FlightItineraryStep({ onNext }: FlightItineraryStepProps) {
   const [flightType, setFlightType] = useState<"direct" | "connecting">(
     "direct",
   );
@@ -196,17 +201,24 @@ function FlightItineraryStep() {
         disruptedLeg: undefined,
       };
 
-  const isValid =
-    !!departingAirport &&
-    !!destinationAirport &&
-    (flightType === "direct" ||
-      (connections.every((c) => c !== null) && disruptedLeg !== null));
-
   const handleNext = () => {
     setSubmitted(true);
-    if (isValid) {
-      // advance to next wizard step
+    if (
+      !departingAirport ||
+      !destinationAirport ||
+      (flightType === "connecting" &&
+        (!connections.every((c) => c !== null) || disruptedLeg === null))
+    ) {
+      return;
     }
+    const confirmed: Itinerary = {
+      departingAirport,
+      destinationAirport,
+      flightType,
+      connections,
+      disruptedLeg,
+    };
+    onNext(confirmed);
   };
 
   return (
