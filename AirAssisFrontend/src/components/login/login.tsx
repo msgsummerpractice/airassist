@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import "./login.css";
 import {
-  Alert,
   Box,
   Button,
   Card,
@@ -16,6 +15,8 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import ResetPassword from "./reset_password";
+import { AppSnackbar } from "../utils/app_snackbar";
+import { useAppSnackbar } from "../utils/use_app_snackbar";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -60,8 +61,12 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const {
+    snackbar,
+    closeSnackbar,
+    showErrorSnackbar,
+    showSuccessSnackbar,
+  } = useAppSnackbar();
 
   const fetchTokenPair = async (
     loginEmail: string,
@@ -97,8 +102,7 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
   const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    setErrorMessage("");
-    setSuccessMessage("");
+    closeSnackbar();
     setIsSubmitting(true);
 
     try {
@@ -146,13 +150,13 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
         return;
       }
 
-      setSuccessMessage("Login successful.");
+      showSuccessSnackbar("Login successful.");
       onLoginSuccess?.();
     } catch (error) {
       if (error instanceof Error) {
-        setErrorMessage(error.message);
+        showErrorSnackbar(error.message);
       } else {
-        setErrorMessage("Login failed. Please try again.");
+        showErrorSnackbar("Login failed. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -165,8 +169,7 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
         onPasswordResetSuccess={onPasswordResetSuccess}
         onBackToLogin={() => {
           setShowPasswordReset(false);
-          setErrorMessage("");
-          setSuccessMessage("");
+          closeSnackbar();
         }}
       />
     );
@@ -174,6 +177,13 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
 
   return (
     <Box className="login-page">
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
+
       <Card elevation={3} className="login-card">
         <CardContent className="login-card-content">
           <Stack spacing={1.5} className="login-header">
@@ -181,12 +191,6 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
               AIRASSIST PORTAL
             </Typography>
           </Stack>
-
-          {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-
-          {successMessage ? (
-            <Alert severity="success">{successMessage}</Alert>
-          ) : null}
 
           <Box
             sx={{ textAlign: "left" }}
@@ -244,8 +248,7 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
                     variant="text"
                     onClick={() => {
                       setShowPasswordReset(true);
-                      setErrorMessage("");
-                      setSuccessMessage("");
+                      closeSnackbar();
                     }}
                     sx={{
                       minWidth: 0,
