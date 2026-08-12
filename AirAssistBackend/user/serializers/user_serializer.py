@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'role', 'firstname', 'lastname', 'email', 'password']
+        fields = ['id',  'firstname', 'lastname', 'email', 'password']
 
 class UserRoleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,3 +30,12 @@ class LoginSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"detail":"forbidden"})
         attrs["user"] = user
         return attrs
+
+class UserListSerialzizer(serializers.ModelSerializer):
+    role = serializers.StringRelatedField()
+    assigned_case_count = serializers.IntegerField(read_only = True)
+
+    class Meta:
+        model = User
+        fields = ["id", "firstname", "lastname", "email", "role", "assigned_case_count"]
+        

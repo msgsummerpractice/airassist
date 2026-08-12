@@ -4,7 +4,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..service.user_service import UserService
-from ..serializers.user_serializer import UserSerializer, UserRoleSerializer, LoginSerializer
+from ..serializers.user_serializer import (
+    UserSerializer, UserRoleSerializer, LoginSerializer, UserListSerializer,
+)
 from ..permissions import IsSystemAdmin
 from rest_framework.permissions import IsAuthenticated
 from ..custom_exceptions.responses import AirAssistResponse
@@ -38,6 +40,11 @@ class UserRoleView(APIView):
     def get(self, user_id):
         role = UserService.get_user_role(user_id)
         serializer = UserRoleSerializer(role)
+        return Response(serializer.data)
+
+    def get(self, request):
+        users = UserService.get_users_for_admin_list()
+        serializer = UserListSerializer(users, many=True)
         return Response(serializer.data)
 
 
