@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import "./reset_password.css";
 import {
-  Alert,
   Box,
   Button,
   Card,
@@ -16,6 +15,8 @@ import {
   Typography,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { AppSnackbar } from "../utils/app_snackbar";
+import { useAppSnackbar } from "../utils/use_app_snackbar";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -96,8 +97,12 @@ const ResetPassword = ({
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const {
+    snackbar,
+    closeSnackbar,
+    showErrorSnackbar,
+    showSuccessSnackbar,
+  } = useAppSnackbar();
 
   const passwordMismatch =
     confirmPassword.length > 0 && newPassword !== confirmPassword;
@@ -111,17 +116,16 @@ const ResetPassword = ({
     event.preventDefault();
 
     if (passwordMismatch) {
-      setErrorMessage("The new passwords do not match.");
+      showErrorSnackbar("The new passwords do not match.");
       return;
     }
 
     if (newPassword.length < 8) {
-      setErrorMessage("The new password must be at least 8 characters long.");
+      showErrorSnackbar("The new password must be at least 8 characters long.");
       return;
     }
 
-    setErrorMessage("");
-    setSuccessMessage("");
+    closeSnackbar();
     setIsSubmitting(true);
 
     try {
@@ -157,14 +161,14 @@ const ResetPassword = ({
         );
       }
 
-      setSuccessMessage(data?.message || "Password changed successfully.");
+      showSuccessSnackbar(data?.message || "Password changed successfully.");
 
       onPasswordResetSuccess?.();
     } catch (error) {
       if (error instanceof Error) {
-        setErrorMessage(error.message);
+        showErrorSnackbar(error.message);
       } else {
-        setErrorMessage("Password change failed. Please try again.");
+        showErrorSnackbar("Password change failed. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -173,6 +177,13 @@ const ResetPassword = ({
 
   return (
     <Box className="reset-password-page">
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
+
       <Card elevation={3} className="reset-password-card">
         <CardContent className="reset-password-card-content">
           <Stack spacing={1.5} className="reset-password-header">
@@ -180,12 +191,6 @@ const ResetPassword = ({
               AIRASSIST PORTAL
             </Typography>
           </Stack>
-
-          {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-
-          {successMessage ? (
-            <Alert severity="success">{successMessage}</Alert>
-          ) : null}
 
           <Box component="form" onSubmit={handleResetSubmit} noValidate>
             <Stack spacing={2.5}>
@@ -198,11 +203,6 @@ const ResetPassword = ({
                 fullWidth
                 required
                 autoComplete="new-password"
-                helperText={
-                  newPassword
-                    ? `Strength: ${passwordStrength.label}`
-                    : "Use at least 8 characters."
-                }
                 slotProps={{
                   input: {
                     endAdornment: (
@@ -339,8 +339,7 @@ const ResetPassword = ({
                 onClick={() => {
                   setNewPassword("");
                   setConfirmPassword("");
-                  setErrorMessage("");
-                  setSuccessMessage("");
+                  closeSnackbar();
                   onBackToLogin?.();
                 }}
                 sx={{
