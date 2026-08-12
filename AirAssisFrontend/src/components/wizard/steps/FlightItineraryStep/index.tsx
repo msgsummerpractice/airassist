@@ -255,12 +255,20 @@ function FlightItineraryStep() {
                 color: "text.secondary",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
+                textAlign: "center",
               }}
             >
               Distance &amp; Compensation
             </Typography>
 
-            <Box sx={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 5,
+                flexWrap: "wrap",
+                justifyContent: "center",
+              }}
+            >
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   Distance
