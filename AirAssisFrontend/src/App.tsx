@@ -6,8 +6,8 @@ function App() {
   return (
     <>
       <div>
-        <FlightItineraryStep />
         <Login />
+        <FlightItineraryStep />
       </div>
     </>
   );
