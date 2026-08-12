@@ -21,7 +21,7 @@ interface DisruptionStepProps {
 function DisruptionStep({ value, onChange }: DisruptionStepProps) {
   function updateField<K extends keyof DisruptionFormData>(
     field: K,
-    fieldValue: DisruptionFormData[K]
+    fieldValue: DisruptionFormData[K],
   ) {
     onChange({
       ...value,
@@ -283,7 +283,7 @@ function DisruptionStep({ value, onChange }: DisruptionStepProps) {
             multiline
             minRows={5}
             fullWidth
-            inputProps={{ maxLength: 2000 }}
+            slotProps={{ htmlInput: { maxLength: 2000 } }}
             helperText={`${value.incident_description.length}/2000 characters`}
           />
         </Box>

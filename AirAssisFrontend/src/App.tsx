@@ -1,13 +1,11 @@
 import "./App.css";
-import FlightDetailsStep from "./components/wizard/steps/FlightDetailsStep";
-
-import FlightItineraryStep from "./components/wizard/steps/FlightItineraryStep";
+import CaseEntryForm from "./components/wizard/CaseEntryForm";
 
 function App() {
   return (
     <>
       <div>
-        <FlightDetailsStep />
+        <CaseEntryForm />
       </div>
     </>
   );

@@ -48,12 +48,12 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             refresh = RefreshToken.for_user(user)
+            response_data = airassist_response.status_login_success()
+            response_data["must_change_password"] = user.must_change_password
+            response_data["refresh"] = str(refresh)
+            response_data["access"] = str(refresh.access_token)
 
-            response_data = airassist_response.status_login_success(refresh)
-            if user.must_change_password:
-                response_data["must_change_password"] = True
-
-            return Response(response_data)
+            return Response(response_data, status=status.HTTP_200_OK)
         return airassist_response.status_forbidden_with_message("Invalid email or password")
 
 
