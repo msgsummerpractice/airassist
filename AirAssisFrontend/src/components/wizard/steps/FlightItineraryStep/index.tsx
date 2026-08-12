@@ -242,8 +242,13 @@ function FlightItineraryStep() {
           >
             <Typography
               variant="caption"
-              sx={{ display: "block", mb: 1.5, color: "text.secondary",
-                textTransform: "uppercase", letterSpacing: "0.08em" }}
+              sx={{
+                display: "block",
+                mb: 1.5,
+                color: "text.secondary",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
             >
               Distance &amp; Compensation
             </Typography>
@@ -255,9 +260,18 @@ function FlightItineraryStep() {
                 </Typography>
                 <Typography
                   variant="h2"
-                  sx={{ color: calculationLoading ? "text.disabled" : "primary.main", mt: 0.25 }}
+                  sx={{
+                    color: calculationLoading
+                      ? "text.disabled"
+                      : "primary.main",
+                    mt: 0.25,
+                  }}
                 >
-                  {calculationLoading ? "…" : displayDistance !== null ? `${displayDistance.toFixed(2)} km` : "—"}
+                  {calculationLoading
+                    ? "…"
+                    : displayDistance !== null
+                      ? `${displayDistance.toFixed(2)} km`
+                      : "—"}
                 </Typography>
               </Box>
 
@@ -273,9 +287,18 @@ function FlightItineraryStep() {
                 </Typography>
                 <Typography
                   variant="h2"
-                  sx={{ color: calculationLoading ? "text.disabled" : "secondary.main", mt: 0.25 }}
+                  sx={{
+                    color: calculationLoading
+                      ? "text.disabled"
+                      : "secondary.main",
+                    mt: 0.25,
+                  }}
                 >
-                  {calculationLoading ? "…" : displayCompensation !== null ? `€ ${displayCompensation}` : "—"}
+                  {calculationLoading
+                    ? "…"
+                    : displayCompensation !== null
+                      ? `€ ${displayCompensation}`
+                      : "—"}
                 </Typography>
               </Box>
             </Box>
