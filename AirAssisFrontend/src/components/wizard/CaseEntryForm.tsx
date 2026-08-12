@@ -15,6 +15,7 @@ import {
 import PassangersStep from "./steps/PassangersStep";
 import DocumentUploadStep from "./steps/DocumentUploadStep";
 import GDPRStep from "./steps/GDPRStep";
+import OverviewStep from "./steps/OverviewStep";
 import WizardProgressBar from "./WizardProgressBar";
 
 const wizardSteps = [
@@ -24,6 +25,7 @@ const wizardSteps = [
   "Passenger",
   "Documents",
   "Consent",
+  "Overview",
 ];
 
 
@@ -106,8 +108,20 @@ function CaseEntryForm() {
                 onChange={setGdpr}
                 onBack={() => setStep(4)}
                 onNext={() => {
-                // final submit later
+              setStep(6)
                 }}
+            />
+            )}
+
+            {step === 6 && (
+            <OverviewStep
+              itinerary={itinerary}
+              legDetails={legDetails}
+              disruption={disruption}
+              passenger={passenger}
+              documents={documents}
+              gdpr={gdpr}
+              onBack={() => setStep(5)}
             />
             )}
     </>
