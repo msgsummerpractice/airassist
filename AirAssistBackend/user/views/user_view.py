@@ -32,7 +32,7 @@ class UserView(APIView):
                 return airassist_response.status_create(user_data)
             except ValueError as e:
                 return airassist_response.status_bad_request_with_message(str(e))
-        return airassist_response.status_bad_request(request.data)
+        return airassist_response.status_bad_request(serializer.errors)
 
     def get(self, request):
         airassist_response = AirAssistResponse()

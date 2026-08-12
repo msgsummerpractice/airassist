@@ -17,6 +17,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
   Tooltip,
@@ -27,7 +28,8 @@ import {
   PersonSearch as PersonSearchIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
-import { getStoredAccessToken } from "../../utils/auth";
+import { fetchWithAuth } from "../../utils/auth";
+import CreateUserButton from "./CreateUserButton";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -58,22 +60,19 @@ function AdminUsersPage() {
   const [minCasesFilter, setMinCasesFilter] = useState("");
 
   const [detailUser, setDetailUser] = useState<UserEntry | null>(null);
-
-  const authHeader = () => ({
-    Authorization: `Bearer ${getStoredAccessToken() ?? ""}`,
-  });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const loadUsers = async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/user/`, {
-        headers: authHeader(),
-      });
+      const res = await fetchWithAuth(`${API_BASE_URL}/user/`);
       if (!res.ok) throw new Error(`Could not load users (${res.status}).`);
       const body = await res.json();
       setUsers(Array.isArray(body) ? body : (body.data ?? []));
       setLoaded(true);
+      setPage(0);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Unexpected error.");
     } finally {
@@ -91,6 +90,11 @@ function AdminUsersPage() {
     );
   });
 
+  const paginated = filtered.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+
   return (
     <Box sx={{ maxWidth: 1100, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}>
       <Typography variant="h2" sx={{ mb: 0.5 }}>
@@ -104,21 +108,23 @@ function AdminUsersPage() {
         Colleagues and passengers registered in the system.
       </Typography>
 
-      <Button
-        variant="contained"
-        startIcon={
-          loading ? (
-            <CircularProgress size={16} color="inherit" />
-          ) : (
-            <RefreshIcon />
-          )
-        }
-        onClick={loadUsers}
-        disabled={loading}
-        sx={{ mb: 3 }}
-      >
-        {loaded ? "Reload Users" : "Load Users"}
-      </Button>
+      <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 3 }}>
+        <Button
+          variant="outlined"
+          startIcon={
+            loading ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              <RefreshIcon />
+            )
+          }
+          onClick={loadUsers}
+          disabled={loading}
+        >
+          {loaded ? "Reload Users" : "Load Users"}
+        </Button>
+        <CreateUserButton onUserCreated={loadUsers} />
+      </Box>
 
       {loadError && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -205,7 +211,7 @@ function AdminUsersPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((user) => (
+                  paginated.map((user) => (
                     <TableRow key={user.id} hover>
                       <TableCell>
                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -256,6 +262,18 @@ function AdminUsersPage() {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            component="div"
+            count={filtered.length}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+          />
         </>
       )}
 

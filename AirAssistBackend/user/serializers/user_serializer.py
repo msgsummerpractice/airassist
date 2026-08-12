@@ -4,12 +4,13 @@ from ..models.users import Role, User
 from ..service.user_service import UserService
 
 class UserSerializer(serializers.ModelSerializer):
-    
     password = serializers.CharField(write_only=True)
+    # resolves "COLLEAGUE" / "PASSENGER" string to Role object for validated_data
+    role = serializers.SlugRelatedField(slug_field='role', queryset=Role.objects.all())
 
     class Meta:
         model = User
-        fields = ['id',  'firstname', 'lastname', 'email', 'password']
+        fields = ['id', 'firstname', 'lastname', 'email', 'password', 'role']
 
 class UserRoleSerializer(serializers.ModelSerializer):
     class Meta:

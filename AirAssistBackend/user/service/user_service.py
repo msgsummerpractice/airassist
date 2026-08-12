@@ -3,9 +3,10 @@ from django.db import transaction
 from django.contrib.auth.hashers import check_password
 from ..models.users import User
 from case_email.services.email_service import send_user_created_email
-from django.db.models import(
-    Count,IntegerField,Subquery,OuterRef,Coalesce,Case as DbCase,When,
+from django.db.models import (
+    Count, IntegerField, Subquery, OuterRef, Case as DbCase, When,
 )
+from django.db.models.functions import Coalesce
 from case.models.passengers import Passenger
 from ..enums.roles import Roles
 
