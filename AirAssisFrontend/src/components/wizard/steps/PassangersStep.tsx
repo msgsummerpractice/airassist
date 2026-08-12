@@ -20,7 +20,7 @@ import {
   ArrowForward,
 } from "@mui/icons-material";
 import type { PassengerData, PassengerFieldErrors } from "../types/wizardTypes";
-import { validatePassengerField } from "../types/wizardTypes";
+import { validatePassengerField } from "../utils/passengerStepValidation";
 
 interface PassengersStepProps {
   data: PassengerData;
