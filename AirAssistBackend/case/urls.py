@@ -16,13 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+
 from .views.case_creation_view import CaseCreationView
-from .views.case_eligibility_view import CaseEligibilityUpdateView, CaseEligibilityView
+from .views.case_eligibility_view import CaseEligibilityView
 from .views.case_assigment_view import CaseAssignmentView
 
 urlpatterns = [
-    path('cases/', CaseCreationView.as_view(), name='case-create'),
-    path("cases/<int:case_id>/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),
-    path("cases/<int:case_id>/eligibility-update/", CaseEligibilityUpdateView.as_view(), name="case-eligibility-update"),
+    path("cases/", CaseCreationView.as_view(), name="case-create"),  # final submit/create
+    path("cases/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),  # payload precheck
     path("cases/<int:case_id>/assign/", CaseAssignmentView.as_view(), name="case-assign"),
 ]
