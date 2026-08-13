@@ -18,6 +18,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
 } from "@mui/material";
 import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
@@ -167,6 +168,19 @@ function PastCasesView({
     );
   }, [cases, assigneeFilter]);
 
+  const caseIdSortDirection = sorting === "id" ? "asc" : "desc";
+  const statusSortDirection = sorting === "-status" ? "desc" : "asc";
+
+  const handleCaseIdSort = () => {
+    setSorting((previousSorting) => (previousSorting === "-id" ? "id" : "-id"));
+  };
+
+  const handleStatusSort = () => {
+    setSorting((previousSorting) =>
+      previousSorting === "status" ? "-status" : "status",
+    );
+  };
+
   const currentUser = getStoredUserIdentity();
 
   return (
@@ -287,23 +301,6 @@ function PastCasesView({
                 ))}
               </Select>
             </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
-              <InputLabel id="past-cases-sort-label">Sort by</InputLabel>
-              <Select
-                labelId="past-cases-sort-label"
-                label="Sort by"
-                value={sorting}
-                onChange={(event) =>
-                  setSorting(event.target.value as SortValue)
-                }
-              >
-                <MenuItem value="-id">Newest first</MenuItem>
-                <MenuItem value="id">Oldest first</MenuItem>
-                <MenuItem value="status">Status (A-Z)</MenuItem>
-                <MenuItem value="-status">Status (Z-A)</MenuItem>
-              </Select>
-            </FormControl>
           </Stack>
 
           {errorMessage && (
@@ -361,10 +358,26 @@ function PastCasesView({
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Case ID</TableCell>
+                      <TableCell sortDirection={caseIdSortDirection}>
+                        <TableSortLabel
+                          active={sorting === "id" || sorting === "-id"}
+                          direction={caseIdSortDirection}
+                          onClick={handleCaseIdSort}
+                        >
+                          Case ID
+                        </TableSortLabel>
+                      </TableCell>
                       <TableCell>Flight Number</TableCell>
                       <TableCell>Passenger Name</TableCell>
-                      <TableCell>Status</TableCell>
+                      <TableCell sortDirection={statusSortDirection}>
+                        <TableSortLabel
+                          active={sorting === "status" || sorting === "-status"}
+                          direction={statusSortDirection}
+                          onClick={handleStatusSort}
+                        >
+                          Status
+                        </TableSortLabel>
+                      </TableCell>
                       <TableCell>Assignee</TableCell>
                       <TableCell>Contract</TableCell>
                     </TableRow>
