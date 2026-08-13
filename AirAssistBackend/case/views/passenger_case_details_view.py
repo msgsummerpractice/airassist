@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from user.permissions import IsPassenger
 
 from ..models.case import Case
+from ..models.comment import Comment
 from ..models.document import CaseDocument
 from ..models.flights import Flight
 from ..models.passengers import Passenger
@@ -38,6 +39,13 @@ class PassengerCaseDetailsView(generics.RetrieveAPIView):
 				Prefetch(
 					"documents",
 					queryset=CaseDocument.objects.order_by("-uploaded_at", "-id"),
+				),
+				Prefetch(
+					"comments",
+					queryset=Comment.objects.select_related(
+						"author",
+						"author__role",
+					).order_by("created_at", "id"),
 				),
 			)
 			.distinct()

@@ -4,6 +4,7 @@ from ..models.case import Case
 from ..models.document import CaseDocument
 from ..models.flights import Flight
 from ..models.passengers import Passenger
+from .passenger_case_comment_serializer import PassengerCaseCommentSerializer
 
 
 class PassengerCaseFlightSerializer(serializers.ModelSerializer):
@@ -48,6 +49,7 @@ class PassengerCaseDetailsSerializer(serializers.ModelSerializer):
 	connecting_flights = serializers.SerializerMethodField()
 	passenger = serializers.SerializerMethodField()
 	documents = PassengerCaseDocumentSerializer(many=True, read_only=True)
+	comments = PassengerCaseCommentSerializer(many=True, read_only=True)
 
 	class Meta:
 		model = Case
@@ -58,6 +60,7 @@ class PassengerCaseDetailsSerializer(serializers.ModelSerializer):
 			"connecting_flights",
 			"passenger",
 			"documents",
+			"comments",
 			"created_at",
 			"updated_at",
 		]

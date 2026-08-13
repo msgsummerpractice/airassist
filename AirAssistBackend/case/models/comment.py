@@ -1,4 +1,7 @@
-class CaseComment(models.Model):
+from django.db import models
+
+
+class Comment(models.Model):
     case = models.ForeignKey("case.Case", on_delete=models.CASCADE, related_name="comments")
     author = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="case_comments")
     text = models.CharField(max_length=1000)
