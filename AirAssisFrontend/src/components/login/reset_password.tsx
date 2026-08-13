@@ -15,6 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 
@@ -92,6 +93,16 @@ const ResetPassword = ({
   onPasswordResetSuccess,
   onBackToLogin,
 }: ResetPasswordProps) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
+  const resetUid = searchParams.get("uid") ?? "";
+  const resetToken = searchParams.get("token") ?? "";
+  const hasResetToken = Boolean(resetUid && resetToken);
+  const hasAccessToken = Boolean(localStorage.getItem("airassist_access_token"));
+  const isRequestResetMode = !hasResetToken && !hasAccessToken;
+
+  const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -112,8 +123,63 @@ const ResetPassword = ({
 
   const passwordStrength = getPasswordStrength(newPassword);
 
+  const handleBack = () => {
+    setEmail("");
+    setNewPassword("");
+    setConfirmPassword("");
+    closeSnackbar();
+
+    if (onBackToLogin) {
+      onBackToLogin();
+      return;
+    }
+
+    navigate("/login", { replace: true });
+  };
+
   const handleResetSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (isRequestResetMode) {
+      closeSnackbar();
+      setIsSubmitting(true);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/user/request-password-reset/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+          }),
+        });
+
+        const data = await readJsonSafely<{
+          message?: string;
+          email?: string[];
+        }>(response);
+
+        if (!response.ok) {
+          throw new Error(data?.email?.[0] || data?.message || "Could not send reset email.");
+        }
+
+        showSuccessSnackbar(
+          data?.message ||
+            "If an account exists for that email, a password reset link has been sent.",
+        );
+      } catch (error) {
+        if (error instanceof Error) {
+          showErrorSnackbar(error.message);
+        } else {
+          showErrorSnackbar("Could not send reset email.");
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+
+      return;
+    }
 
     if (passwordMismatch) {
       showErrorSnackbar("The new passwords do not match.");
@@ -129,24 +195,40 @@ const ResetPassword = ({
     setIsSubmitting(true);
 
     try {
-      const currentAccessToken = localStorage.getItem("airassist_access_token");
+      let response: Response;
 
-      if (!currentAccessToken) {
-        throw new Error(
-          "No access token found. The password change endpoint requires authentication.",
-        );
+      if (hasResetToken) {
+        response = await fetch(`${API_BASE_URL}/user/reset-password/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            uid: resetUid,
+            token: resetToken,
+            new_password: newPassword,
+          }),
+        });
+      } else {
+        const currentAccessToken = localStorage.getItem("airassist_access_token");
+
+        if (!currentAccessToken) {
+          throw new Error(
+            "No access token found. The password change endpoint requires authentication.",
+          );
+        }
+
+        response = await fetch(`${API_BASE_URL}/user/change-password/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentAccessToken}`,
+          },
+          body: JSON.stringify({
+            new_password: newPassword,
+          }),
+        });
       }
-
-      const response = await fetch(`${API_BASE_URL}/user/change-password/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${currentAccessToken}`,
-        },
-        body: JSON.stringify({
-          new_password: newPassword,
-        }),
-      });
 
       const data = await readJsonSafely<{
         message?: string;
@@ -194,6 +276,18 @@ const ResetPassword = ({
 
           <Box component="form" onSubmit={handleResetSubmit} noValidate>
             <Stack spacing={2.5}>
+              {isRequestResetMode ? (
+                <TextField
+                  label="Email address"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  fullWidth
+                  required
+                  autoComplete="email"
+                />
+              ) : (
+                <>
               {/* New Password */}
               <TextField
                 label="New password"
@@ -311,6 +405,8 @@ const ResetPassword = ({
                   },
                 }}
               />
+                </>
+              )}
 
               {/* Update Password */}
               <Button
@@ -326,7 +422,7 @@ const ResetPassword = ({
                 {isSubmitting ? (
                   <CircularProgress size={22} color="inherit" />
                 ) : (
-                  "Update password"
+                  isRequestResetMode ? "Send reset link" : "Update password"
                 )}
               </Button>
 
@@ -336,12 +432,7 @@ const ResetPassword = ({
                 variant="outlined"
                 size="large"
                 disabled={isSubmitting}
-                onClick={() => {
-                  setNewPassword("");
-                  setConfirmPassword("");
-                  closeSnackbar();
-                  onBackToLogin?.();
-                }}
+                onClick={handleBack}
                 sx={{
                   minHeight: 48,
                   textTransform: "none",

@@ -28,8 +28,6 @@ const wizardSteps = [
   "Overview",
 ];
 
-
-
 const defaultDisruption: DisruptionFormData = {
   motive: "",
   cancellation_type: "",
@@ -40,8 +38,6 @@ const defaultDisruption: DisruptionFormData = {
   airline_motive: "",
   incident_description: "",
 };
-
-
 
 function CaseEntryForm() {
   const [step, setStep] = useState(0);
@@ -54,67 +50,93 @@ function CaseEntryForm() {
   const [gdpr, setGdpr] = useState(EMPTY_GDPR);
 
   const handleItineraryNext = (confirmed: Itinerary) => {
+    const rebuiltLegs = buildLegs(confirmed);
+
+    const mergedLegs = rebuiltLegs.map((rebuiltLeg) => {
+      const existingLeg = legDetails.find(
+        (leg) =>
+          leg.departureIata === rebuiltLeg.departureIata &&
+          leg.arrivalIata === rebuiltLeg.arrivalIata,
+      );
+
+      return existingLeg
+        ? {
+            ...rebuiltLeg,
+            flightDate: existingLeg.flightDate,
+            plannedDepartureTime: existingLeg.plannedDepartureTime,
+            plannedArrivalTime: existingLeg.plannedArrivalTime,
+            flightNumber: existingLeg.flightNumber,
+            airline: existingLeg.airline,
+            reservationNumber: existingLeg.reservationNumber,
+            nextDayArrival: existingLeg.nextDayArrival,
+          }
+        : rebuiltLeg;
+    });
+
     setItinerary(confirmed);
-    setLegDetails(buildLegs(confirmed));
+    setLegDetails(mergedLegs);
     setStep(1);
   };
 
   return (
     <>
-        <WizardProgressBar steps={wizardSteps} activeStep={step} />
-        {step === 0 && (
-            <FlightItineraryStep 
-            value={itinerary} 
-            onChange={setItinerary} 
-            onNext={handleItineraryNext} />
-        )}
+      <WizardProgressBar steps={wizardSteps} activeStep={step} />
+      {step === 0 && (
+        <FlightItineraryStep
+          value={itinerary}
+          onChange={setItinerary}
+          onNext={handleItineraryNext}
+        />
+      )}
 
-        {step === 1 && (
-            <FlightDetailsStep
-            legs={legDetails}
-            onLegsChange={setLegDetails}
-            onNext={() => setStep(2)}
-            onBack={() => setStep(0)}
-            />
-        )}
-        {step === 2 && (
-            <DisruptionStep 
-                value={disruption} 
-                onChange={setDisruption} 
-                onBack={() => setStep(1)}
-                onNext={() => setStep(3)}/>
-        )}
-        {step === 3 && (
-            <PassangersStep
-                data={passenger}
-                onChange={setPassenger}
-                onBack={() => setStep(2)}
-                onFinalize={() => setStep(4)}
-            />
-            )}
+      {step === 1 && (
+        <FlightDetailsStep
+          legs={legDetails}
+          onLegsChange={setLegDetails}
+          onNext={() => setStep(2)}
+          onBack={() => setStep(0)}
+        />
+      )}
+      {step === 2 && (
+        <DisruptionStep
+          value={disruption}
+          onChange={setDisruption}
+          onBack={() => setStep(1)}
+          onNext={() => setStep(3)}
+        />
+      )}
+      {step === 3 && (
+        <PassangersStep
+          data={passenger}
+          onChange={setPassenger}
+          onBack={() => setStep(2)}
+          onFinalize={() => setStep(4)}
+        />
+      )}
 
-            {step === 4 && (
-            <DocumentUploadStep
-                data={documents}
-                onChange={setDocuments}
-                onBack={() => setStep(3)}
-                onNext={() => setStep(5)}
-            />
-            )}
+      {step === 4 && (
+        <DocumentUploadStep
+          data={documents}
+          onChange={setDocuments}
+          onBack={() => setStep(3)}
+          onNext={() => setStep(5)}
+        />
+      )}
 
-            {step === 5 && (
-            <GDPRStep
-                data={gdpr}
-                onChange={setGdpr}
-                onBack={() => setStep(4)}
-                onNext={() => {
-              setStep(6)
-                }}
-            />
-            )}
+      {step === 5 && (
+        <GDPRStep
+          data={gdpr}
+          onChange={setGdpr}
+          onBack={() => setStep(4)}
+          onNext={() => {
+            setStep(6);
+          }}
+        />
+      )}
 
             {step === 6 && (
             <OverviewStep
+              isColleagueCaseEntry={isColleagueCaseEntry}
               itinerary={itinerary}
               legDetails={legDetails}
               disruption={disruption}
@@ -124,6 +146,17 @@ function CaseEntryForm() {
               onBack={() => setStep(5)}
             />
             )}
+      {step === 6 && (
+        <OverviewStep
+          itinerary={itinerary}
+          legDetails={legDetails}
+          disruption={disruption}
+          passenger={passenger}
+          documents={documents}
+          gdpr={gdpr}
+          onBack={() => setStep(5)}
+        />
+      )}
     </>
   );
 }
