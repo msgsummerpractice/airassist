@@ -1,13 +1,12 @@
 from io import BytesIO
 
 from django.core.files.base import ContentFile
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
+
 
 from ..enums.document_type_enum import DocumentType
 from ..models.document import CaseDocument
-
-
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 class CaseContractGenerationError(Exception):
     pass
 

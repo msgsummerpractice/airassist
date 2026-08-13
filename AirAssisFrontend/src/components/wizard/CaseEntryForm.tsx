@@ -214,6 +214,7 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
         />
       )}
 
+
       {step === 6 && (
         <OverviewStep
           isColleagueCaseEntry={isColleagueCaseEntry}

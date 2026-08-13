@@ -6,6 +6,7 @@ import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
 import ArrowOutwardOutlinedIcon from "@mui/icons-material/ArrowOutwardOutlined";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import ColleagueCaseList from "./ColleagueCaseList";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
@@ -419,6 +420,7 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
               )}
             </CardContent>
           </Card>
+          <ColleagueCaseList />
         </Stack>
       </Box>
     </Box>

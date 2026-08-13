@@ -11,13 +11,15 @@ class CaseAssignmentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, case_id):
+        airassist_response = AirAssistResponse()        
+
         try:
             case = Case.objects.get(id=case_id)
         except Case.DoesNotExist:
             return airassist_response.status_not_found_with_message("Case not found.")
 
         serializer = CaseAssignmentSerializer(data=request.data)
-        airassist_response = AirAssistResponse()
+        
 
         if not serializer.is_valid():
             return airassist_response.status_bad_request(serializer)

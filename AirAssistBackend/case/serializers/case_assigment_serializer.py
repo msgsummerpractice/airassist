@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from user.models.users import User
-
+from user.models.users import Roles
 
 class CaseAssignmentSerializer(serializers.Serializer):
     colleague_id = serializers.IntegerField()
@@ -12,7 +12,7 @@ class CaseAssignmentSerializer(serializers.Serializer):
         except User.DoesNotExist:
             raise serializers.ValidationError("Colleague does not exist.")
 
-        if getattr(user.role, "role", None) != "Colleague":
+        if getattr(user.role, "role", None) != Roles.COLLEAGUE.value:
             raise serializers.ValidationError("Selected user cannot be assigned to a case.")
 
         return value

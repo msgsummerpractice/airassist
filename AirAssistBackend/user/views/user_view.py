@@ -16,6 +16,32 @@ from ..permissions import IsSystemAdmin
 from rest_framework.permissions import IsAuthenticated
 from ..custom_exceptions.responses import AirAssistResponse
 
+from colleague_cases.permissions import IsColleague
+from ..enums.roles import Roles
+from ..models.users import User
+
+
+class ColleagueListView(APIView):
+    permission_classes = [IsAuthenticated, IsColleague]
+
+    def get(self, request):
+        colleagues = User.objects.filter(
+            role__role=Roles.COLLEAGUE.value,
+            is_active=True,
+        ).order_by("lastname", "firstname")
+
+        data = [
+            {
+                "id": colleague.id,
+                "firstname": colleague.firstname,
+                "lastname": colleague.lastname,
+                "email": colleague.email,
+            }
+            for colleague in colleagues
+        ]
+
+        return Response(data, status=status.HTTP_200_OK)
+
 # Create your views here.
 class UserView(APIView):
     permission_classes = [IsSystemAdmin]
