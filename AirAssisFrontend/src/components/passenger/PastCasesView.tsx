@@ -53,10 +53,17 @@ type PastCasesViewProps = {
 
 function mapStatusToChipColor(
   status: string,
-): "default" | "primary" | "secondary" | "success" | "warning" | "error" {
+):
+  | "default"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "error"
+  | "info" {
   switch (status) {
     case "NEW":
-      return "success";
+      return "info";
     case "VALID":
       return "success";
     case "ASSIGNED":
@@ -64,6 +71,26 @@ function mapStatusToChipColor(
     default:
       return "default";
   }
+}
+
+function getStatusChipSx(status: string) {
+  if (status === "NEW") {
+    return {
+      color: "#2563eb",
+      borderColor: "#93c5fd",
+      backgroundColor: "#eff6ff",
+    };
+  }
+
+  if (status === "VALID") {
+    return {
+      color: "#2e7d32",
+      borderColor: "#a5d6a7",
+      backgroundColor: "#f1f8e9",
+    };
+  }
+
+  return undefined;
 }
 
 function PastCasesView({
@@ -340,8 +367,8 @@ function PastCasesView({
               sx={{
                 maxHeight: { xs: 520, md: 640 },
                 overflowY: "auto",
-                pr: 1,
-                scrollbarGutter: "stable",
+                px: 1,
+                scrollbarGutter: "stable both-edges",
               }}
             >
               <TableContainer
@@ -398,6 +425,7 @@ function PastCasesView({
                             size="small"
                             label={item.status}
                             color={mapStatusToChipColor(item.status)}
+                            sx={getStatusChipSx(item.status)}
                             variant={
                               item.status === "ASSIGNED" ? "filled" : "outlined"
                             }
@@ -480,6 +508,7 @@ function PastCasesView({
                             size="small"
                             label={item.status}
                             color={mapStatusToChipColor(item.status)}
+                            sx={getStatusChipSx(item.status)}
                             variant={
                               item.status === "ASSIGNED" ? "filled" : "outlined"
                             }
