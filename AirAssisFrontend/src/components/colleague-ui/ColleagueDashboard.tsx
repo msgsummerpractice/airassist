@@ -34,7 +34,10 @@ import {
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import PortalUserHeader from "../portal/PortalUserHeader";
-import { clearStoredUserIdentity, setStoredUserIdentity } from "../../utils/auth";
+import {
+  clearStoredUserIdentity,
+  setStoredUserIdentity,
+} from "../../utils/auth";
 
 type DashboardColleague = {
   id: number;
@@ -71,7 +74,7 @@ const API_BASE_URL =
 
 const statusColorMap: Record<string, "warning" | "success" | "error" | "info"> =
   {
-    NEW: "warning",
+    NEW: "success",
     VALID: "success",
     INVALID: "error",
     ASSIGNED: "info",
@@ -278,7 +281,8 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                   <Box>
                     <Typography variant="h2">Case Views</Typography>
                     <Typography variant="body1" color="text.secondary">
-                      Review the colleague case lists available in the current app.
+                      Review the colleague case lists available in the current
+                      app.
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Assigned cases are available below. Additional views for
@@ -303,7 +307,9 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                     startIcon={<AssignmentTurnedInOutlinedIcon />}
                     onClick={() => setIsClaimsVisible((current) => !current)}
                   >
-                    {isClaimsVisible ? "Hide Assigned Cases" : "Show Assigned Cases"}
+                    {isClaimsVisible
+                      ? "Hide Assigned Cases"
+                      : "Show Assigned Cases"}
                   </Button>
                 </Stack>
               </Stack>
@@ -313,7 +319,8 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
               {!isClaimsVisible ? (
                 <Box className="colleague-dashboard__empty-state">
                   <Typography variant="body1" color="text.secondary">
-                    Use the button above to open the list of cases currently assigned to you.
+                    Use the button above to open the list of cases currently
+                    assigned to you.
                   </Typography>
                 </Box>
               ) : isLoading ? (

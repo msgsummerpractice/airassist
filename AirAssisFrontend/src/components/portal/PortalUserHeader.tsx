@@ -51,15 +51,17 @@ function PortalUserHeader({
         position: "sticky",
         top: 0,
         zIndex: 20,
+        width: "100%",
+        backgroundColor: "#ffffff",
         borderBottom: "1px solid",
         borderColor: "divider",
-        backgroundColor: "rgba(248, 249, 255, 0.92)",
+        boxShadow: "0 6px 20px rgba(18, 28, 42, 0.04)",
         backdropFilter: "blur(10px)",
       }}
     >
       <Box
         sx={{
-          maxWidth: 1120,
+          maxWidth: 1220,
           mx: "auto",
           px: { xs: 2, md: 4 },
           py: 2,
@@ -95,7 +97,7 @@ function PortalUserHeader({
               {authAction ? (
                 <Button
                   key={authAction.label}
-                  variant={authAction.active ? "contained" : "outlined"}
+                  variant={authAction.active ? "contained" : "text"}
                   color={authAction.active ? "primary" : "inherit"}
                   startIcon={authAction.icon}
                   onClick={authAction.onClick}
@@ -135,7 +137,7 @@ function PortalUserHeader({
               {logoutAction ? (
                 <Button
                   key={logoutAction.label}
-                  variant={logoutAction.active ? "contained" : "outlined"}
+                  variant={logoutAction.active ? "contained" : "text"}
                   color={logoutAction.active ? "primary" : "inherit"}
                   startIcon={logoutAction.icon}
                   onClick={logoutAction.onClick}
@@ -158,9 +160,7 @@ function PortalUserHeader({
               spacing={1.5}
               sx={{
                 alignItems: "center",
-                borderLeft: { lg: "1px solid" },
-                borderColor: { lg: "divider" },
-                pl: { lg: 2 },
+                pl: { lg: 1 },
               }}
             >
               <Stack spacing={0.15} sx={{ textAlign: "right" }}>
@@ -178,8 +178,6 @@ function PortalUserHeader({
                   height: 42,
                   bgcolor: "rgba(0, 49, 120, 0.08)",
                   color: "primary.main",
-                  border: "1px solid",
-                  borderColor: "divider",
                 }}
               >
                 {name === "Guest" ? (

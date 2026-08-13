@@ -468,7 +468,7 @@ function OverviewStep({
   };
 
   return (
-    <Box sx={{ maxWidth: 920, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
+    <Box sx={{ maxWidth: 1220, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
           <Stack spacing={1} sx={{ textAlign: "left" }}>

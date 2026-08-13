@@ -45,7 +45,7 @@ function WizardProgressBar({ steps, activeStep }: WizardProgressBarProps) {
   const currentLabel = steps[clampedStep] ?? "";
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, md: 4 }, pt: 3 }}>
+    <Box sx={{ maxWidth: 1220, mx: "auto", px: { xs: 2, md: 4 }, pt: 3 }}>
       <Box
         sx={{ display: "flex", alignItems: "center", width: "100%", mb: 1.5 }}
       >

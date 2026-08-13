@@ -117,9 +117,7 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
     <Box
       sx={{
         minHeight: "100vh",
-        background:
-          "radial-gradient(circle at 12% 12%, rgba(0, 49, 120, 0.08), transparent 42%), " +
-          "radial-gradient(circle at 88% 8%, rgba(27, 109, 36, 0.08), transparent 36%), #f8f9ff",
+        backgroundColor: "#ffffff",
         pb: 4,
       }}
     >
