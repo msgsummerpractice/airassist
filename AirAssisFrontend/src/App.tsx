@@ -22,7 +22,7 @@ function App() {
   useEffect(() => {
     if (
       pathname === "/reset-password" ||
-      pathname === "/passenger-cases" ||
+      pathname.startsWith("/passenger-cases") ||
       pathname === "/colleague-cases"
     ) {
       return;
@@ -63,6 +63,7 @@ function App() {
       />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/passenger-cases" element={<PassengerCasesPage />} />
+      <Route path="/passenger-cases/:caseId" element={<PassengerCasesPage />} />
       <Route
         path="/colleague-cases"
         element={

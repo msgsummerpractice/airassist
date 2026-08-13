@@ -67,7 +67,11 @@ function mapStatusToChipColor(
   }
 }
 
-function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
+function PastCasesView({
+  onLogout,
+  onUnauthorized,
+  onOpenCaseDetails,
+}: PastCasesViewProps) {
   const navigate = useNavigate();
   const [cases, setCases] = useState<PassengerCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -399,7 +403,9 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
                               rel="noreferrer"
                               size="small"
                               variant="text"
-                              endIcon={<OpenInNewOutlinedIcon fontSize="small" />}
+                              endIcon={
+                                <OpenInNewOutlinedIcon fontSize="small" />
+                              }
                               sx={{ px: 0, minWidth: 0 }}
                             >
                               PDF
@@ -451,7 +457,9 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
                               rel="noreferrer"
                               size="small"
                               variant="outlined"
-                              endIcon={<OpenInNewOutlinedIcon fontSize="small" />}
+                              endIcon={
+                                <OpenInNewOutlinedIcon fontSize="small" />
+                              }
                             >
                               Download contract
                             </Button>
