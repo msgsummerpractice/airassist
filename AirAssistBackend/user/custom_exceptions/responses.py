@@ -11,6 +11,9 @@ class AirAssistResponse:
     def status_bad_request_with_message(self, message):
         return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
 
+    def status_not_found_with_message(self, message):
+        return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+
     def status_no_content(self):
         return Response({'message':f"Request completed successfully"},status=status.HTTP_204_NO_CONTENT)
 

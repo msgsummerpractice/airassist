@@ -25,7 +25,7 @@ class CaseStateService:
             raise ValueError("Only VALID cases can be marked as ASSIGNED.")
         case.assigned_colleague = colleague
         case.status = CaseState.ASSIGNED.value
-        case.save(update_fields=["status", "updated_at"])
+        case.save(update_fields=["assigned_colleague", "status", "updated_at"])
         return case
 
 

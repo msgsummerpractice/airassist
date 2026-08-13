@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import "./ColleagueDashboard.css";
 
-import ArrowOutwardOutlinedIcon from "@mui/icons-material/ArrowOutwardOutlined";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import ListAltOutlinedIcon from "@mui/icons-material/ListAltOutlined";
 
@@ -12,7 +11,6 @@ import {
   CardContent,
   Chip,
   Divider,
-  IconButton,
   Skeleton,
   Stack,
   Table,
@@ -21,9 +19,13 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip,
   Typography,
 } from "@mui/material";
+
+import AssignColleagueButton, {
+  type ColleagueOption,
+} from "./AssignColleagueButton";
+import { fetchWithAuth } from "../../utils/auth";
 
 type ColleagueCaseListItem = {
   id: number;
@@ -34,6 +36,14 @@ type ColleagueCaseListItem = {
   status: string;
   assigned_colleague_id: number | null;
   assigned_colleague_name: string | null;
+};
+
+type UserListItem = {
+  id: number;
+  firstname: string;
+  lastname: string;
+  email: string;
+  role: string;
 };
 
 type ColleagueCaseListResponse = {
@@ -89,32 +99,18 @@ const formatDate = (value: string | null) => {
 
 function ColleagueCaseList() {
   const [cases, setCases] = useState<ColleagueCaseListItem[]>([]);
+  const [colleagues, setColleagues] = useState<ColleagueOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let isActive = true;
 
     const loadCases = async () => {
-      const accessToken = localStorage.getItem("airassist_access_token");
-
-      if (!accessToken) {
-        if (isActive) {
-          setHasError(true);
-          setIsLoading(false);
-        }
-
-        return;
-      }
-
       try {
-        const response = await fetch(
+        const response = await fetchWithAuth(
           `${API_BASE_URL}/api/cases/colleague/list/`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          },
         );
 
         const payload =
@@ -144,12 +140,44 @@ function ColleagueCaseList() {
       }
     };
 
+    const loadColleagues = async () => {
+      try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/user/colleagues/`);
+        const payload = await readJsonSafely<UserListItem[]>(response);
+
+        if (!isActive) {
+          return;
+        }
+
+        if (!response.ok || !Array.isArray(payload)) {
+          setColleagues([]);
+          return;
+        }
+
+        setColleagues(
+            payload.map((user) => ({
+                id: user.id,
+                firstname: user.firstname,
+                lastname: user.lastname,
+                email: user.email,
+            })),
+            );
+      } catch {
+        if (!isActive) {
+          return;
+        }
+
+        setColleagues([]);
+      }
+    };
+
     void loadCases();
+    void loadColleagues();
 
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   return (
     <Card elevation={0} className="colleague-dashboard__claims-card">
@@ -262,17 +290,15 @@ function ColleagueCaseList() {
                     </TableCell>
 
                     <TableCell align="right">
-                      <Tooltip title="Case detail navigation is not available in the current app flow.">
-                        <span>
-                          <IconButton
-                            size="small"
-                            className="colleague-dashboard__action-button"
-                            disabled
-                          >
-                            <ArrowOutwardOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
+                      <AssignColleagueButton
+                        caseId={caseItem.id}
+                        caseStatus={caseItem.status}
+                        colleagues={colleagues}
+                        assignedColleagueId={caseItem.assigned_colleague_id}
+                        onAssigned={() => {
+                          setReloadKey((current) => current + 1);
+                        }}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
