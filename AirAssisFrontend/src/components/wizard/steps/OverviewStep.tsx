@@ -1,3 +1,4 @@
+import { useAppSnackbar } from "../../utils/use_app_snackbar";
 import {
   ArrowBack,
   DescriptionOutlined,
@@ -26,6 +27,9 @@ import type {
   Leg,
   PassengerData,
 } from "../types/wizardTypes";
+import dayjs from "dayjs";
+import { AppSnackbar } from "../../utils/app_snackbar";
+import React from "react";
 
 interface OverviewStepProps {
   itinerary: Itinerary;
@@ -36,6 +40,9 @@ interface OverviewStepProps {
   gdpr: GDPRData;
   onBack?: () => void;
 }
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 const disruptionLabels: Record<string, string> = {
   CANCELATION: "Cancellation",
@@ -52,6 +59,36 @@ const disruptionLabels: Record<string, string> = {
 };
 
 const formatOption = (value: string) => disruptionLabels[value] ?? value;
+
+const extractErrorMessage = (payload: unknown): string | null => {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const data = payload as {
+    message?: unknown;
+    errors?: Record<string, unknown>;
+  };
+
+  if (typeof data.message === "string" && data.message.trim()) {
+    return data.message;
+  }
+
+  if (!data.errors || typeof data.errors !== "object") {
+    return null;
+  }
+
+  for (const [field, raw] of Object.entries(data.errors)) {
+    if (Array.isArray(raw) && raw.length > 0) {
+      return `${field}: ${String(raw[0])}`;
+    }
+    if (typeof raw === "string" && raw.trim()) {
+      return `${field}: ${raw}`;
+    }
+  }
+
+  return null;
+};
 
 const formatAirport = (airport: Itinerary["departingAirport"]) => {
   if (!airport) {
@@ -75,6 +112,26 @@ const formatTime = (value: Leg["plannedDepartureTime"]) => {
   }
 
   return value.format("HH:mm");
+};
+
+const toIsoDateTime = (
+  dateValue: Leg["flightDate"],
+  timeValue: Leg["plannedDepartureTime"],
+  nextDay = false,
+) => {
+  if (!dateValue || !timeValue) return null;
+
+  let dt = dayjs(dateValue)
+    .hour(timeValue.hour())
+    .minute(timeValue.minute())
+    .second(0)
+    .millisecond(0);
+
+  if (nextDay) {
+    dt = dt.add(1, "day");
+  }
+
+  return dt.toISOString();
 };
 
 const SummarySection = ({
@@ -113,7 +170,13 @@ const SummarySection = ({
   </Card>
 );
 
-const DetailRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
+const DetailRow = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) => (
   <Box
     sx={{
       display: "grid",
@@ -137,6 +200,128 @@ function OverviewStep({
   gdpr,
   onBack,
 }: OverviewStepProps) {
+  const [submitting, setSubmitting] = React.useState(false);
+  const { snackbar, closeSnackbar, showSuccessSnackbar, showErrorSnackbar } =
+    useAppSnackbar();
+
+  const buildCaseFormData = () => {
+    const formData = new FormData();
+    const disruptedLegIndex = itinerary.disruptedLeg ?? 0;
+    const mainLeg = legDetails[0];
+    const connectionLegs = legDetails.slice(1);
+
+    const mainDepIso = toIsoDateTime(
+      mainLeg.flightDate,
+      mainLeg.plannedDepartureTime,
+      false,
+    );
+    const mainArrIso = toIsoDateTime(
+      mainLeg.flightDate,
+      mainLeg.plannedArrivalTime,
+      mainLeg.nextDayArrival,
+    );
+
+    if (!mainDepIso || !mainArrIso) {
+      throw new Error("Invalid main leg date/time");
+    }
+    formData.append(
+      "flight_date",
+      mainLeg.flightDate?.format("YYYY-MM-DD") ?? "",
+    );
+    formData.append("flight_number", mainLeg.flightNumber);
+    formData.append("airline", mainLeg.airline);
+    formData.append("reservation_number", mainLeg.reservationNumber);
+    formData.append("departing_airport", mainLeg.departureIata);
+    formData.append("destination_airport", mainLeg.arrivalIata);
+    formData.append("planned_departure_time", mainDepIso);
+    formData.append("planned_arrival_time", mainArrIso);
+    formData.append("is_problem_flight", String(disruptedLegIndex === 0));
+    formData.append("is_main_flight", "true");
+
+    const connectionPayload = connectionLegs.map((leg, index) => {
+      const depIso = toIsoDateTime(
+        leg.flightDate,
+        leg.plannedDepartureTime,
+        false,
+      );
+      const arrIso = toIsoDateTime(
+        leg.flightDate,
+        leg.plannedArrivalTime,
+        leg.nextDayArrival,
+      );
+      return {
+        flight_date: leg.flightDate?.format("YYYY-MM-DD") ?? "",
+        flight_number: leg.flightNumber,
+        airline: leg.airline,
+        reservation_number: leg.reservationNumber,
+        departing_airport: leg.departureIata,
+        destination_airport: leg.arrivalIata,
+        planned_departure_time: depIso,
+        planned_arrival_time: arrIso,
+        is_problem_flight: disruptedLegIndex === index + 1,
+      };
+    });
+    formData.append("connection_flights", JSON.stringify(connectionPayload));
+    formData.append("disruption", JSON.stringify(disruption));
+
+    formData.append("first_name", passenger.firstName);
+    formData.append("last_name", passenger.lastName);
+    formData.append("date_of_birth", passenger.dateOfBirth);
+    formData.append("email", passenger.email);
+    formData.append("phone", passenger.phone);
+    formData.append("address", passenger.address);
+    formData.append("postal_code", passenger.postalCode);
+
+    if (documents.boardingPass) {
+      formData.append("boarding_pass", documents.boardingPass);
+    }
+    if (documents.identityDocument) {
+      formData.append("passport", documents.identityDocument);
+    }
+
+    formData.append("gdpr_consent", String(gdpr.gdprConsent));
+
+    return formData;
+  };
+
+  const readJsonSafe = async (res: Response) => {
+    try {
+      return await res.json();
+    } catch {
+      return null;
+    }
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    try {
+      const submitBody = buildCaseFormData();
+      const submitRes = await fetch(`${API_BASE_URL}/api/cases/`, {
+        method: "POST",
+        body: submitBody,
+      });
+
+      const submitData = await readJsonSafe(submitRes);
+
+      if (!submitRes.ok) {
+        showErrorSnackbar(
+          extractErrorMessage(submitData) ?? "Failed to submit case.",
+        );
+        return;
+      }
+
+      showSuccessSnackbar("Case submitted successfully.");
+    } catch (error) {
+      showErrorSnackbar(
+        error instanceof Error
+          ? error.message
+          : "Unexpected error while submitting.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <Box sx={{ maxWidth: 920, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
       <Card sx={{ mb: 3 }}>
@@ -148,24 +333,39 @@ function OverviewStep({
               variant="outlined"
               sx={{ alignSelf: "flex-start" }}
             />
-            <Typography variant="h1" sx={{ fontSize: { xs: "1.75rem", md: "2.1rem" } }}>
+            <Typography
+              variant="h1"
+              sx={{ fontSize: { xs: "1.75rem", md: "2.1rem" } }}
+            >
               Overview
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Review all claim details before the final submission step is wired.
+              Review all claim details before the final submission step is
+              wired.
             </Typography>
           </Stack>
         </CardContent>
       </Card>
 
       <Stack spacing={2.5}>
-        <SummarySection icon={<RouteOutlined fontSize="small" />} title="Itinerary">
+        <SummarySection
+          icon={<RouteOutlined fontSize="small" />}
+          title="Itinerary"
+        >
           <Stack spacing={1.5}>
-            <DetailRow label="Departure" value={formatAirport(itinerary.departingAirport)} />
-            <DetailRow label="Destination" value={formatAirport(itinerary.destinationAirport)} />
+            <DetailRow
+              label="Departure"
+              value={formatAirport(itinerary.departingAirport)}
+            />
+            <DetailRow
+              label="Destination"
+              value={formatAirport(itinerary.destinationAirport)}
+            />
             <DetailRow
               label="Flight type"
-              value={itinerary.flightType === "direct" ? "Direct" : "Connecting"}
+              value={
+                itinerary.flightType === "direct" ? "Direct" : "Connecting"
+              }
             />
             {itinerary.flightType === "connecting" ? (
               <DetailRow
@@ -191,7 +391,10 @@ function OverviewStep({
           </Stack>
         </SummarySection>
 
-        <SummarySection icon={<FlightOutlined fontSize="small" />} title="Flight Details">
+        <SummarySection
+          icon={<FlightOutlined fontSize="small" />}
+          title="Flight Details"
+        >
           <Stack spacing={2}>
             {legDetails.map((leg, index) => (
               <Box
@@ -208,13 +411,34 @@ function OverviewStep({
                   <Typography variant="body1" sx={{ fontWeight: 700 }}>
                     Leg {index + 1}: {leg.departureIata} to {leg.arrivalIata}
                   </Typography>
-                  <DetailRow label="Route" value={`${leg.departureAirport} -> ${leg.arrivalAirport}`} />
-                  <DetailRow label="Flight date" value={formatDate(leg.flightDate)} />
-                  <DetailRow label="Flight number" value={leg.flightNumber || "Not provided"} />
-                  <DetailRow label="Airline" value={leg.airline || "Not provided"} />
-                  <DetailRow label="Reservation number" value={leg.reservationNumber || "Not provided"} />
-                  <DetailRow label="Departure time" value={formatTime(leg.plannedDepartureTime)} />
-                  <DetailRow label="Arrival time" value={formatTime(leg.plannedArrivalTime)} />
+                  <DetailRow
+                    label="Route"
+                    value={`${leg.departureAirport} -> ${leg.arrivalAirport}`}
+                  />
+                  <DetailRow
+                    label="Flight date"
+                    value={formatDate(leg.flightDate)}
+                  />
+                  <DetailRow
+                    label="Flight number"
+                    value={leg.flightNumber || "Not provided"}
+                  />
+                  <DetailRow
+                    label="Airline"
+                    value={leg.airline || "Not provided"}
+                  />
+                  <DetailRow
+                    label="Reservation number"
+                    value={leg.reservationNumber || "Not provided"}
+                  />
+                  <DetailRow
+                    label="Departure time"
+                    value={formatTime(leg.plannedDepartureTime)}
+                  />
+                  <DetailRow
+                    label="Arrival time"
+                    value={formatTime(leg.plannedArrivalTime)}
+                  />
                   <DetailRow
                     label="Next day arrival"
                     value={leg.nextDayArrival ? "Yes" : "No"}
@@ -225,47 +449,101 @@ function OverviewStep({
           </Stack>
         </SummarySection>
 
-        <SummarySection icon={<ReportProblemOutlined fontSize="small" />} title="Disruption">
+        <SummarySection
+          icon={<ReportProblemOutlined fontSize="small" />}
+          title="Disruption"
+        >
           <Stack spacing={1.5}>
-            <DetailRow label="Disruption type" value={formatOption(disruption.motive) || "Not provided"} />
+            <DetailRow
+              label="Disruption type"
+              value={formatOption(disruption.motive) || "Not provided"}
+            />
             {disruption.cancellation_type ? (
-              <DetailRow label="Cancellation timing" value={formatOption(disruption.cancellation_type)} />
+              <DetailRow
+                label="Cancellation timing"
+                value={formatOption(disruption.cancellation_type)}
+              />
             ) : null}
             {disruption.delay_type ? (
-              <DetailRow label="Delay type" value={formatOption(disruption.delay_type)} />
+              <DetailRow
+                label="Delay type"
+                value={formatOption(disruption.delay_type)}
+              />
             ) : null}
             {disruption.denied_boarding_type ? (
-              <DetailRow label="Voluntary denied boarding" value={formatOption(disruption.denied_boarding_type)} />
+              <DetailRow
+                label="Voluntary denied boarding"
+                value={formatOption(disruption.denied_boarding_type)}
+              />
             ) : null}
             {disruption.denied_boarding_reason ? (
-              <DetailRow label="Denied boarding reason" value={formatOption(disruption.denied_boarding_reason)} />
+              <DetailRow
+                label="Denied boarding reason"
+                value={formatOption(disruption.denied_boarding_reason)}
+              />
             ) : null}
             {disruption.airline_motive_mentioned ? (
-              <DetailRow label="Airline mentioned motive" value={formatOption(disruption.airline_motive_mentioned)} />
+              <DetailRow
+                label="Airline mentioned motive"
+                value={formatOption(disruption.airline_motive_mentioned)}
+              />
             ) : null}
             {disruption.airline_motive ? (
-              <DetailRow label="Airline motive" value={formatOption(disruption.airline_motive)} />
+              <DetailRow
+                label="Airline motive"
+                value={formatOption(disruption.airline_motive)}
+              />
             ) : null}
             <DetailRow
               label="Incident description"
-              value={disruption.incident_description || "No additional description provided"}
+              value={
+                disruption.incident_description ||
+                "No additional description provided"
+              }
             />
           </Stack>
         </SummarySection>
 
-        <SummarySection icon={<PersonOutlineOutlined fontSize="small" />} title="Passenger">
+        <SummarySection
+          icon={<PersonOutlineOutlined fontSize="small" />}
+          title="Passenger"
+        >
           <Stack spacing={1.5}>
-            <DetailRow label="First name" value={passenger.firstName || "Not provided"} />
-            <DetailRow label="Last name" value={passenger.lastName || "Not provided"} />
-            <DetailRow label="Date of birth" value={passenger.dateOfBirth || "Not provided"} />
-            <DetailRow label="Email" value={passenger.email || "Not provided"} />
-            <DetailRow label="Phone" value={passenger.phone || "Not provided"} />
-            <DetailRow label="Address" value={passenger.address || "Not provided"} />
-            <DetailRow label="Postal code" value={passenger.postalCode || "Not provided"} />
+            <DetailRow
+              label="First name"
+              value={passenger.firstName || "Not provided"}
+            />
+            <DetailRow
+              label="Last name"
+              value={passenger.lastName || "Not provided"}
+            />
+            <DetailRow
+              label="Date of birth"
+              value={passenger.dateOfBirth || "Not provided"}
+            />
+            <DetailRow
+              label="Email"
+              value={passenger.email || "Not provided"}
+            />
+            <DetailRow
+              label="Phone"
+              value={passenger.phone || "Not provided"}
+            />
+            <DetailRow
+              label="Address"
+              value={passenger.address || "Not provided"}
+            />
+            <DetailRow
+              label="Postal code"
+              value={passenger.postalCode || "Not provided"}
+            />
           </Stack>
         </SummarySection>
 
-        <SummarySection icon={<DescriptionOutlined fontSize="small" />} title="Documents">
+        <SummarySection
+          icon={<DescriptionOutlined fontSize="small" />}
+          title="Documents"
+        >
           <Stack spacing={1.5}>
             <DetailRow
               label="Boarding pass"
@@ -278,9 +556,15 @@ function OverviewStep({
           </Stack>
         </SummarySection>
 
-        <SummarySection icon={<VerifiedUserOutlined fontSize="small" />} title="Consent">
+        <SummarySection
+          icon={<VerifiedUserOutlined fontSize="small" />}
+          title="Consent"
+        >
           <Stack spacing={1.5}>
-            <DetailRow label="Contact email" value={gdpr.email || "Not provided"} />
+            <DetailRow
+              label="Contact email"
+              value={gdpr.email || "Not provided"}
+            />
             <DetailRow
               label="GDPR consent"
               value={gdpr.gdprConsent ? "Granted" : "Not granted"}
@@ -293,9 +577,21 @@ function OverviewStep({
         <Button variant="outlined" startIcon={<ArrowBack />} onClick={onBack}>
           Back
         </Button>
-        <Button variant="contained" endIcon={<FactCheckOutlined />} disabled>
-          Submit Claim
+        <Button
+          variant="contained"
+          endIcon={<FactCheckOutlined />}
+          disabled={submitting}
+          onClick={handleSubmit}
+        >
+          {submitting ? "Submitting..." : "Submit Claim"}
         </Button>
+
+        <AppSnackbar
+          open={snackbar.open}
+          message={snackbar.message}
+          severity={snackbar.severity}
+          onClose={closeSnackbar}
+        />
       </Box>
     </Box>
   );
