@@ -22,6 +22,7 @@ from .views.case_creation_view import CaseCreationView
 from .views.case_eligibility_view import CaseEligibilityView
 from .views.case_assigment_view import CaseAssignmentView
 from .views.passenger_case_list_view import PassengerCaseListView
+from .views.passenger_case_details_view import PassengerCaseDetailsView
 
 urlpatterns = [
     path('cases/', CaseCreationView.as_view(), name='case-create'),
@@ -30,4 +31,5 @@ urlpatterns = [
     path("cases/me/", PassengerCaseListView.as_view(), name="passenger-case-list"),
     path("cases/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),
     path("cases/<int:case_id>/assign/", CaseAssignmentView.as_view(), name="case-assign"),
-]
+    path("cases/me/<int:pk>/", PassengerCaseDetailsView.as_view(), name="passenger-case-details"),
+] 
