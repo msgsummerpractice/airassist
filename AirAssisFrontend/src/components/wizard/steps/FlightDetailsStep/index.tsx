@@ -1,4 +1,12 @@
-import { Box, Button, Card, CardContent, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Typography,
+} from "@mui/material";
+import dayjs from "dayjs";
 import type { Leg } from "../../types/wizardTypes";
 import LegDetails from "./LegDetails";
 import { useState } from "react";
@@ -17,6 +25,41 @@ function FlightDetailsStep({
   onBack,
 }: FlightDetailsStepProps) {
   const [submitted, setSubmitted] = useState(false);
+
+  const getDepartureDateTime = (leg: Leg) => {
+    if (!leg.flightDate || !leg.plannedDepartureTime) {
+      return null;
+    }
+
+    return dayjs(leg.flightDate)
+      .hour(leg.plannedDepartureTime.hour())
+      .minute(leg.plannedDepartureTime.minute())
+      .second(0)
+      .millisecond(0);
+  };
+
+  const getArrivalDateTime = (leg: Leg) => {
+    if (!leg.flightDate || !leg.plannedArrivalTime) {
+      return null;
+    }
+
+    let value = dayjs(leg.flightDate)
+      .hour(leg.plannedArrivalTime.hour())
+      .minute(leg.plannedArrivalTime.minute())
+      .second(0)
+      .millisecond(0);
+
+    const departure = getDepartureDateTime(leg);
+    const arrivesNextDay =
+      leg.nextDayArrival || (!!departure && value.isBefore(departure));
+
+    if (arrivesNextDay) {
+      value = value.add(1, "day");
+    }
+
+    return value;
+  };
+
   const isLegValid = (leg: Leg) =>
     !!leg.flightDate &&
     !!leg.flightNumber &&
@@ -25,9 +68,25 @@ function FlightDetailsStep({
     !!leg.plannedDepartureTime &&
     !!leg.plannedArrivalTime;
 
+  const hasValidConnectionSequence = legs.every((leg, index) => {
+    if (index === 0) {
+      return true;
+    }
+
+    const previousLeg = legs[index - 1];
+    const previousArrival = getArrivalDateTime(previousLeg);
+    const currentDeparture = getDepartureDateTime(leg);
+
+    if (!previousArrival || !currentDeparture) {
+      return true;
+    }
+
+    return currentDeparture.isAfter(previousArrival);
+  });
+
   const handleNext = () => {
     setSubmitted(true);
-    if (legs.every(isLegValid)) onNext();
+    if (legs.every(isLegValid) && hasValidConnectionSequence) onNext();
   };
   return (
     <Box sx={{ maxWidth: 760, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
@@ -46,6 +105,11 @@ function FlightDetailsStep({
             Please provide the specifics for each leg of your disrupted journey.
             This information is crucial for determining EU 261/2004 eligibility.
           </Typography>
+          {submitted && !hasValidConnectionSequence && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              Each connecting leg must depart after the previous leg arrives.
+            </Alert>
+          )}
           {legs.map((leg, i) => (
             <LegDetails
               key={i}
@@ -78,7 +142,7 @@ function FlightDetailsStep({
             onClick={handleNext}
             endIcon={<span>→</span>}
           >
-            Next Step
+            Next
           </Button>
         </Box>
       </Card>

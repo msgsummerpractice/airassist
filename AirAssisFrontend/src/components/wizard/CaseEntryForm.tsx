@@ -21,7 +21,7 @@ import {
 import PassangersStep from "./steps/PassangersStep";
 import DocumentUploadStep from "./steps/DocumentUploadStep";
 import GDPRStep from "./steps/GDPRStep";
-import OverviewStep from "./steps/OverviewStep";
+import OverviewStep from "./steps/OverviewStep.tsx";
 import WizardProgressBar from "./WizardProgressBar";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { clearStoredUserIdentity, getStoredUserIdentity } from "../../utils/auth";
@@ -63,31 +63,38 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
   const [gdpr, setGdpr] = useState(EMPTY_GDPR);
 
   const handleItineraryNext = (confirmed: Itinerary) => {
-    const rebuiltLegs = buildLegs(confirmed);
+    setItinerary(confirmed);
 
-    const mergedLegs = rebuiltLegs.map((rebuiltLeg) => {
-      const existingLeg = legDetails.find(
-        (leg) =>
-          leg.departureIata === rebuiltLeg.departureIata &&
-          leg.arrivalIata === rebuiltLeg.arrivalIata,
-      );
+    setLegDetails((previousLegs) => {
+      const rebuiltLegs = buildLegs(confirmed);
+      if (previousLegs.length === 0) {
+        return rebuiltLegs;
+      }
 
-      return existingLeg
-        ? {
-            ...rebuiltLeg,
-            flightDate: existingLeg.flightDate,
-            plannedDepartureTime: existingLeg.plannedDepartureTime,
-            plannedArrivalTime: existingLeg.plannedArrivalTime,
-            flightNumber: existingLeg.flightNumber,
-            airline: existingLeg.airline,
-            reservationNumber: existingLeg.reservationNumber,
-            nextDayArrival: existingLeg.nextDayArrival,
-          }
-        : rebuiltLeg;
+      return rebuiltLegs.map((rebuiltLeg) => {
+        const matchedLeg = previousLegs.find(
+          (previousLeg) =>
+            previousLeg.departureIata === rebuiltLeg.departureIata &&
+            previousLeg.arrivalIata === rebuiltLeg.arrivalIata,
+        );
+
+        if (!matchedLeg) {
+          return rebuiltLeg;
+        }
+
+        return {
+          ...rebuiltLeg,
+          flightDate: matchedLeg.flightDate,
+          plannedDepartureTime: matchedLeg.plannedDepartureTime,
+          plannedArrivalTime: matchedLeg.plannedArrivalTime,
+          flightNumber: matchedLeg.flightNumber,
+          airline: matchedLeg.airline,
+          reservationNumber: matchedLeg.reservationNumber,
+          nextDayArrival: matchedLeg.nextDayArrival,
+        };
+      });
     });
 
-    setItinerary(confirmed);
-    setLegDetails(mergedLegs);
     setStep(1);
   };
 
@@ -217,6 +224,7 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
           documents={documents}
           gdpr={gdpr}
           onBack={() => setStep(5)}
+          onEditDisruption={() => setStep(2)}
         />
       )}
     </Box>

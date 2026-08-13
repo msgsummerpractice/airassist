@@ -13,6 +13,7 @@ import ResetPassword from "./components/login/reset_password";
 import PassengerCasesPage from "./components/passenger/PassengerCasesPage";
 import { useAuthView } from "./components/wizard/utils/use_auth_view";
 import CaseEntryForm from "./components/wizard/CaseEntryForm";
+import AdminUsersPage from "./components/admin/AdminUsersPage";
 
 function App() {
   const { view, role, resolveView, showCaseEntry } = useAuthView();
@@ -35,6 +36,10 @@ function App() {
       if (pathname !== "/case-entry") {
         navigate("/case-entry", { replace: true });
       }
+      return;
+    }
+    if (view === "admin-users") {
+      navigate("/admin/users", { replace: true });
       return;
     }
     if (view === "login") {
@@ -77,6 +82,16 @@ function App() {
         element={
           view === "colleague-dashboard" ? (
             <ColleagueDashboard onCreateCase={showCaseEntry} />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          view === "admin-users" ? (
+            <AdminUsersPage />
           ) : (
             <Navigate to="/login" replace />
           )

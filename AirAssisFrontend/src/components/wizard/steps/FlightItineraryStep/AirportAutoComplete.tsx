@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Autocomplete, TextField, InputAdornment } from "@mui/material";
-import { FlightTakeoff as FlightTakeoffIcon } from "@mui/icons-material";
 
 export interface AirportOption {
   iata: string;
@@ -16,6 +15,7 @@ interface AutocompleteProps {
   value: AirportOption | null;
   onChange: (option: AirportOption | null) => void;
   error?: string;
+  icon?: React.ReactNode;
 }
 
 function AirportAutocomplete({
@@ -24,6 +24,7 @@ function AirportAutocomplete({
   value,
   onChange,
   error,
+  icon,
 }: AutocompleteProps) {
   const [options, setOptions] = useState<AirportOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,9 +71,7 @@ function AirportAutocomplete({
             input: {
               ...(params.slotProps?.input as object),
               startAdornment: (
-                <InputAdornment position="start">
-                  <FlightTakeoffIcon fontSize="small" />
-                </InputAdornment>
+                <InputAdornment position="start">{icon}</InputAdornment>
               ),
             },
           }}
