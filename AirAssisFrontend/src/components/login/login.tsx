@@ -17,6 +17,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import ResetPassword from "./reset_password";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
+import { setStoredUserIdentity } from "../../utils/auth";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -135,6 +136,7 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
       }
 
       localStorage.setItem("airassist_access_token", tokens.access);
+      setStoredUserIdentity({ email });
 
       localStorage.setItem(
         "airassist_refresh_token",

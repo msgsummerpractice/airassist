@@ -10,12 +10,14 @@ import {
   VerifiedUserOutlined,
 } from "@mui/icons-material";
 import {
+  Alert,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
   Divider,
+  Link,
   Stack,
   Typography,
 } from "@mui/material";
@@ -30,8 +32,10 @@ import type {
 import dayjs from "dayjs";
 import { AppSnackbar } from "../../utils/app_snackbar";
 import React from "react";
+import { fetchWithAuth } from "../../../utils/auth";
 
 interface OverviewStepProps {
+  isColleagueCaseEntry?: boolean;
   itinerary: Itinerary;
   legDetails: Leg[];
   disruption: DisruptionFormData;
@@ -39,7 +43,18 @@ interface OverviewStepProps {
   documents: DocumentUploadData;
   gdpr: GDPRData;
   onBack?: () => void;
+  onEditDisruption?: () => void;
 }
+
+type EligibilityStatus = "checking" | "eligible" | "ineligible" | "error";
+
+type EligibilityResponse = {
+  success?: boolean;
+  is_eligible?: boolean;
+  message?: string;
+  reason?: string | null;
+  errors?: Record<string, unknown>;
+};
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -145,7 +160,7 @@ const SummarySection = ({
 }) => (
   <Card variant="outlined">
     <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
-      <Stack spacing={2}>
+      <Stack spacing={2} sx={{ textAlign: "left" }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           <Box
             sx={{
@@ -182,16 +197,25 @@ const DetailRow = ({
       display: "grid",
       gridTemplateColumns: { xs: "1fr", sm: "180px 1fr" },
       gap: 1,
+      alignItems: "start",
+      textAlign: "left",
     }}
   >
-    <Typography variant="caption" color="text.secondary">
+    <Typography
+      variant="caption"
+      color="text.secondary"
+      sx={{ textAlign: "left" }}
+    >
       {label}
     </Typography>
-    <Typography variant="body1">{value}</Typography>
+    <Typography variant="body1" sx={{ textAlign: "left" }}>
+      {value}
+    </Typography>
   </Box>
 );
 
 function OverviewStep({
+  isColleagueCaseEntry = false,
   itinerary,
   legDetails,
   disruption,
@@ -199,16 +223,28 @@ function OverviewStep({
   documents,
   gdpr,
   onBack,
+  onEditDisruption,
 }: OverviewStepProps) {
   const [submitting, setSubmitting] = React.useState(false);
+  const [eligibilityStatus, setEligibilityStatus] =
+    React.useState<EligibilityStatus>("checking");
+  const [eligibilityMessage, setEligibilityMessage] = React.useState<string>(
+    "Checking case eligibility...",
+  );
   const { snackbar, closeSnackbar, showSuccessSnackbar, showErrorSnackbar } =
     useAppSnackbar();
 
-  const buildCaseFormData = () => {
+  const buildCaseFormData = React.useCallback(() => {
     const formData = new FormData();
     const disruptedLegIndex = itinerary.disruptedLeg ?? 0;
     const mainLeg = legDetails[0];
-    const connectionLegs = legDetails.slice(1);
+
+    if (!mainLeg) {
+      throw new Error("At least one flight leg is required.");
+    }
+
+    const isConnectingTrip = legDetails.length > 1;
+    const finalLeg = legDetails[legDetails.length - 1] ?? mainLeg;
 
     const mainDepIso = toIsoDateTime(
       mainLeg.flightDate,
@@ -216,14 +252,15 @@ function OverviewStep({
       false,
     );
     const mainArrIso = toIsoDateTime(
-      mainLeg.flightDate,
-      mainLeg.plannedArrivalTime,
-      mainLeg.nextDayArrival,
+      finalLeg.flightDate,
+      finalLeg.plannedArrivalTime,
+      finalLeg.nextDayArrival,
     );
 
     if (!mainDepIso || !mainArrIso) {
       throw new Error("Invalid main leg date/time");
     }
+
     formData.append(
       "flight_date",
       mainLeg.flightDate?.format("YYYY-MM-DD") ?? "",
@@ -232,35 +269,40 @@ function OverviewStep({
     formData.append("airline", mainLeg.airline);
     formData.append("reservation_number", mainLeg.reservationNumber);
     formData.append("departing_airport", mainLeg.departureIata);
-    formData.append("destination_airport", mainLeg.arrivalIata);
+    formData.append("destination_airport", finalLeg.arrivalIata);
     formData.append("planned_departure_time", mainDepIso);
     formData.append("planned_arrival_time", mainArrIso);
     formData.append("is_problem_flight", String(disruptedLegIndex === 0));
     formData.append("is_main_flight", "true");
 
-    const connectionPayload = connectionLegs.map((leg, index) => {
-      const depIso = toIsoDateTime(
-        leg.flightDate,
-        leg.plannedDepartureTime,
-        false,
-      );
-      const arrIso = toIsoDateTime(
-        leg.flightDate,
-        leg.plannedArrivalTime,
-        leg.nextDayArrival,
-      );
-      return {
-        flight_date: leg.flightDate?.format("YYYY-MM-DD") ?? "",
-        flight_number: leg.flightNumber,
-        airline: leg.airline,
-        reservation_number: leg.reservationNumber,
-        departing_airport: leg.departureIata,
-        destination_airport: leg.arrivalIata,
-        planned_departure_time: depIso,
-        planned_arrival_time: arrIso,
-        is_problem_flight: disruptedLegIndex === index + 1,
-      };
-    });
+    const connectionPayload = (isConnectingTrip ? legDetails : []).map(
+      (leg, index) => {
+        const depIso = toIsoDateTime(
+          leg.flightDate,
+          leg.plannedDepartureTime,
+          false,
+        );
+        const arrIso = toIsoDateTime(
+          leg.flightDate,
+          leg.plannedArrivalTime,
+          leg.nextDayArrival,
+        );
+
+        return {
+          flight_date: leg.flightDate?.format("YYYY-MM-DD") ?? "",
+          flight_number: leg.flightNumber,
+          airline: leg.airline,
+          reservation_number: leg.reservationNumber,
+          departing_airport: leg.departureIata,
+          destination_airport: leg.arrivalIata,
+          planned_departure_time: depIso,
+          planned_arrival_time: arrIso,
+          is_problem_flight:
+            disruptedLegIndex !== 0 && disruptedLegIndex === index,
+        };
+      },
+    );
+
     formData.append("connection_flights", JSON.stringify(connectionPayload));
     formData.append("disruption", JSON.stringify(disruption));
 
@@ -282,24 +324,104 @@ function OverviewStep({
     formData.append("gdpr_consent", String(gdpr.gdprConsent));
 
     return formData;
-  };
+  }, [itinerary, legDetails, disruption, passenger, documents, gdpr]);
 
-  const readJsonSafe = async (res: Response) => {
+  const readJsonSafe = React.useCallback(async (res: Response) => {
     try {
       return await res.json();
     } catch {
       return null;
     }
-  };
+  }, []);
+
+  React.useEffect(() => {
+    let active = true;
+
+    const runEligibilityCheck = async () => {
+      setEligibilityStatus("checking");
+      setEligibilityMessage("Checking case eligibility...");
+
+      try {
+        const body = buildCaseFormData();
+        const res = await fetch(
+          `${API_BASE_URL}/api/cases/eligibility-check/`,
+          {
+            method: "POST",
+            body,
+          },
+        );
+
+        const data = (await readJsonSafe(res)) as EligibilityResponse | null;
+        if (!active) {
+          return;
+        }
+
+        if (!res.ok) {
+          setEligibilityStatus("error");
+          setEligibilityMessage(
+            extractErrorMessage(data) ?? "Could not validate eligibility.",
+          );
+          return;
+        }
+
+        if (data?.is_eligible) {
+          setEligibilityStatus("eligible");
+          setEligibilityMessage(
+            data?.message ?? "Case is eligible for submission.",
+          );
+          return;
+        }
+
+        const reasonSuffix =
+          data?.reason && String(data.reason).trim()
+            ? ` ${String(data.reason).trim()}`
+            : "";
+
+        setEligibilityStatus("ineligible");
+        setEligibilityMessage(
+          `${data?.message ?? "Case is NOT eligible for submission."}${reasonSuffix}`,
+        );
+      } catch {
+        if (!active) {
+          return;
+        }
+        setEligibilityStatus("error");
+        setEligibilityMessage(
+          "Could not validate eligibility. Please try again.",
+        );
+      }
+    };
+
+    runEligibilityCheck();
+
+    return () => {
+      active = false;
+    };
+  }, [buildCaseFormData, readJsonSafe]);
 
   const handleSubmit = async () => {
+    if (eligibilityStatus !== "eligible") {
+      showErrorSnackbar(
+        eligibilityMessage ?? "Case is NOT eligible for submission.",
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
       const submitBody = buildCaseFormData();
-      const submitRes = await fetch(`${API_BASE_URL}/api/cases/`, {
-        method: "POST",
-        body: submitBody,
-      });
+      const submitUrl = isColleagueCaseEntry
+        ? `${API_BASE_URL}/api/cases/colleague/`
+        : `${API_BASE_URL}/api/cases/`;
+      const submitRes = isColleagueCaseEntry
+        ? await fetchWithAuth(submitUrl, {
+            method: "POST",
+            body: submitBody,
+          })
+        : await fetch(submitUrl, {
+            method: "POST",
+            body: submitBody,
+          });
 
       const submitData = await readJsonSafe(submitRes);
 
@@ -310,7 +432,30 @@ function OverviewStep({
         return;
       }
 
-      showSuccessSnackbar("Case submitted successfully.");
+      const contractDownloadUrl =
+        typeof submitData?.data?.contract_download_url === "string"
+          ? submitData.data.contract_download_url
+          : null;
+
+      showSuccessSnackbar(
+        contractDownloadUrl ? (
+          <>
+            Case submitted successfully. {" "}
+            <Link
+              href={contractDownloadUrl}
+              target="_blank"
+              rel="noreferrer"
+              underline="always"
+              color="inherit"
+              sx={{ fontWeight: 700 }}
+            >
+              Download contract PDF
+            </Link>
+          </>
+        ) : (
+          "Case submitted successfully."
+        ),
+      );
     } catch (error) {
       showErrorSnackbar(
         error instanceof Error
@@ -326,22 +471,22 @@ function OverviewStep({
     <Box sx={{ maxWidth: 920, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
-          <Stack spacing={1.5}>
+          <Stack spacing={1} sx={{ textAlign: "left" }}>
             <Chip
               label="Final step"
               color="primary"
               variant="outlined"
               sx={{ alignSelf: "flex-start" }}
             />
-            <Typography
-              variant="h1"
-              sx={{ fontSize: { xs: "1.75rem", md: "2.1rem" } }}
-            >
+            <Typography variant="h2" sx={{ mb: 0.25 }}>
               Overview
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Review all claim details before the final submission step is
-              wired.
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontSize: "0.875rem" }}
+            >
+              Review all claim details before final submission.
             </Typography>
           </Stack>
         </CardContent>
@@ -573,6 +718,36 @@ function OverviewStep({
         </SummarySection>
       </Stack>
 
+      <Alert
+        severity={
+          eligibilityStatus === "eligible"
+            ? "success"
+            : eligibilityStatus === "checking"
+              ? "info"
+              : "error"
+        }
+        variant="filled"
+        action={
+          (eligibilityStatus === "ineligible" ||
+            eligibilityStatus === "error") &&
+          onEditDisruption ? (
+            <Button color="inherit" size="small" onClick={onEditDisruption}>
+              Edit Disruption
+            </Button>
+          ) : undefined
+        }
+        sx={{
+          mt: 3,
+          borderRadius: 2,
+          alignItems: "center",
+          "& .MuiAlert-message": {
+            fontWeight: 500,
+          },
+        }}
+      >
+        {eligibilityMessage}
+      </Alert>
+
       <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
         <Button variant="outlined" startIcon={<ArrowBack />} onClick={onBack}>
           Back
@@ -580,10 +755,14 @@ function OverviewStep({
         <Button
           variant="contained"
           endIcon={<FactCheckOutlined />}
-          disabled={submitting}
+          disabled={submitting || eligibilityStatus !== "eligible"}
           onClick={handleSubmit}
         >
-          {submitting ? "Submitting..." : "Submit Claim"}
+          {submitting
+            ? "Submitting..."
+            : eligibilityStatus === "checking"
+              ? "Checking eligibility..."
+              : "Submit Claim"}
         </Button>
 
         <AppSnackbar

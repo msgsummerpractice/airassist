@@ -1,4 +1,10 @@
-import { useState } from "react";
+import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
+import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import LoginOutlinedIcon from "@mui/icons-material/LoginOutlined";
+import { Box } from "@mui/material";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import FlightItineraryStep from "./steps/FlightItineraryStep";
 import FlightDetailsStep from "./steps/FlightDetailsStep";
 import DisruptionStep from "./steps/DisruptionStep";
@@ -15,8 +21,10 @@ import {
 import PassangersStep from "./steps/PassangersStep";
 import DocumentUploadStep from "./steps/DocumentUploadStep";
 import GDPRStep from "./steps/GDPRStep";
-import OverviewStep from "./steps/OverviewStep";
+import OverviewStep from "./steps/OverviewStep.tsx";
 import WizardProgressBar from "./WizardProgressBar";
+import PortalUserHeader from "../portal/PortalUserHeader";
+import { clearStoredUserIdentity, getStoredUserIdentity } from "../../utils/auth";
 
 const wizardSteps = [
   "Itinerary",
@@ -27,8 +35,6 @@ const wizardSteps = [
   "Consent",
   "Overview",
 ];
-
-
 
 const defaultDisruption: DisruptionFormData = {
   motive: "",
@@ -41,9 +47,12 @@ const defaultDisruption: DisruptionFormData = {
   incident_description: "",
 };
 
+type CaseEntryFormProps = {
+  isColleagueCaseEntry?: boolean;
+};
 
-
-function CaseEntryForm() {
+function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [itinerary, setItinerary] = useState<Itinerary>(EMPTY_ITINERARY);
   const [legDetails, setLegDetails] = useState<Leg[]>([]);
@@ -55,76 +64,170 @@ function CaseEntryForm() {
 
   const handleItineraryNext = (confirmed: Itinerary) => {
     setItinerary(confirmed);
-    setLegDetails(buildLegs(confirmed));
+
+    setLegDetails((previousLegs) => {
+      const rebuiltLegs = buildLegs(confirmed);
+      if (previousLegs.length === 0) {
+        return rebuiltLegs;
+      }
+
+      return rebuiltLegs.map((rebuiltLeg) => {
+        const matchedLeg = previousLegs.find(
+          (previousLeg) =>
+            previousLeg.departureIata === rebuiltLeg.departureIata &&
+            previousLeg.arrivalIata === rebuiltLeg.arrivalIata,
+        );
+
+        if (!matchedLeg) {
+          return rebuiltLeg;
+        }
+
+        return {
+          ...rebuiltLeg,
+          flightDate: matchedLeg.flightDate,
+          plannedDepartureTime: matchedLeg.plannedDepartureTime,
+          plannedArrivalTime: matchedLeg.plannedArrivalTime,
+          flightNumber: matchedLeg.flightNumber,
+          airline: matchedLeg.airline,
+          reservationNumber: matchedLeg.reservationNumber,
+          nextDayArrival: matchedLeg.nextDayArrival,
+        };
+      });
+    });
+
     setStep(1);
   };
 
+  const currentUser = useMemo(() => getStoredUserIdentity(), []);
+  const casesRoute = isColleagueCaseEntry
+    ? "/colleague-cases"
+    : "/passenger-cases";
+  const casesLabel = isColleagueCaseEntry ? "See Cases" : "My Cases";
+  const isGuest = currentUser.isGuest;
+
+  const handleLogout = () => {
+    localStorage.removeItem("airassist_access_token");
+    localStorage.removeItem("airassist_refresh_token");
+    clearStoredUserIdentity();
+    navigate("/case-entry", { replace: true });
+    window.location.reload();
+  };
+
   return (
-    <>
-        <WizardProgressBar steps={wizardSteps} activeStep={step} />
-        {step === 0 && (
-            <FlightItineraryStep 
-            value={itinerary} 
-            onChange={setItinerary} 
-            onNext={handleItineraryNext} />
-        )}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background:
+          "radial-gradient(circle at 12% 12%, rgba(0, 49, 120, 0.08), transparent 42%), " +
+          "radial-gradient(circle at 88% 8%, rgba(27, 109, 36, 0.08), transparent 36%), #f8f9ff",
+        pb: 4,
+      }}
+    >
+      <PortalUserHeader
+        name={currentUser.name}
+        email={currentUser.email}
+        roleLabel={currentUser.roleLabel}
+        authAction={
+          isGuest
+            ? {
+                label: "Log In",
+                icon: <LoginOutlinedIcon fontSize="small" />,
+                onClick: () => navigate("/login"),
+              }
+            : undefined
+        }
+        logoutAction={
+          isGuest
+            ? undefined
+            : {
+                label: "Log Out",
+                icon: <LogoutOutlinedIcon fontSize="small" />,
+                onClick: handleLogout,
+              }
+        }
+        actions={[
+          {
+            label: casesLabel,
+            icon: <AssignmentTurnedInOutlinedIcon fontSize="small" />,
+            onClick: () => navigate(casesRoute),
+          },
+          {
+            label: "New Claim",
+            active: true,
+            icon: <AddTaskOutlinedIcon fontSize="small" />,
+            onClick: () => navigate("/case-entry"),
+          },
+        ]}
+      />
 
-        {step === 1 && (
-            <FlightDetailsStep
-            legs={legDetails}
-            onLegsChange={setLegDetails}
-            onNext={() => setStep(2)}
-            onBack={() => setStep(0)}
-            />
-        )}
-        {step === 2 && (
-            <DisruptionStep 
-                value={disruption} 
-                onChange={setDisruption} 
-                onBack={() => setStep(1)}
-                onNext={() => setStep(3)}/>
-        )}
-        {step === 3 && (
-            <PassangersStep
-                data={passenger}
-                onChange={setPassenger}
-                onBack={() => setStep(2)}
-                onFinalize={() => setStep(4)}
-            />
-            )}
+      <WizardProgressBar steps={wizardSteps} activeStep={step} />
+      {step === 0 && (
+        <FlightItineraryStep
+          value={itinerary}
+          onChange={setItinerary}
+          onNext={handleItineraryNext}
+        />
+      )}
 
-            {step === 4 && (
-            <DocumentUploadStep
-                data={documents}
-                onChange={setDocuments}
-                onBack={() => setStep(3)}
-                onNext={() => setStep(5)}
-            />
-            )}
+      {step === 1 && (
+        <FlightDetailsStep
+          legs={legDetails}
+          onLegsChange={setLegDetails}
+          onNext={() => setStep(2)}
+          onBack={() => setStep(0)}
+        />
+      )}
+      {step === 2 && (
+        <DisruptionStep
+          value={disruption}
+          onChange={setDisruption}
+          onBack={() => setStep(1)}
+          onNext={() => setStep(3)}
+        />
+      )}
+      {step === 3 && (
+        <PassangersStep
+          data={passenger}
+          onChange={setPassenger}
+          onBack={() => setStep(2)}
+          onFinalize={() => setStep(4)}
+        />
+      )}
 
-            {step === 5 && (
-            <GDPRStep
-                data={gdpr}
-                onChange={setGdpr}
-                onBack={() => setStep(4)}
-                onNext={() => {
-              setStep(6)
-                }}
-            />
-            )}
+      {step === 4 && (
+        <DocumentUploadStep
+          data={documents}
+          onChange={setDocuments}
+          onBack={() => setStep(3)}
+          onNext={() => setStep(5)}
+        />
+      )}
 
-            {step === 6 && (
-            <OverviewStep
-              itinerary={itinerary}
-              legDetails={legDetails}
-              disruption={disruption}
-              passenger={passenger}
-              documents={documents}
-              gdpr={gdpr}
-              onBack={() => setStep(5)}
-            />
-            )}
-    </>
+      {step === 5 && (
+        <GDPRStep
+          data={gdpr}
+          onChange={setGdpr}
+          onBack={() => setStep(4)}
+          onNext={() => {
+            setStep(6);
+          }}
+        />
+      )}
+
+      {step === 6 && (
+        <OverviewStep
+          isColleagueCaseEntry={isColleagueCaseEntry}
+          itinerary={itinerary}
+          legDetails={legDetails}
+          disruption={disruption}
+          passenger={passenger}
+          documents={documents}
+          gdpr={gdpr}
+          onBack={() => setStep(5)}
+          onEditDisruption={() => setStep(2)}
+        />
+      )}
+    </Box>
   );
 }
 

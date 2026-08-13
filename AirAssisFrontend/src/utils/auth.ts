@@ -16,11 +16,77 @@ export function getStoredAccessToken(): string | null {
   return localStorage.getItem("airassist_access_token");
 }
 
+const USER_NAME_STORAGE_KEY = "airassist_user_name";
+const USER_EMAIL_STORAGE_KEY = "airassist_user_email";
+
 export function getTokenRole(): string | null {
   const token = getStoredAccessToken();
   if (!token) return null;
   const payload = decodeJwtPayload(token);
   return typeof payload?.role === "string" ? payload.role : null;
+}
+
+export function setStoredUserIdentity(identity: {
+  name?: string | null;
+  email?: string | null;
+}) {
+  if (identity.name) {
+    localStorage.setItem(USER_NAME_STORAGE_KEY, identity.name);
+  }
+
+  if (identity.email) {
+    localStorage.setItem(USER_EMAIL_STORAGE_KEY, identity.email);
+  }
+}
+
+export function clearStoredUserIdentity() {
+  localStorage.removeItem(USER_NAME_STORAGE_KEY);
+  localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
+}
+
+const formatNameFromEmail = (email: string) => {
+  const prefix = email.split("@")[0] ?? "";
+  const parts = prefix
+    .split(/[._-]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) {
+    return "Passenger";
+  }
+
+  return parts
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+};
+
+export function getStoredUserIdentity() {
+  const accessToken = getStoredAccessToken();
+  const role = getTokenRole();
+
+  if (!accessToken) {
+    return {
+      name: "Guest",
+      email: "Not logged in",
+      roleLabel: "Guest User",
+      isGuest: true,
+    };
+  }
+
+  const storedName = localStorage.getItem(USER_NAME_STORAGE_KEY);
+  const storedEmail = localStorage.getItem(USER_EMAIL_STORAGE_KEY);
+  const fallbackName = storedEmail
+    ? formatNameFromEmail(storedEmail)
+    : role === "COLLEAGUE"
+      ? "Colleague"
+      : "Passenger";
+
+  return {
+    name: storedName || fallbackName,
+    email: storedEmail || "Email unavailable",
+    roleLabel: role === "COLLEAGUE" ? "Colleague" : "Passenger",
+    isGuest: false,
+  };
 }
 
 export function isSystemAdmin(): boolean {
@@ -72,6 +138,7 @@ export async function fetchWithAuth(
     } else {
       localStorage.removeItem("airassist_access_token");
       localStorage.removeItem("airassist_refresh_token");
+      clearStoredUserIdentity();
       window.location.href = "/";
     }
   }
