@@ -49,9 +49,11 @@ function PassengerCasesPage() {
         caseId={selectedCaseId}
         onLogout={handleLogout}
         onUnauthorized={() => setIsAuthenticated(false)}
-        onBack={() => navigate("/passenger/cases")}
+        onBack={() => navigate("/passenger-cases")}
       />
     );
+  }
+
   if (getTokenRole() === "COLLEAGUE") {
     return <Navigate to="/colleague-cases" replace />;
   }
@@ -61,7 +63,7 @@ function PassengerCasesPage() {
       onLogout={handleLogout}
       onUnauthorized={() => setIsAuthenticated(false)}
       onOpenCaseDetails={(nextCaseId) =>
-        navigate(`/passenger/cases/${nextCaseId}`)
+        navigate(`/passenger-cases/${nextCaseId}`)
       }
     />
   );

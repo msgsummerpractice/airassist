@@ -8,9 +8,8 @@ export type AppView =
   | "resolving"
   | "colleague-dashboard"
   | "case-entry"
-  | "passenger-cases";
-  | "admin-users"
-  | "case-entry";
+  | "passenger-cases"
+  | "admin-users";
 
 type UserRoleResponse = {
   role?: string;
