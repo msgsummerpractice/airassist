@@ -46,12 +46,35 @@ class UserView(APIView):
         return airassist_response.status_ok(serializer.data)
     
 class UserRoleView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method == "DELETE":
+            return [IsSystemAdmin()]
+        return [IsAuthenticated()]
 
-    def get(self,request, user_id):
+    def get(self, request, user_id):
         role = UserService.get_user_role(user_id)
         serializer = UserRoleSerializer(role)
         return Response(serializer.data)
+
+    def delete(self, request, user_id):
+        try:
+            result = UserService.delete_user_account(
+                requesting_user_id=request.user.id,
+                target_user_id=user_id,
+            )
+        except ValueError as exc:
+            message = str(exc)
+            if message == "User not found.":
+                return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "message": "User account deleted successfully.",
+                "data": result,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class LoginView(APIView):

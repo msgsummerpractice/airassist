@@ -7,6 +7,7 @@ export type AppView =
   | "login"
   | "resolving"
   | "colleague-dashboard"
+  | "admin-users"
   | "case-entry";
 
 type UserRoleResponse = {
@@ -83,7 +84,15 @@ export const useAuthView = () => {
       const resolvedRole = typeof data.role === "string" ? data.role : null;
 
       setRole(resolvedRole);
-      setView(data.role === "COLLEAGUE" ? "colleague-dashboard" : "case-entry");
+      if (data.role === "COLLEAGUE") {
+        setView("colleague-dashboard");
+        return;
+      }
+      if (data.role === "SYSTEM_ADMIN") {
+        setView("admin-users");
+        return;
+      }
+      setView("case-entry");
     } catch {
       clearTokens();
       setRole(null);

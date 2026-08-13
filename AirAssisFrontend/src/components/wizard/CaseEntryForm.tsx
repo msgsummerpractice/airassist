@@ -39,7 +39,11 @@ const defaultDisruption: DisruptionFormData = {
   incident_description: "",
 };
 
-function CaseEntryForm() {
+interface CaseEntryFormProps {
+  isColleagueCaseEntry?: boolean;
+}
+
+function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
   const [step, setStep] = useState(0);
   const [itinerary, setItinerary] = useState<Itinerary>(EMPTY_ITINERARY);
   const [legDetails, setLegDetails] = useState<Leg[]>([]);
@@ -111,20 +115,9 @@ function CaseEntryForm() {
         />
       )}
 
-            {step === 6 && (
-            <OverviewStep
-              isColleagueCaseEntry={isColleagueCaseEntry}
-              itinerary={itinerary}
-              legDetails={legDetails}
-              disruption={disruption}
-              passenger={passenger}
-              documents={documents}
-              gdpr={gdpr}
-              onBack={() => setStep(5)}
-            />
-            )}
       {step === 6 && (
         <OverviewStep
+          isColleagueCaseEntry={isColleagueCaseEntry}
           itinerary={itinerary}
           legDetails={legDetails}
           disruption={disruption}
