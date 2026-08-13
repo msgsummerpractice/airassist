@@ -9,6 +9,8 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from case.models.passengers import Passenger
 from ..enums.roles import Roles
+from django.db import transaction
+from case.models.passengers import Passenger
 
 
 
@@ -40,6 +42,45 @@ class UserService:
         send_user_created_email(user,password)
 
         return user
+
+    @transaction.atomic
+    @staticmethod
+    def delete_user_account(requesting_user_id: int, target_user_id: int) -> dict:
+        try:
+            target_user = User.objects.select_related("role").get(pk=target_user_id)
+        except User.DoesNotExist:
+            raise ValueError("User not found.")
+    
+        if requesting_user_id == target_user.id:
+            raise ValueError("You cannot delete your own account.")
+    
+        role_name = getattr(target_user.role, "role", None)
+    
+        if role_name == Roles.SYSTEM_ADMIN.value:
+            raise ValueError("System admin accounts cannot be deleted.")
+    
+        if role_name not in {Roles.COLLEAGUE.value, Roles.PASSENGER.value}:
+            raise ValueError("Only colleague and passenger accounts can be deleted.")
+    
+        deleted_passenger_rows = 0
+        if role_name == Roles.PASSENGER.value:
+            passenger_qs = Passenger.objects.filter(email__iexact=target_user.email)
+            deleted_passenger_rows = passenger_qs.count()
+            passenger_qs.delete()
+    
+        deleted_user_id = target_user.id
+        deleted_user_email = target_user.email
+        deleted_user_role = role_name
+        target_user.delete()
+    
+        return {
+            "deleted_user_id": deleted_user_id,
+            "deleted_user_email": deleted_user_email,
+            "deleted_user_role": deleted_user_role,
+            "deleted_case_passenger_rows": deleted_passenger_rows,
+        }
+
+            
 
     @staticmethod
     def get_user_role(user_id):
