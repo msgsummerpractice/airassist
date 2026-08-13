@@ -25,7 +25,7 @@ import {
 } from "@mui/material";
 import {
   InfoOutlined as InfoIcon,
-  DeleteOutline as DeleteOutlineIcon,
+  DeleteOutlined as DeleteOutlineIcon,
   PersonSearch as PersonSearchIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
