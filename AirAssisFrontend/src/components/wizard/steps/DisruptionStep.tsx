@@ -18,8 +18,10 @@ import {
 } from "@mui/material";
 
 import type { DisruptionFormData } from "../types/wizardTypes";
-import { isDisruptionStepValid,validateDisruptionStep,
-} from "../utils/DisruptionValidation"
+import {
+  isDisruptionStepValid,
+  validateDisruptionStep,
+} from "../utils/DisruptionValidation";
 
 interface DisruptionStepProps {
   value: DisruptionFormData;
@@ -80,6 +82,41 @@ function DisruptionStep({
       },
     },
   };
+
+  const renderDelayTypeSelector = () => (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Typography variant="caption" color="text.primary">
+        How late arrived to final destination?
+      </Typography>
+
+      <ToggleButtonGroup
+        exclusive
+        fullWidth
+        value={value.delay_type}
+        onChange={(_, selectedValue) => {
+          if (selectedValue) {
+            updateField("delay_type", selectedValue);
+          }
+        }}
+        sx={{
+          ...optionGroupStyles,
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+        }}
+      >
+        <ToggleButton value="LESS_THAN_3_HOURS">Less than 3h</ToggleButton>
+        <ToggleButton value="MORE_THAN_3_HOURS">More than 3h</ToggleButton>
+        <ToggleButton value="CONNECTION_FLIGHT_LOST">
+          Connection flight lost
+        </ToggleButton>
+      </ToggleButtonGroup>
+
+      {errors.delay_type && (
+        <Typography variant="caption" color="error">
+          {errors.delay_type}
+        </Typography>
+      )}
+    </Box>
+  );
 
   return (
     <Box sx={{ maxWidth: 760, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
@@ -188,51 +225,18 @@ function DisruptionStep({
                       {errors.cancellation_type}
                     </Typography>
                   )}
+
+                  {renderDelayTypeSelector()}
                 </Box>
               )}
 
-              {value.motive === "DELAY" && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Typography variant="caption" color="text.primary">
-                    How late arrived to final destination?
-                  </Typography>
-
-                  <ToggleButtonGroup
-                    exclusive
-                    fullWidth
-                    value={value.delay_type}
-                    onChange={(_, selectedValue) => {
-                      if (selectedValue) {
-                        updateField("delay_type", selectedValue);
-                      }
-                    }}
-                    sx={{
-                      ...optionGroupStyles,
-                      gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
-                    }}
-                  >
-                    <ToggleButton value="LESS_THAN_3_HOURS">
-                      Less than 3h
-                    </ToggleButton>
-                    <ToggleButton value="MORE_THAN_3_HOURS">
-                      More than 3h
-                    </ToggleButton>
-                    <ToggleButton value="CONNECTION_FLIGHT_LOST">
-                      Connection flight lost
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-
-                  {errors.delay_type && (
-                    <Typography variant="caption" color="error">
-                      {errors.delay_type}
-                    </Typography>
-                  )}
-                </Box>
-              )}
+              {value.motive === "DELAY" && renderDelayTypeSelector()}
 
               {value.motive === "DENIED_BOARDING" && (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
                     <Typography variant="caption" color="text.primary">
                       Did you give up your seat voluntarily?
                     </Typography>
@@ -268,6 +272,8 @@ function DisruptionStep({
                       </Typography>
                     )}
                   </Box>
+
+                  {renderDelayTypeSelector()}
 
                   {value.denied_boarding_type === "NO" && (
                     <Box
@@ -336,8 +342,8 @@ function DisruptionStep({
                 <InfoOutlinedIcon color="primary" fontSize="small" />
 
                 <Typography variant="caption" color="text.secondary">
-                  Selecting options will help evaluate your basic eligibility for
-                  compensation under EU Regulation 261/2004.
+                  Selecting options will help evaluate your basic eligibility
+                  for compensation under EU Regulation 261/2004.
                 </Typography>
               </Box>
             </Box>

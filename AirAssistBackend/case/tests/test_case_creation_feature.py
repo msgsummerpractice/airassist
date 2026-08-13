@@ -40,7 +40,7 @@ INELIGIBLE_CANCELLATION_DISRUPTION = {
 
 ELIGIBLE_DENIED_BOARDING_DISRUPTION = {
     "motive": DisruptionMotive.DENIED_BOARDING.value,
-    "denied_boarding_type": DeniedBoardingType.YES.value,
+    "denied_boarding_type": DeniedBoardingType.NO.value,
     "delay_type": DelayType.MORE_THAN_3_HOURS.value,
 }
 
@@ -475,10 +475,10 @@ class CaseEligibilityViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["is_eligible"])
 
-    def test_ineligible_denied_boarding_not_confirmed_returns_false(self):
+    def test_ineligible_denied_boarding_voluntary_returns_false(self):
         disruption = {
             "motive": DisruptionMotive.DENIED_BOARDING.value,
-            "denied_boarding_type": DeniedBoardingType.NO.value,
+            "denied_boarding_type": DeniedBoardingType.YES.value,
             "delay_type": DelayType.MORE_THAN_3_HOURS.value,
         }
         payload = _api_payload(disruption=json.dumps(disruption))

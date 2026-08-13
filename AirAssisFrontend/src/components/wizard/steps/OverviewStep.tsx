@@ -10,6 +10,7 @@ import {
   VerifiedUserOutlined,
 } from "@mui/icons-material";
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -41,7 +42,18 @@ interface OverviewStepProps {
   documents: DocumentUploadData;
   gdpr: GDPRData;
   onBack?: () => void;
+  onEditDisruption?: () => void;
 }
+
+type EligibilityStatus = "checking" | "eligible" | "ineligible" | "error";
+
+type EligibilityResponse = {
+  success?: boolean;
+  is_eligible?: boolean;
+  message?: string;
+  reason?: string | null;
+  errors?: Record<string, unknown>;
+};
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -202,12 +214,18 @@ function OverviewStep({
   documents,
   gdpr,
   onBack,
+  onEditDisruption,
 }: OverviewStepProps) {
   const [submitting, setSubmitting] = React.useState(false);
+  const [eligibilityStatus, setEligibilityStatus] =
+    React.useState<EligibilityStatus>("checking");
+  const [eligibilityMessage, setEligibilityMessage] = React.useState<string>(
+    "Checking case eligibility...",
+  );
   const { snackbar, closeSnackbar, showSuccessSnackbar, showErrorSnackbar } =
     useAppSnackbar();
 
-  const buildCaseFormData = () => {
+  const buildCaseFormData = React.useCallback(() => {
     const formData = new FormData();
     const disruptedLegIndex = itinerary.disruptedLeg ?? 0;
     const mainLeg = legDetails[0];
@@ -233,6 +251,7 @@ function OverviewStep({
     if (!mainDepIso || !mainArrIso) {
       throw new Error("Invalid main leg date/time");
     }
+
     formData.append(
       "flight_date",
       mainLeg.flightDate?.format("YYYY-MM-DD") ?? "",
@@ -259,6 +278,7 @@ function OverviewStep({
           leg.plannedArrivalTime,
           leg.nextDayArrival,
         );
+
         return {
           flight_date: leg.flightDate?.format("YYYY-MM-DD") ?? "",
           flight_number: leg.flightNumber,
@@ -273,6 +293,7 @@ function OverviewStep({
         };
       },
     );
+
     formData.append("connection_flights", JSON.stringify(connectionPayload));
     formData.append("disruption", JSON.stringify(disruption));
 
@@ -294,17 +315,89 @@ function OverviewStep({
     formData.append("gdpr_consent", String(gdpr.gdprConsent));
 
     return formData;
-  };
+  }, [itinerary, legDetails, disruption, passenger, documents, gdpr]);
 
-  const readJsonSafe = async (res: Response) => {
+  const readJsonSafe = React.useCallback(async (res: Response) => {
     try {
       return await res.json();
     } catch {
       return null;
     }
-  };
+  }, []);
+
+  React.useEffect(() => {
+    let active = true;
+
+    const runEligibilityCheck = async () => {
+      setEligibilityStatus("checking");
+      setEligibilityMessage("Checking case eligibility...");
+
+      try {
+        const body = buildCaseFormData();
+        const res = await fetch(
+          `${API_BASE_URL}/api/cases/eligibility-check/`,
+          {
+            method: "POST",
+            body,
+          },
+        );
+
+        const data = (await readJsonSafe(res)) as EligibilityResponse | null;
+        if (!active) {
+          return;
+        }
+
+        if (!res.ok) {
+          setEligibilityStatus("error");
+          setEligibilityMessage(
+            extractErrorMessage(data) ?? "Could not validate eligibility.",
+          );
+          return;
+        }
+
+        if (data?.is_eligible) {
+          setEligibilityStatus("eligible");
+          setEligibilityMessage(
+            data?.message ?? "Case is eligible for submission.",
+          );
+          return;
+        }
+
+        const reasonSuffix =
+          data?.reason && String(data.reason).trim()
+            ? ` ${String(data.reason).trim()}`
+            : "";
+
+        setEligibilityStatus("ineligible");
+        setEligibilityMessage(
+          `${data?.message ?? "Case is NOT eligible for submission."}${reasonSuffix}`,
+        );
+      } catch {
+        if (!active) {
+          return;
+        }
+        setEligibilityStatus("error");
+        setEligibilityMessage(
+          "Could not validate eligibility. Please try again.",
+        );
+      }
+    };
+
+    runEligibilityCheck();
+
+    return () => {
+      active = false;
+    };
+  }, [buildCaseFormData, readJsonSafe]);
 
   const handleSubmit = async () => {
+    if (eligibilityStatus !== "eligible") {
+      showErrorSnackbar(
+        eligibilityMessage ?? "Case is NOT eligible for submission.",
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
       const submitBody = buildCaseFormData();
@@ -360,8 +453,7 @@ function OverviewStep({
               Overview
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Review all claim details before the final submission step is
-              wired.
+              Review all claim details before final submission.
             </Typography>
           </Stack>
         </CardContent>
@@ -593,6 +685,36 @@ function OverviewStep({
         </SummarySection>
       </Stack>
 
+      <Alert
+        severity={
+          eligibilityStatus === "eligible"
+            ? "success"
+            : eligibilityStatus === "checking"
+              ? "info"
+              : "error"
+        }
+        variant="filled"
+        action={
+          (eligibilityStatus === "ineligible" ||
+            eligibilityStatus === "error") &&
+          onEditDisruption ? (
+            <Button color="inherit" size="small" onClick={onEditDisruption}>
+              Edit Disruption
+            </Button>
+          ) : undefined
+        }
+        sx={{
+          mt: 3,
+          borderRadius: 2,
+          alignItems: "center",
+          "& .MuiAlert-message": {
+            fontWeight: 500,
+          },
+        }}
+      >
+        {eligibilityMessage}
+      </Alert>
+
       <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
         <Button variant="outlined" startIcon={<ArrowBack />} onClick={onBack}>
           Back
@@ -600,10 +722,14 @@ function OverviewStep({
         <Button
           variant="contained"
           endIcon={<FactCheckOutlined />}
-          disabled={submitting}
+          disabled={submitting || eligibilityStatus !== "eligible"}
           onClick={handleSubmit}
         >
-          {submitting ? "Submitting..." : "Submit Claim"}
+          {submitting
+            ? "Submitting..."
+            : eligibilityStatus === "checking"
+              ? "Checking eligibility..."
+              : "Submit Claim"}
         </Button>
 
         <AppSnackbar

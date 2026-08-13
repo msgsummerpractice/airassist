@@ -57,8 +57,8 @@ class CaseEligibilityService:
 
     @staticmethod
     def check_denied_boarding_eligibility_with_reason(disruption: Disruption) -> Tuple[bool, Optional[str]]:
-        if disruption.denied_boarding_type == DeniedBoardingType.NO.value:
-            return False, "Not eligible: denied boarding was not confirmed."
+        if disruption.denied_boarding_type == DeniedBoardingType.YES.value:
+            return False, "Not eligible: passenger gave up the seat voluntarily."
         if disruption.delay_type == DelayType.LESS_THAN_3_HOURS.value:
             return False, "Not eligible: resulting delay is less than 3 hours."
         return True, None
