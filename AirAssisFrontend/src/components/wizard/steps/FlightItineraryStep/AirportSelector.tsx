@@ -1,6 +1,8 @@
 import { Box, IconButton } from "@mui/material";
 import { SwapHoriz as SwapHorizIcon } from "@mui/icons-material";
 import AirportAutocomplete, { type AirportOption } from "./AirportAutoComplete";
+import FlightLandIcon from "@mui/icons-material/FlightLand";
+import FLightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 
 interface Props {
   departing: AirportOption | null;
@@ -27,6 +29,7 @@ function AirportSelector({
         value={departing}
         onChange={onDepartingChange}
         error={errors}
+        icon={<FLightTakeoffIcon fontSize="small" />}
       />
       <IconButton
         size="small"
@@ -44,6 +47,7 @@ function AirportSelector({
         value={destination}
         onChange={onDestinationChange}
         error={errorDestination}
+        icon={<FlightLandIcon fontSize="small" />}
       />
     </Box>
   );

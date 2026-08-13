@@ -78,7 +78,7 @@ function FlightDetailsStep({
             onClick={handleNext}
             endIcon={<span>→</span>}
           >
-            Next Step
+            Next
           </Button>
         </Box>
       </Card>

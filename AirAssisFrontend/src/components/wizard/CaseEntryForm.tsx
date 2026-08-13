@@ -55,7 +55,37 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
 
   const handleItineraryNext = (confirmed: Itinerary) => {
     setItinerary(confirmed);
-    setLegDetails(buildLegs(confirmed));
+
+    setLegDetails((previousLegs) => {
+      const rebuiltLegs = buildLegs(confirmed);
+      if (previousLegs.length === 0) {
+        return rebuiltLegs;
+      }
+
+      return rebuiltLegs.map((rebuiltLeg) => {
+        const matchedLeg = previousLegs.find(
+          (previousLeg) =>
+            previousLeg.departureIata === rebuiltLeg.departureIata &&
+            previousLeg.arrivalIata === rebuiltLeg.arrivalIata,
+        );
+
+        if (!matchedLeg) {
+          return rebuiltLeg;
+        }
+
+        return {
+          ...rebuiltLeg,
+          flightDate: matchedLeg.flightDate,
+          plannedDepartureTime: matchedLeg.plannedDepartureTime,
+          plannedArrivalTime: matchedLeg.plannedArrivalTime,
+          flightNumber: matchedLeg.flightNumber,
+          airline: matchedLeg.airline,
+          reservationNumber: matchedLeg.reservationNumber,
+          nextDayArrival: matchedLeg.nextDayArrival,
+        };
+      });
+    });
+
     setStep(1);
   };
 
