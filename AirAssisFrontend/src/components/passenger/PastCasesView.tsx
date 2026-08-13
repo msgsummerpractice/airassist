@@ -61,8 +61,6 @@ function mapStatusToChipColor(
       return "success";
     case "ASSIGNED":
       return "primary";
-    case "INVALID":
-      return "error";
     default:
       return "default";
   }
@@ -280,7 +278,6 @@ function PastCasesView({
                 <MenuItem value="NEW">New</MenuItem>
                 <MenuItem value="VALID">Valid</MenuItem>
                 <MenuItem value="ASSIGNED">Assigned</MenuItem>
-                <MenuItem value="INVALID">Invalid</MenuItem>
               </Select>
             </FormControl>
 
