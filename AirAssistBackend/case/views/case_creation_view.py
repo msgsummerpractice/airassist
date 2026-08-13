@@ -24,40 +24,6 @@ class CaseCreationView(APIView):
     def post(self, request):
         serializer = CaseCreationSerializer(data=request.data)
 
-        if serializer.is_valid():
-            try:
-                with transaction.atomic():
-                    case = serializer.save()
-                
-                    CaseService.calculate_case_compensation(case)
-
-                    passenger = case.passengers.first()
-                    CaseService.create_passenger_account(passenger)
-
-                    contract_document = CaseContractService.generate_for_case(case)
-            except (DatabaseError, CaseContractGenerationError):
-                return Response(
-                    {
-                        "success": False,
-                        "message": "Failed to save case. Please try again."
-                    },
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-            
-            
-            return Response(
-                {
-                    "success": True,
-                    "message": "Case created successfully. Your contract PDF is ready for download.",
-                    "data": {
-                        "case_id": case.id,
-                        "status": case.status,
-                        "created_at": case.created_at,
-                        "contract_document_id": contract_document.id,
-                        "contract_download_url": request.build_absolute_uri(
-                            reverse("case-contract-download", kwargs={"case_id": case.id})
-                        ),
-                    }
         if not serializer.is_valid():
             return Response(
                 {
@@ -90,6 +56,8 @@ class CaseCreationView(APIView):
                 passenger = case.passengers.first()
                 CaseService.create_passenger_account(passenger)
 
+                contract_document = CaseContractService.generate_for_case(case)
+
                 if passenger and passenger.email:
                     to_email = passenger.email
                     submitted_case_id = case.id
@@ -110,7 +78,7 @@ class CaseCreationView(APIView):
 
                     transaction.on_commit(_send_submission_email)
 
-        except DatabaseError:
+        except (DatabaseError, CaseContractGenerationError):
             return Response(
                 {
                     "success": False,
@@ -129,17 +97,16 @@ class CaseCreationView(APIView):
 
         return Response(
             {
-                "success": False,
-                "errors": serializer.errors
-            }, 
-            status=status.HTTP_400_BAD_REQUEST
-        )  
                 "success": True,
-                "message": "Case submitted successfully.",
+                "message": "Case created successfully. Your contract PDF is ready for download.",
                 "data": {
                     "case_id": case.id,
                     "status": case.status,
                     "created_at": case.created_at,
+                    "contract_document_id": contract_document.id,
+                    "contract_download_url": request.build_absolute_uri(
+                        reverse("case-contract-download", kwargs={"case_id": case.id})
+                    ),
                 }
             },
             status=status.HTTP_201_CREATED
