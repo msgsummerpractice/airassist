@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 
 import Login from "../login/login";
 import PastCasesView from "./PastCasesView";
+import { clearStoredUserIdentity, getTokenRole } from "../../utils/auth";
 
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
 const REFRESH_TOKEN_STORAGE_KEY = "airassist_refresh_token";
@@ -14,6 +16,7 @@ function PassengerCasesPage() {
   const handleLogout = () => {
     localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
     localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    clearStoredUserIdentity();
     setIsAuthenticated(false);
   };
 
@@ -24,6 +27,10 @@ function PassengerCasesPage() {
         onPasswordResetSuccess={() => setIsAuthenticated(true)}
       />
     );
+  }
+
+  if (getTokenRole() === "COLLEAGUE") {
+    return <Navigate to="/colleague-cases" replace />;
   }
 
   return (

@@ -16,6 +16,7 @@ import {
   CardContent,
   Chip,
   Divider,
+  Link,
   Stack,
   Typography,
 } from "@mui/material";
@@ -330,7 +331,30 @@ function OverviewStep({
         return;
       }
 
-      showSuccessSnackbar("Case submitted successfully.");
+      const contractDownloadUrl =
+        typeof submitData?.data?.contract_download_url === "string"
+          ? submitData.data.contract_download_url
+          : null;
+
+      showSuccessSnackbar(
+        contractDownloadUrl ? (
+          <>
+            Case submitted successfully. {" "}
+            <Link
+              href={contractDownloadUrl}
+              target="_blank"
+              rel="noreferrer"
+              underline="always"
+              color="inherit"
+              sx={{ fontWeight: 700 }}
+            >
+              Download contract PDF
+            </Link>
+          </>
+        ) : (
+          "Case submitted successfully."
+        ),
+      );
     } catch (error) {
       showErrorSnackbar(
         error instanceof Error
@@ -360,8 +384,7 @@ function OverviewStep({
               Overview
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Review all claim details before the final submission step is
-              wired.
+              Review all claim details before submitting your case.
             </Typography>
           </Stack>
         </CardContent>

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { SyntheticEvent } from "react";
+import type { ReactNode, SyntheticEvent } from "react";
 import type {
   AlertColor,
   SnackbarCloseReason,
@@ -8,7 +8,7 @@ import type {
 import type { AppSnackbarState } from "./app_snackbar";
 
 type ShowSnackbarOptions = {
-  message: string;
+  message: ReactNode;
   severity: AlertColor;
 };
 
@@ -31,7 +31,7 @@ export function useAppSnackbar() {
   );
 
   const showSuccessSnackbar = useCallback(
-    (message: string) => {
+    (message: ReactNode) => {
       showSnackbar({
         message,
         severity: "success",
@@ -41,7 +41,7 @@ export function useAppSnackbar() {
   );
 
   const showErrorSnackbar = useCallback(
-    (message: string) => {
+    (message: ReactNode) => {
       showSnackbar({
         message,
         severity: "error",
