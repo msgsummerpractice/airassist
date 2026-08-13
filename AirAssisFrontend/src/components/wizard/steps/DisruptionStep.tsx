@@ -154,11 +154,16 @@ function DisruptionStep({
                   const motive = event.target
                     .value as DisruptionFormData["motive"];
 
+                  const defaultDelayType =
+                    motive === "CANCELATION" || motive === "DENIED_BOARDING"
+                      ? "CONNECTION_FLIGHT_LOST"
+                      : "";
+
                   onChange({
                     ...value,
                     motive,
                     cancellation_type: "",
-                    delay_type: "",
+                    delay_type: defaultDelayType,
                     denied_boarding_type: "",
                     denied_boarding_reason: "",
                   });
@@ -398,7 +403,7 @@ function DisruptionStep({
             onClick={handleNext}
             endIcon={<span>→</span>}
           >
-            Next Step
+            Next
           </Button>
         </Box>
       </Card>
