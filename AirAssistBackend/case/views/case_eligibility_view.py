@@ -1,56 +1,55 @@
 
+from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.permissions import  IsAuthenticated, AllowAny
-from user.custom_exceptions.responses import AirAssistResponse
+from rest_framework.permissions import AllowAny
 
-from ..serializers.case_eligibility_serializer import CaseEligibilitySerializer
-from ..services.case_state_service import CaseStateService
+
+from ..serializers.case_creation_serializer import CaseCreationSerializer
 from ..services.case_eligibility_service import CaseEligibilityService
-from ..models.case import Case
+from ..models.disruption import Disruption
+
 
 class CaseEligibilityView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, case_id):
-        airassist_response = AirAssistResponse()
-        try:
-            case = Case.objects.get(id=case_id)
-        except Case.DoesNotExist:
-            return airassist_response.status_not_found_with_message("Case not found.")
-
-        valid = CaseEligibilityService.check_case_eligibility(case)
-        return airassist_response.status_ok({"is_eligible": valid})
-    
-    
-class CaseEligibilityUpdateView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request, case_id):
-        serializer = CaseEligibilitySerializer(data=request.data)
-        airassist_response = AirAssistResponse()
-        try:
-            case = Case.objects.get(id=case_id)
-        except Case.DoesNotExist:
-            return airassist_response.status_not_found_with_message("Case not found.")
-
+    def post(self, request):
+        serializer = CaseCreationSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return airassist_response.status_bad_request(serializer)
-
-        try:
-            case = CaseStateService.mark_case_as_valid(
-                case
+            return Response(
+                {
+                    "success": False,
+                    "errors": serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
             )
-        except ValueError as exc:
-            return airassist_response.status_bad_request_with_message(str(exc))
 
-        return airassist_response.status_ok(
+        disruption_data = serializer.validated_data.get("disruption")
+        if not disruption_data:
+           return Response(
+                {
+                    "success": False,
+                    "message": "Disruption data is required.",
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        disruption_probe = Disruption(**disruption_data)
+        is_eligible, reason = CaseEligibilityService.check_disruption_eligibility_with_reason(disruption_probe)
+
+        message = (
+            "Case is eligible for submission"
+            if is_eligible
+            else "Case is NOT eligible for submission"
+        )
+
+        return Response(
             {
                 "success": True,
-                "message": "Case status updated successfully.",
-                "data": {
-                    "case_id": case.id,
-                    "status": case.status,
-                },
-            }
+                "is_eligible": is_eligible,
+                "message": message,
+                "reason": reason,
+            },
+            status=status.HTTP_200_OK
         )
