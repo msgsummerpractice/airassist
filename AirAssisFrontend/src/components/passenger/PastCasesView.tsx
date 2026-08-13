@@ -38,6 +38,7 @@ type SortValue = "-id" | "id" | "status" | "-status";
 type PastCasesViewProps = {
   onLogout: () => void;
   onUnauthorized?: () => void;
+  onOpenCaseDetails?: (caseId: number) => void;
 };
 
 function mapStatusToChipColor(
@@ -57,7 +58,11 @@ function mapStatusToChipColor(
   }
 }
 
-function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
+function PastCasesView({
+  onLogout,
+  onUnauthorized,
+  onOpenCaseDetails,
+}: PastCasesViewProps) {
   const [cases, setCases] = useState<PassengerCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -343,7 +348,15 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
                   <TableBody>
                     {displayedCases.map((item) => (
                       <TableRow key={item.id} hover>
-                        <TableCell>#{item.id}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="text"
+                            onClick={() => onOpenCaseDetails?.(item.id)}
+                            sx={{ minWidth: 0, px: 0, textTransform: "none" }}
+                          >
+                            #{item.id}
+                          </Button>
+                        </TableCell>
                         <TableCell>{item.flight_number ?? "-"}</TableCell>
                         <TableCell>{item.passenger_name ?? "-"}</TableCell>
                         <TableCell>
@@ -369,7 +382,18 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
                     <CardContent>
                       <Stack spacing={1}>
                         <Typography variant="caption" color="text.secondary">
-                          CASE #{item.id}
+                          <Button
+                            variant="text"
+                            onClick={() => onOpenCaseDetails?.(item.id)}
+                            sx={{
+                              minWidth: 0,
+                              px: 0,
+                              py: 0,
+                              textTransform: "none",
+                            }}
+                          >
+                            CASE #{item.id}
+                          </Button>
                         </Typography>
                         <Typography variant="body1" sx={{ fontWeight: 600 }}>
                           Flight {item.flight_number ?? "-"}

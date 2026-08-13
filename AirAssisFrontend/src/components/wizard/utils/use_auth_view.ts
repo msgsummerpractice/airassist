@@ -7,7 +7,8 @@ export type AppView =
   | "login"
   | "resolving"
   | "colleague-dashboard"
-  | "case-entry";
+  | "case-entry"
+  | "passenger-cases";
 
 type UserRoleResponse = {
   role?: string;
@@ -77,7 +78,9 @@ export const useAuthView = () => {
       }
 
       const data = (await response.json()) as UserRoleResponse;
-      setView(data.role === "COLLEAGUE" ? "colleague-dashboard" : "case-entry");
+      setView(
+        data.role === "COLLEAGUE" ? "colleague-dashboard" : "passenger-cases",
+      );
     } catch {
       clearTokens();
       setView("login");
