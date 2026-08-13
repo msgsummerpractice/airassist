@@ -7,6 +7,8 @@ export type AppView =
   | "login"
   | "resolving"
   | "colleague-dashboard"
+  | "case-entry"
+  | "passenger-cases";
   | "admin-users"
   | "case-entry";
 
