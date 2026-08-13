@@ -5,7 +5,9 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.urls import reverse
 
+from case.services.case_contract_service import CaseContractGenerationError, CaseContractService
 from case.services.case_service import CaseService
 
 from ..permissions import IsColleague
@@ -43,7 +45,9 @@ class ColleagueCaseCreationView(APIView):
 
                     passenger = case.passengers.first()
                     CaseService.create_passenger_account(passenger)
-            except DatabaseError:
+
+                    contract_document = CaseContractService.generate_for_case(case)
+            except (DatabaseError, CaseContractGenerationError):
                 return Response(
                     {
                         'success': False,
@@ -55,11 +59,15 @@ class ColleagueCaseCreationView(APIView):
             return Response(
                 {
                     'success': True,
-                    'message': 'Case created successfully.',
+                    'message': 'Case created successfully. Your contract PDF is ready for download.',
                     'data': {
                         'case_id': case.id,
                         'status': case.status,
                         'created_at': case.created_at,
+                        'contract_document_id': contract_document.id,
+                        'contract_download_url': request.build_absolute_uri(
+                            reverse('case-contract-download', kwargs={'case_id': case.id})
+                        ),
                     }
                 },
                 status=status.HTTP_201_CREATED

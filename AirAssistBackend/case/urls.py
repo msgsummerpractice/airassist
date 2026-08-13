@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from .views.case_contract_download_view import CaseContractDownloadView
 
 from .views.case_creation_view import CaseCreationView
 from .views.case_eligibility_view import CaseEligibilityView
@@ -24,6 +25,8 @@ from .views.passenger_case_list_view import PassengerCaseListView
 
 urlpatterns = [
     path('cases/', CaseCreationView.as_view(), name='case-create'),
+    path('cases/<int:case_id>/contract/', CaseContractDownloadView.as_view(), name='case-contract-download'),
+    path("cases/<int:case_id>/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),
     path("cases/me/", PassengerCaseListView.as_view(), name="passenger-case-list"),
     path("cases/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),
     path("cases/<int:case_id>/eligibility/", CaseEligibilityUpdateView.as_view(), name="case-eligibility"),
