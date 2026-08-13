@@ -15,12 +15,18 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from "@mui/material";
+import {
+  createPassengerCaseComment,
+  type PassengerCaseCommentApiError,
+} from "./PassengerCaseCommentApi";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
+const COMMENT_MAX_LENGTH = 1000;
 
 type FlightDetails = {
   flight_date: string;
@@ -50,6 +56,14 @@ type CaseDocument = {
   uploaded_at: string;
 };
 
+type CaseComment = {
+  id: number;
+  text: string;
+  author_email: string;
+  author_role: string;
+  created_at: string;
+};
+
 type PassengerCaseDetails = {
   id: number;
   status: string;
@@ -57,6 +71,7 @@ type PassengerCaseDetails = {
   connecting_flights: FlightDetails[];
   passenger: PassengerDetails | null;
   documents: CaseDocument[];
+  comments?: CaseComment[];
   created_at: string;
   updated_at: string;
 };
@@ -106,6 +121,10 @@ function PassengerCaseDetailsPage({
   const [details, setDetails] = useState<PassengerCaseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [commentText, setCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentSubmitError, setCommentSubmitError] = useState("");
+  const [commentSubmitSuccess, setCommentSubmitSuccess] = useState("");
 
   const resolvedCaseId = useMemo(() => {
     if (typeof caseId === "number" && Number.isInteger(caseId)) {
@@ -127,6 +146,12 @@ function PassengerCaseDetailsPage({
 
     navigate(-1);
   };
+
+  const normalizedCommentText = commentText.trim();
+  const canSubmitComment =
+    normalizedCommentText.length > 0 &&
+    normalizedCommentText.length <= COMMENT_MAX_LENGTH &&
+    !isSubmittingComment;
 
   const fetchDetails = useCallback(async () => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -195,6 +220,60 @@ function PassengerCaseDetailsPage({
       window.clearTimeout(timeoutId);
     };
   }, [fetchDetails]);
+
+  const submitComment = useCallback(async () => {
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+
+    if (!accessToken) {
+      onUnauthorized?.();
+      return;
+    }
+
+    if (resolvedCaseId === null) {
+      setCommentSubmitError("Invalid case id.");
+      return;
+    }
+
+    if (!normalizedCommentText) {
+      setCommentSubmitError("Comment text cannot be empty.");
+      return;
+    }
+
+    if (normalizedCommentText.length > COMMENT_MAX_LENGTH) {
+      setCommentSubmitError("Comment text cannot exceed 1000 characters.");
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    setCommentSubmitError("");
+    setCommentSubmitSuccess("");
+
+    try {
+      await createPassengerCaseComment({
+        caseId: resolvedCaseId,
+        text: normalizedCommentText,
+        accessToken,
+      });
+
+      setCommentText("");
+      setCommentSubmitSuccess("Comment added successfully.");
+      await fetchDetails();
+    } catch (error) {
+      const apiError = error as Partial<PassengerCaseCommentApiError>;
+      if (apiError.status === 401 || apiError.status === 403) {
+        onUnauthorized?.();
+        return;
+      }
+
+      if (error instanceof Error) {
+        setCommentSubmitError(error.message);
+      } else {
+        setCommentSubmitError("Could not add comment.");
+      }
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  }, [fetchDetails, normalizedCommentText, onUnauthorized, resolvedCaseId]);
 
   return (
     <Box
@@ -544,6 +623,102 @@ function PassengerCaseDetailsPage({
                               <TableCell>{item.document_type}</TableCell>
                               <TableCell>
                                 {formatDateTime(item.uploaded_at)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h5" sx={{ mb: 2 }}>
+                    Add Comment
+                  </Typography>
+
+                  <TextField
+                    fullWidth
+                    multiline
+                    minRows={5}
+                    maxRows={12}
+                    value={commentText}
+                    onChange={(event) => {
+                      setCommentText(event.target.value);
+                      if (commentSubmitError) {
+                        setCommentSubmitError("");
+                      }
+                      if (commentSubmitSuccess) {
+                        setCommentSubmitSuccess("");
+                      }
+                    }}
+                    placeholder="Add your additional information or question here..."
+                    slotProps={{ htmlInput: { maxLength: COMMENT_MAX_LENGTH } }}
+                  />
+
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1.5}
+                    sx={{ mt: 1.5, alignItems: { sm: "center" } }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      {commentText.length}/{COMMENT_MAX_LENGTH}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      onClick={() => void submitComment()}
+                      disabled={!canSubmitComment}
+                    >
+                      {isSubmittingComment ? "Adding..." : "Add Comment"}
+                    </Button>
+                  </Stack>
+
+                  {commentSubmitError && (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                      {commentSubmitError}
+                    </Alert>
+                  )}
+
+                  {commentSubmitSuccess && (
+                    <Alert severity="success" sx={{ mt: 2 }}>
+                      {commentSubmitSuccess}
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h5" sx={{ mb: 2 }}>
+                    Comment List
+                  </Typography>
+                  {(details.comments ?? []).length === 0 ? (
+                    <Typography variant="body1" color="text.secondary">
+                      No comments yet.
+                    </Typography>
+                  ) : (
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>User</TableCell>
+                            <TableCell>Role</TableCell>
+                            <TableCell>Timestamp</TableCell>
+                            <TableCell>Comment</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {(details.comments ?? []).map((comment) => (
+                            <TableRow key={comment.id}>
+                              <TableCell>{comment.author_email}</TableCell>
+                              <TableCell>{comment.author_role}</TableCell>
+                              <TableCell>
+                                {formatDateTime(comment.created_at)}
+                              </TableCell>
+                              <TableCell sx={{ whiteSpace: "pre-wrap" }}>
+                                {comment.text}
                               </TableCell>
                             </TableRow>
                           ))}
