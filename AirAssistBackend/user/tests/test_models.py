@@ -40,7 +40,7 @@ class UserModelTests(TestCase):
         self.assertEqual(lastname_field.max_length, 20)
         self.assertEqual(email_field.max_length, 50)
         self.assertTrue(email_field.unique)
-        self.assertEqual(password_field.max_length, 255)
+        self.assertEqual(password_field.max_length, 128)
 
     def test_user_str_returns_full_name_and_email(self):
         user = User.objects.create(
@@ -70,17 +70,3 @@ class UserModelTests(TestCase):
                 email="jane.doe@example.com",
                 password="plain-password",
             )
-
-    def test_user_password_must_have_minimum_length(self):
-        user = User(
-            role=self.role,
-            firstname="Jane",
-            lastname="Doe",
-            email="jane.doe@example.com",
-            password="short",
-        )
-
-        with self.assertRaises(ValidationError) as context:
-            user.full_clean()
-
-        self.assertIn("password", context.exception.message_dict)

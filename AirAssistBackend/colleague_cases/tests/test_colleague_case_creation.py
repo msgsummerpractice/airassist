@@ -5,7 +5,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from case.enums.document_type_enum import DocumentType
 from case.models.case import Case
+from case.models.document import CaseDocument
 from case.models.flights import Flight
 from user.enums.roles import Roles
 from user.models.users import Role, User
@@ -70,11 +72,55 @@ class ColleagueCaseCreationViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(response.data['success'])
-        self.assertEqual(response.data['message'], 'Case created successfully.')
+        self.assertIn('ready for download', response.data['message'])
+        self.assertIn('contract_download_url', response.data['data'])
         self.assertEqual(Case.objects.count(), 1)
         self.assertEqual(Flight.objects.count(), 1)
+        self.assertEqual(
+            CaseDocument.objects.filter(document_type=DocumentType.CONTRACT.value).count(),
+            1,
+        )
         created_case = Case.objects.get()
         self.assertEqual(created_case.assigned_colleague, self.colleague)
+
+        contract_document = CaseDocument.objects.get(
+            document_type=DocumentType.CONTRACT.value,
+        )
+        self.assertTrue(contract_document.original_filename.endswith('.pdf'))
+
+        download_response = self.client.get(
+            f"/api/cases/{response.data['data']['case_id']}/contract/"
+        )
+
+        self.assertEqual(download_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(download_response.get('Content-Type'), 'application/pdf')
+        self.assertIn('attachment;', download_response.get('Content-Disposition'))
+        self.assertTrue(b''.join(download_response.streaming_content).startswith(b'%PDF'))
+        calculate_case_compensation.assert_called_once()
+        create_passenger_account.assert_called_once()
+
+    @patch('colleague_cases.views.colleague_case_creation_view.CaseContractService.generate_for_case')
+    @patch('colleague_cases.views.colleague_case_creation_view.CaseService.create_passenger_account')
+    @patch('colleague_cases.views.colleague_case_creation_view.CaseService.calculate_case_compensation')
+    def test_returns_500_when_contract_generation_fails(
+        self,
+        calculate_case_compensation,
+        create_passenger_account,
+        generate_for_case,
+    ):
+        from case.services.case_contract_service import CaseContractGenerationError
+
+        self.client.force_authenticate(user=self.colleague)
+        generate_for_case.side_effect = CaseContractGenerationError('boom')
+
+        response = self.client.post('/api/cases/colleague/', data=self.build_payload(), format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertFalse(response.data['success'])
+        self.assertEqual(
+            CaseDocument.objects.filter(document_type=DocumentType.CONTRACT.value).count(),
+            0,
+        )
         calculate_case_compensation.assert_called_once()
         create_passenger_account.assert_called_once()
 

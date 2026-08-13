@@ -36,4 +36,24 @@ def send_user_created_email(user,plain_password):
         subject = "Account Created",
         body= body
     )
+
+
+def send_password_reset_email(user, reset_url):
+    body = f"""
+ Hello {user.firstname},
+
+ We received a request to reset your AirAssist password.
+
+ Use the link below to choose a new password:
+ {reset_url}
+
+ If you did not request this change, you can ignore this email.
+
+ AirAssist Team
+ """
+    return send_basic_email(
+        to_email=user.email,
+        subject="Password Reset",
+        body=body,
+    )
     

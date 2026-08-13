@@ -147,11 +147,14 @@ class CaseCreationSerializer(serializers.Serializer):
 
         return value
 
+    def _validate_upload(self, value, field_name):
+        return self.validate_upload(value, field_name)
+
     def validate_boarding_pass(self, value):
-        return self._validate_upload(value, "Boarding pass")
+        return self.validate_upload(value, "Boarding pass")
 
     def validate_passport(self, value):
-        return self._validate_upload(value, "Passport")
+        return self.validate_upload(value, "Passport")
 
     def validate_gdpr_consent(self, value):
         if not value:
@@ -172,6 +175,9 @@ class CaseCreationSerializer(serializers.Serializer):
             status=State.NEW.value,
             gdpr_consent=gdpr_consent,
             gdpr_consent_at=timezone.now() if gdpr_consent else None,
+            reservation_number=validated_data["reservation_number"],
+            departure_airport=validated_data["departing_airport"],
+            arrival_airport=validated_data["destination_airport"],
         )
 
         Disruption.objects.create(
@@ -235,8 +241,6 @@ class CaseCreationSerializer(serializers.Serializer):
             "postal_code": validated_data.pop("postal_code"),
             }
         
-        validated_data.pop("boarding_pass")
-        validated_data.pop("passport")
 
         validated_data.pop("flight_date")
         validated_data.pop("flight_number")
