@@ -34,6 +34,8 @@ import CreateUserButton from "./CreateUserButton";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 
+const USER_DELETE_SUCCESS_HIDE_MS = 15000;
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -183,6 +185,12 @@ function AdminUsersPage() {
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}
+        autoHideDuration={
+          snackbar.severity === "success" &&
+          snackbar.message === "User account deleted succesfully."
+            ? USER_DELETE_SUCCESS_HIDE_MS
+            : undefined
+        }
         onClose={closeSnackbar}
       />
       <Typography variant="h2" sx={{ mb: 0.5 }}>
