@@ -1,8 +1,9 @@
-from AirAssistBackend.case.enums.cancellation_type_enum import CancellationType
-from AirAssistBackend.case.enums.delay_type_enum import DelayType
-from AirAssistBackend.case.enums.denied_boarding_type_enum import DeniedBoardingType
-from AirAssistBackend.case.enums.disruption_type_enum import DisruptionMotive
-from case.models import Disruption, Case
+from case.enums.cancellation_type_enum import CancellationType
+from case.enums.delay_type_enum import DelayType
+from case.enums.denied_boarding_type_enum import DeniedBoardingType
+from case.enums.disruption_type_enum import DisruptionMotive
+from case.models.case import Case
+from case.models.disruption import Disruption
 
 
 class CaseEligibilityService:

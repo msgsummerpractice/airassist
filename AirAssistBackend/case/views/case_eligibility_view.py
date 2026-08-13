@@ -1,7 +1,7 @@
 
 from rest_framework.views import APIView
 from rest_framework.permissions import  IsAuthenticated, AllowAny
-from AirAssistBackend.user.custom_exceptions.responses import AirAssistResponse
+from user.custom_exceptions.responses import AirAssistResponse
 
 from ..serializers.case_eligibility_serializer import CaseEligibilitySerializer
 from ..services.case_state_service import CaseStateService
@@ -11,7 +11,7 @@ from ..models.case import Case
 class CaseEligibilityView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, case_id):
+    def get(self, case_id):
         airassist_response = AirAssistResponse()
         try:
             case = Case.objects.get(id=case_id)
