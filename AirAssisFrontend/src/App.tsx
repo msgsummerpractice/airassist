@@ -11,6 +11,7 @@ import ColleagueDashboard from "./components/colleague-ui/ColleagueDashboard";
 import Login from "./components/login/login";
 import { useAuthView } from "./components/wizard/utils/use_auth_view";
 import CaseEntryForm from "./components/wizard/CaseEntryForm";
+import AdminUsersPage from "./components/admin/AdminUsersPage";
 
 function App() {
   const { view, resolveView, showCaseEntry } = useAuthView();
@@ -19,6 +20,10 @@ function App() {
   useEffect(() => {
     if (view === "colleague-dashboard") {
       navigate("/colleague-dashboard", { replace: true });
+      return;
+    }
+    if (view === "admin-users") {
+      navigate("/admin/users", { replace: true });
       return;
     }
     if (view === "login") {
@@ -46,6 +51,16 @@ function App() {
         element={
           view === "colleague-dashboard" ? (
             <ColleagueDashboard onCreateCase={showCaseEntry} />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          view === "admin-users" ? (
+            <AdminUsersPage />
           ) : (
             <Navigate to="/login" replace />
           )

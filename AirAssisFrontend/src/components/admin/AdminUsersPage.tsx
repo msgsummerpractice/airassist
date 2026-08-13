@@ -25,11 +25,14 @@ import {
 } from "@mui/material";
 import {
   InfoOutlined as InfoIcon,
+  DeleteOutline as DeleteOutlineIcon,
   PersonSearch as PersonSearchIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { fetchWithAuth } from "../../utils/auth";
 import CreateUserButton from "./CreateUserButton";
+import { AppSnackbar } from "../utils/app_snackbar";
+import { useAppSnackbar } from "../utils/use_app_snackbar";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -49,11 +52,35 @@ function roleChipColor(role: string): "primary" | "secondary" | "default" {
   return "default";
 }
 
+function extractApiError(data: unknown, status: number): string {
+  if (!data || typeof data !== "object") {
+    return `Error ${status}: Could not delete user.`;
+  }
+
+  const record = data as Record<string, unknown>;
+  if (typeof record.message === "string") return record.message;
+  if (typeof record.detail === "string") return record.detail;
+
+  const firstKey = Object.keys(record)[0];
+  if (firstKey) {
+    const value = record[firstKey];
+    const text = Array.isArray(value) ? String(value[0]) : String(value);
+    return `${firstKey}: ${text}`;
+  }
+
+  return `Error ${status}: Could not delete user.`;
+}
+
 function AdminUsersPage() {
   const [users, setUsers] = useState<UserEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [deleteUser, setDeleteUser] = useState<UserEntry | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
+
+  const { snackbar, closeSnackbar, showSuccessSnackbar, showErrorSnackbar } =
+    useAppSnackbar();
 
   const [nameFilter, setNameFilter] = useState("");
   const [emailFilter, setEmailFilter] = useState("");
@@ -62,6 +89,17 @@ function AdminUsersPage() {
   const [detailUser, setDetailUser] = useState<UserEntry | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const minCases = parseInt(minCasesFilter, 10);
+
+  const matchesFilters = (u: UserEntry) => {
+    const fullName = `${u.firstname} ${u.lastname}`.toLowerCase();
+    return (
+      fullName.includes(nameFilter.toLowerCase()) &&
+      u.email.toLowerCase().includes(emailFilter.toLowerCase()) &&
+      (isNaN(minCases) || u.assigned_case_count >= minCases)
+    );
+  };
 
   const loadUsers = async () => {
     setLoading(true);
@@ -80,15 +118,59 @@ function AdminUsersPage() {
     }
   };
 
-  const minCases = parseInt(minCasesFilter, 10);
-  const filtered = users.filter((u) => {
-    const fullName = `${u.firstname} ${u.lastname}`.toLowerCase();
-    return (
-      fullName.includes(nameFilter.toLowerCase()) &&
-      u.email.toLowerCase().includes(emailFilter.toLowerCase()) &&
-      (isNaN(minCases) || u.assigned_case_count >= minCases)
-    );
-  });
+  const filtered = users.filter(matchesFilters);
+
+  const openDeleteDialog = (user: UserEntry) => {
+    setDeleteUser(user);
+  };
+
+  const closeDeleteDialog = () => {
+    if (deletingUserId === null) {
+      setDeleteUser(null);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteUser) return;
+
+    const targetId = deleteUser.id;
+    setDeletingUserId(targetId);
+
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/user/${targetId}/`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(extractApiError(data, res.status));
+      }
+
+      const nextUsers = users.filter((u) => u.id !== targetId);
+      setUsers(nextUsers);
+
+      if (detailUser?.id === targetId) {
+        setDetailUser(null);
+      }
+
+      const nextFilteredCount = nextUsers.filter(matchesFilters).length;
+      const maxPage = Math.max(
+        0,
+        Math.ceil(nextFilteredCount / rowsPerPage) - 1,
+      );
+      setPage((current) => Math.min(current, maxPage));
+
+      setDeleteUser(null);
+      showSuccessSnackbar("User account deleted successfully.");
+    } catch (err) {
+      showErrorSnackbar(
+        err instanceof Error ? err.message : "Could not delete user.",
+      );
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
 
   const paginated = filtered.slice(
     page * rowsPerPage,
@@ -97,6 +179,12 @@ function AdminUsersPage() {
 
   return (
     <Box sx={{ maxWidth: 1100, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}>
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
       <Typography variant="h2" sx={{ mb: 0.5 }}>
         User Management
       </Typography>
@@ -255,6 +343,23 @@ function AdminUsersPage() {
                             <InfoIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        <Tooltip title="Delete user">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => openDeleteDialog(user)}
+                              disabled={deletingUserId === user.id}
+                              sx={{ ml: 0.5 }}
+                            >
+                              {deletingUserId === user.id ? (
+                                <CircularProgress size={16} color="inherit" />
+                              ) : (
+                                <DeleteOutlineIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))
@@ -336,6 +441,62 @@ function AdminUsersPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDetailUser(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={!!deleteUser}
+        onClose={closeDeleteDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h2" component="span">
+            Delete User
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          {deleteUser && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+              <Typography variant="body1">
+                Are you sure you want to delete this user account?
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                {deleteUser.firstname} {deleteUser.lastname}
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {deleteUser.email}
+              </Typography>
+              <Chip
+                label={deleteUser.role}
+                color={roleChipColor(deleteUser.role)}
+                size="small"
+                variant="outlined"
+                sx={{ alignSelf: "flex-start" }}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            onClick={closeDeleteDialog}
+            disabled={deletingUserId !== null}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={confirmDelete}
+            disabled={deletingUserId !== null}
+            startIcon={
+              deletingUserId !== null ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : undefined
+            }
+          >
+            {deletingUserId !== null ? "Deleting..." : "Delete"}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
