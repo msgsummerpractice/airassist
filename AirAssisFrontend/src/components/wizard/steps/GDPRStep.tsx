@@ -32,7 +32,7 @@ function GDPRStep({ data, onChange, onBack, onNext }: GDPRStepProps) {
     consentTouched && !data.gdprConsent ? "You must consent to continue" : "";
 
   return (
-    <Box sx={{ maxWidth: 760, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
+    <Box sx={{ maxWidth: 1220, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
       <Card>
         <CardContent sx={{ p: { xs: 2, md: 4 } }}>
           <Box sx={{ textAlign: "left", mb: 3 }}>
