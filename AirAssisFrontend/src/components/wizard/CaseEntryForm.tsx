@@ -15,7 +15,7 @@ import {
 import PassangersStep from "./steps/PassangersStep";
 import DocumentUploadStep from "./steps/DocumentUploadStep";
 import GDPRStep from "./steps/GDPRStep";
-import OverviewStep from "./steps/OverviewStep";
+import OverviewStep from "./steps/OverviewStep.tsx";
 import WizardProgressBar from "./WizardProgressBar";
 
 const wizardSteps = [
@@ -50,31 +50,8 @@ function CaseEntryForm() {
   const [gdpr, setGdpr] = useState(EMPTY_GDPR);
 
   const handleItineraryNext = (confirmed: Itinerary) => {
-    const rebuiltLegs = buildLegs(confirmed);
-
-    const mergedLegs = rebuiltLegs.map((rebuiltLeg) => {
-      const existingLeg = legDetails.find(
-        (leg) =>
-          leg.departureIata === rebuiltLeg.departureIata &&
-          leg.arrivalIata === rebuiltLeg.arrivalIata,
-      );
-
-      return existingLeg
-        ? {
-            ...rebuiltLeg,
-            flightDate: existingLeg.flightDate,
-            plannedDepartureTime: existingLeg.plannedDepartureTime,
-            plannedArrivalTime: existingLeg.plannedArrivalTime,
-            flightNumber: existingLeg.flightNumber,
-            airline: existingLeg.airline,
-            reservationNumber: existingLeg.reservationNumber,
-            nextDayArrival: existingLeg.nextDayArrival,
-          }
-        : rebuiltLeg;
-    });
-
     setItinerary(confirmed);
-    setLegDetails(mergedLegs);
+    setLegDetails(buildLegs(confirmed));
     setStep(1);
   };
 
@@ -143,6 +120,7 @@ function CaseEntryForm() {
           documents={documents}
           gdpr={gdpr}
           onBack={() => setStep(5)}
+          onEditDisruption={() => setStep(2)}
         />
       )}
     </>

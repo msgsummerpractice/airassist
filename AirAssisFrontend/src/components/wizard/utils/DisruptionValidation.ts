@@ -21,8 +21,13 @@ export function validateDisruptionStep(
     errors.cancellation_type = "Cancellation timing is required";
   }
 
-  if (disruption.motive === "DELAY" && !disruption.delay_type) {
-    errors.delay_type = "Delay length is required";
+  if (
+    (disruption.motive === "DELAY" ||
+      disruption.motive === "CANCELATION" ||
+      disruption.motive === "DENIED_BOARDING") &&
+    !disruption.delay_type
+  ) {
+    errors.delay_type = "Arrival delay is required";
   }
 
   if (
