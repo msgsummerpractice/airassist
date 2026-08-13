@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   Divider,
   Stack,
@@ -19,6 +20,14 @@ import {
   Typography,
 } from "@mui/material";
 import {
+  AddCommentOutlined,
+  DescriptionOutlined,
+  FlightTakeoffOutlined,
+  HubOutlined,
+  PersonOutlineOutlined,
+  SummarizeOutlined,
+} from "@mui/icons-material";
+import {
   createPassengerCaseComment,
   type PassengerCaseCommentApiError,
 } from "./PassengerCaseCommentApi";
@@ -27,6 +36,7 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
 const COMMENT_MAX_LENGTH = 1000;
+const SECTION_ICON_COLOR = "#003178";
 
 type FlightDetails = {
   flight_date: string;
@@ -108,6 +118,48 @@ const formatDateTime = (value: string | null | undefined) => {
 
   return parsedDate.toLocaleString();
 };
+
+function mapStatusToChipColor(
+  status: string,
+):
+  | "default"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "error"
+  | "info" {
+  switch (status) {
+    case "NEW":
+      return "info";
+    case "VALID":
+      return "success";
+    case "ASSIGNED":
+      return "primary";
+    default:
+      return "default";
+  }
+}
+
+function getStatusChipSx(status: string) {
+  if (status === "NEW") {
+    return {
+      color: "#2563eb",
+      borderColor: "#93c5fd",
+      backgroundColor: "#eff6ff",
+    };
+  }
+
+  if (status === "VALID") {
+    return {
+      color: "#2e7d32",
+      borderColor: "#a5d6a7",
+      backgroundColor: "#f1f8e9",
+    };
+  }
+
+  return undefined;
+}
 
 function PassengerCaseDetailsPage({
   onLogout,
@@ -386,94 +438,128 @@ function PassengerCaseDetailsPage({
             <Stack spacing={3}>
               <Card variant="outlined">
                 <CardContent>
-                  <Typography variant="h5" sx={{ mb: 2 }}>
-                    Summary
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <SummarizeOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">Summary</Typography>
+                  </Box>
                   <Stack
                     direction={{ xs: "column", md: "row" }}
                     spacing={2}
                     sx={{ justifyContent: "space-between" }}
                   >
-                    <Typography variant="body1">
-                      Case ID: #{details.id}
-                    </Typography>
-                    <Typography variant="body1">
-                      Status: {details.status}
-                    </Typography>
-                    <Typography variant="body1">
-                      Created: {formatDateTime(details.created_at)}
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="body1">Case ID:</Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: "#003178",
+                          backgroundColor: "rgba(0, 49, 120, 0.04)",
+                          borderRadius: 1,
+                          px: 1,
+                          py: 0.5,
+                          fontWeight: 500,
+                          lineHeight: 1.75,
+                        }}
+                      >
+                        #{details.id}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="body1">Status:</Typography>
+                      <Chip
+                        size="small"
+                        label={details.status}
+                        color={mapStatusToChipColor(details.status)}
+                        sx={getStatusChipSx(details.status)}
+                        variant={
+                          details.status === "ASSIGNED" ? "filled" : "outlined"
+                        }
+                      />
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Typography variant="body1">
+                        Created: {formatDateTime(details.created_at)}
+                      </Typography>
+                    </Box>
                   </Stack>
                 </CardContent>
               </Card>
 
               <Card variant="outlined">
                 <CardContent>
-                  <Typography variant="h5" sx={{ mb: 2 }}>
-                    Flight details
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <FlightTakeoffOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">Flight details</Typography>
+                  </Box>
                   {details.flight ? (
                     <TableContainer>
-                      <Table size="small">
+                      <Table
+                        size="small"
+                        sx={{
+                          "& td:first-of-type": {
+                            fontWeight: 400,
+                            width: "38%",
+                          },
+                          "& td:last-of-type": { pl: 2 },
+                        }}
+                      >
                         <TableBody>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Flight date
-                            </TableCell>
+                            <TableCell>Flight date</TableCell>
                             <TableCell>
                               {formatDate(details.flight.flight_date)}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Flight Nr.
-                            </TableCell>
+                            <TableCell>Flight Nr.</TableCell>
                             <TableCell>
                               {details.flight.flight_number}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Airline
-                            </TableCell>
+                            <TableCell>Airline</TableCell>
                             <TableCell>{details.flight.airline}</TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Reservation Number
-                            </TableCell>
+                            <TableCell>Reservation Number</TableCell>
                             <TableCell>
                               {details.flight.reservation_number}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Departing Airport
-                            </TableCell>
+                            <TableCell>Departing Airport</TableCell>
                             <TableCell>
                               {details.flight.departing_airport}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Destination Airport
-                            </TableCell>
+                            <TableCell>Destination Airport</TableCell>
                             <TableCell>
                               {details.flight.destination_airport}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Planned Departure Time
-                            </TableCell>
+                            <TableCell>Planned Departure Time</TableCell>
                             <TableCell>
                               {details.flight.planned_departure_time}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Planned Arrival Time
-                            </TableCell>
+                            <TableCell>Planned Arrival Time</TableCell>
                             <TableCell>
                               {details.flight.planned_arrival_time}
                             </TableCell>
@@ -489,9 +575,17 @@ function PassengerCaseDetailsPage({
 
                   <Divider sx={{ my: 2 }} />
 
-                  <Typography variant="h6" sx={{ mb: 1 }}>
-                    Connecting Flights
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 1,
+                    }}
+                  >
+                    <HubOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h6">Connecting Flights</Typography>
+                  </Box>
                   {details.connecting_flights.length === 0 ? (
                     <Typography variant="body1" color="text.secondary">
                       None
@@ -529,59 +623,58 @@ function PassengerCaseDetailsPage({
 
               <Card variant="outlined">
                 <CardContent>
-                  <Typography variant="h5" sx={{ mb: 2 }}>
-                    Passenger details
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <PersonOutlineOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">Passenger details</Typography>
+                  </Box>
                   {details.passenger ? (
                     <TableContainer>
-                      <Table size="small">
+                      <Table
+                        size="small"
+                        sx={{ "& td:first-of-type": { fontWeight: 400 } }}
+                      >
                         <TableBody>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                            <TableCell>Name</TableCell>
                             <TableCell>
                               {details.passenger.first_name}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Family Name
-                            </TableCell>
+                            <TableCell>Family Name</TableCell>
                             <TableCell>{details.passenger.last_name}</TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Date of Birth
-                            </TableCell>
+                            <TableCell>Date of Birth</TableCell>
                             <TableCell>
                               {formatDate(details.passenger.date_of_birth)}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              E-mail
-                            </TableCell>
+                            <TableCell>E-mail</TableCell>
                             <TableCell>{details.passenger.email}</TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Phone
-                            </TableCell>
+                            <TableCell>Phone</TableCell>
                             <TableCell>
                               {details.passenger.phone ?? "-"}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Address
-                            </TableCell>
+                            <TableCell>Address</TableCell>
                             <TableCell>
                               {details.passenger.address ?? "-"}
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              Postal Code
-                            </TableCell>
+                            <TableCell>Postal Code</TableCell>
                             <TableCell>
                               {details.passenger.postal_code ?? "-"}
                             </TableCell>
@@ -599,9 +692,19 @@ function PassengerCaseDetailsPage({
 
               <Card variant="outlined">
                 <CardContent>
-                  <Typography variant="h5" sx={{ mb: 2 }}>
-                    Attached Documents List
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <DescriptionOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">
+                      Attached Documents List
+                    </Typography>
+                  </Box>
                   {details.documents.length === 0 ? (
                     <Typography variant="body1" color="text.secondary">
                       No documents attached.
@@ -635,9 +738,17 @@ function PassengerCaseDetailsPage({
 
               <Card variant="outlined">
                 <CardContent>
-                  <Typography variant="h5" sx={{ mb: 2 }}>
-                    Add Comment
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <AddCommentOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">Add Comment</Typography>
+                  </Box>
 
                   <TextField
                     fullWidth
@@ -713,7 +824,28 @@ function PassengerCaseDetailsPage({
                           {(details.comments ?? []).map((comment) => (
                             <TableRow key={comment.id}>
                               <TableCell>{comment.author_email}</TableCell>
-                              <TableCell>{comment.author_role}</TableCell>
+                              <TableCell>
+                                {comment.author_role?.toUpperCase() ===
+                                "PASSENGER" ? (
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      display: "inline-block",
+                                      color: "#003178",
+                                      backgroundColor: "rgba(0, 49, 120, 0.04)",
+                                      borderRadius: 1,
+                                      px: 1,
+                                      py: 0.5,
+                                      fontWeight: 500,
+                                      lineHeight: 1.75,
+                                    }}
+                                  >
+                                    {comment.author_role}
+                                  </Box>
+                                ) : (
+                                  comment.author_role
+                                )}
+                              </TableCell>
                               <TableCell>
                                 {formatDateTime(comment.created_at)}
                               </TableCell>
