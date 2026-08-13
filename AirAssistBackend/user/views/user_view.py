@@ -5,7 +5,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..service.user_service import UserService
 from ..serializers.user_serializer import (
-    UserSerializer, UserRoleSerializer, LoginSerializer, UserListSerializer,
+    LoginSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    UserListSerializer,
+    UserRoleSerializer,
+    UserSerializer,
 )
 from ..permissions import IsSystemAdmin
 from rest_framework.permissions import IsAuthenticated
@@ -73,13 +78,52 @@ class ChangePasswordView(APIView):
     def post(self, request):
         new_password = request.data.get("new_password")
 
-        if not new_password:
-            return Response({"error": "New password is required."}, status = status.HTTP_400_BAD_REQUEST)
-
-        user = request.user
-        user.set_password(new_password)
-
-        user.must_change_password = False
-        user.save(update_fields = ["password", "must_change_password"])
+        try:
+            UserService.change_password(request.user, new_password)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"message": "Password changed successfully."}, status = status.HTTP_200_OK)
+
+
+class RequestPasswordResetView(APIView):
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        frontend_base_url = request.headers.get("Origin") or "http://localhost:5173"
+        UserService.send_password_reset_email(
+            email=serializer.validated_data["email"],
+            frontend_base_url=frontend_base_url,
+        )
+
+        return Response(
+            {
+                "message": "If an account exists for that email, a password reset link has been sent.",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class ResetPasswordView(APIView):
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            UserService.reset_password_with_token(
+                uid=serializer.validated_data["uid"],
+                token=serializer.validated_data["token"],
+                new_password=serializer.validated_data["new_password"],
+            )
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {"message": "Password reset successfully."},
+            status=status.HTTP_200_OK,
+        )

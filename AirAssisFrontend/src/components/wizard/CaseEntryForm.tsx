@@ -134,6 +134,18 @@ function CaseEntryForm() {
         />
       )}
 
+            {step === 6 && (
+            <OverviewStep
+              isColleagueCaseEntry={isColleagueCaseEntry}
+              itinerary={itinerary}
+              legDetails={legDetails}
+              disruption={disruption}
+              passenger={passenger}
+              documents={documents}
+              gdpr={gdpr}
+              onBack={() => setStep(5)}
+            />
+            )}
       {step === 6 && (
         <OverviewStep
           itinerary={itinerary}

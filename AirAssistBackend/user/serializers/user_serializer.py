@@ -32,6 +32,16 @@ class LoginSerializer(serializers.ModelSerializer):
         attrs["user"] = user
         return attrs
 
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(min_length=8)
+
 class UserListSerializer(serializers.ModelSerializer):
     role = serializers.StringRelatedField()
     assigned_case_count = serializers.IntegerField(read_only=True)

@@ -1,8 +1,11 @@
 from ..models.users import User, Role
 from django.db import transaction
 from django.contrib.auth.hashers import check_password
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from ..models.users import User
-from case_email.services.email_service import send_user_created_email
+from case_email.services.email_service import send_password_reset_email, send_user_created_email
 from django.db.models import (
     Count, IntegerField, Subquery, OuterRef, Case as DbCase, When,
 )
@@ -59,6 +62,46 @@ class UserService:
         if not check_password(password, user.password):
             return None
         return user
+
+    @staticmethod
+    def change_password(user: User, new_password: str) -> User:
+        if not new_password:
+            raise ValueError("New password is required.")
+
+        user.set_password(new_password)
+        user.must_change_password = False
+        user.save(update_fields=["password", "must_change_password"])
+        return user
+
+    @staticmethod
+    def send_password_reset_email(email: str, frontend_base_url: str) -> None:
+        normalized_email = (email or "").lower()
+        user = User.objects.filter(email=normalized_email).first()
+
+        if user is None:
+            return
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        reset_url = (
+            f"{frontend_base_url.rstrip('/')}"
+            f"/reset-password?uid={uid}&token={token}"
+        )
+
+        send_password_reset_email(user, reset_url)
+
+    @staticmethod
+    def reset_password_with_token(uid: str, token: str, new_password: str) -> User:
+        try:
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_id)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise ValueError("Invalid or expired password reset link.")
+
+        if not default_token_generator.check_token(user, token):
+            raise ValueError("Invalid or expired password reset link.")
+
+        return UserService.change_password(user, new_password)
 
     
 

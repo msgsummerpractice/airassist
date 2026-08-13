@@ -48,11 +48,13 @@ export const useAuthView = () => {
     const accessToken = localStorage.getItem("airassist_access_token");
     return accessToken ? "resolving" : "login";
   });
+  const [role, setRole] = useState<string | null>(null);
 
   const resolveView = useCallback(async () => {
     const accessToken = localStorage.getItem("airassist_access_token");
 
     if (!accessToken) {
+      setRole(null);
       setView("login");
       return;
     }
@@ -61,6 +63,7 @@ export const useAuthView = () => {
 
     if (!userId) {
       clearTokens();
+      setRole(null);
       setView("login");
       return;
     }
@@ -77,9 +80,13 @@ export const useAuthView = () => {
       }
 
       const data = (await response.json()) as UserRoleResponse;
+      const resolvedRole = typeof data.role === "string" ? data.role : null;
+
+      setRole(resolvedRole);
       setView(data.role === "COLLEAGUE" ? "colleague-dashboard" : "case-entry");
     } catch {
       clearTokens();
+      setRole(null);
       setView("login");
     }
   }, []);
@@ -104,6 +111,7 @@ export const useAuthView = () => {
 
   return {
     view,
+    role,
     resolveView,
     showCaseEntry,
   };

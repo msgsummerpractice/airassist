@@ -30,8 +30,10 @@ import type {
 import dayjs from "dayjs";
 import { AppSnackbar } from "../../utils/app_snackbar";
 import React from "react";
+import { fetchWithAuth } from "../../../utils/auth";
 
 interface OverviewStepProps {
+  isColleagueCaseEntry?: boolean;
   itinerary: Itinerary;
   legDetails: Leg[];
   disruption: DisruptionFormData;
@@ -192,6 +194,7 @@ const DetailRow = ({
 );
 
 function OverviewStep({
+  isColleagueCaseEntry = false,
   itinerary,
   legDetails,
   disruption,
@@ -305,10 +308,18 @@ function OverviewStep({
     setSubmitting(true);
     try {
       const submitBody = buildCaseFormData();
-      const submitRes = await fetch(`${API_BASE_URL}/api/cases/`, {
-        method: "POST",
-        body: submitBody,
-      });
+      const submitUrl = isColleagueCaseEntry
+        ? `${API_BASE_URL}/api/cases/colleague/`
+        : `${API_BASE_URL}/api/cases/`;
+      const submitRes = isColleagueCaseEntry
+        ? await fetchWithAuth(submitUrl, {
+            method: "POST",
+            body: submitBody,
+          })
+        : await fetch(submitUrl, {
+            method: "POST",
+            body: submitBody,
+          });
 
       const submitData = await readJsonSafe(submitRes);
 
