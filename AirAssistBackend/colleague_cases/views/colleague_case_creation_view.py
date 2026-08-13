@@ -17,6 +17,17 @@ class ColleagueCaseCreationView(APIView):
     permission_classes = [IsAuthenticated, IsColleague]
     parser_classes = [MultiPartParser, FormParser]
 
+    def get(self, request):
+        return Response(
+            {
+                'success': True,
+                'data': ColleagueCaseCreationService.build_dashboard_payload(
+                    request.user,
+                )
+            },
+            status=status.HTTP_200_OK
+        )
+
     def post(self, request):
         serializer = ColleagueCaseCreationSerializer(data=request.data)
 

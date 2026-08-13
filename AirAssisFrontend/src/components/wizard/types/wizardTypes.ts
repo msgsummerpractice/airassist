@@ -78,6 +78,13 @@ export interface Itinerary {
   connections: (AirportOption | null)[];
   disruptedLeg: number | null;
 }
+export const EMPTY_ITINERARY: Itinerary = {
+  departingAirport: null,
+  destinationAirport: null,
+  flightType: "direct",
+  connections: [null],
+  disruptedLeg: null,
+};
 
 export function buildLegs(itinerary: Itinerary): Leg[] {
   const stops =
