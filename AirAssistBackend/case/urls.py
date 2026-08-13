@@ -26,7 +26,5 @@ urlpatterns = [
     path('cases/', CaseCreationView.as_view(), name='case-create'),
     path("cases/me/", PassengerCaseListView.as_view(), name="passenger-case-list"),
     path("cases/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),
-    path("cases/<int:case_id>/eligibility/", CaseEligibilityUpdateView.as_view(), name="case-eligibility"),
-    path("cases/<int:case_id>/eligibility-update/", CaseEligibilityUpdateView.as_view(), name="case-eligibility-update"),
     path("cases/<int:case_id>/assign/", CaseAssignmentView.as_view(), name="case-assign"),
 ]
