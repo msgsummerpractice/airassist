@@ -21,9 +21,12 @@ import {
 } from "@mui/material";
 import {
   AddCommentOutlined,
+  AddTaskOutlined,
+  AssignmentTurnedInOutlined,
   DescriptionOutlined,
   FlightTakeoffOutlined,
   HubOutlined,
+  LogoutOutlined,
   PersonOutlineOutlined,
   SummarizeOutlined,
 } from "@mui/icons-material";
@@ -31,6 +34,8 @@ import {
   createPassengerCaseComment,
   type PassengerCaseCommentApiError,
 } from "./PassengerCaseCommentApi";
+import PortalUserHeader from "../portal/PortalUserHeader";
+import { getStoredUserIdentity } from "../../utils/auth";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -169,6 +174,7 @@ function PassengerCaseDetailsPage({
 }: PassengerCaseDetailsPageProps) {
   const navigate = useNavigate();
   const { caseId: routeCaseId } = useParams();
+  const currentUser = getStoredUserIdentity();
 
   const [details, setDetails] = useState<PassengerCaseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -333,16 +339,39 @@ function PassengerCaseDetailsPage({
         minHeight: "100vh",
         px: { xs: 2, md: 4 },
         py: { xs: 3, md: 5 },
-        background:
-          "radial-gradient(circle at 12% 12%, rgba(0, 49, 120, 0.08), transparent 42%), " +
-          "radial-gradient(circle at 88% 8%, rgba(27, 109, 36, 0.08), transparent 36%), #f8f9ff",
+        backgroundColor: "#ffffff",
       }}
     >
+      <PortalUserHeader
+        name={currentUser.name}
+        email={currentUser.email}
+        roleLabel={currentUser.roleLabel}
+        logoutAction={{
+          label: "Log Out",
+          icon: <LogoutOutlined fontSize="small" />,
+          onClick: onLogout,
+        }}
+        actions={[
+          {
+            label: "My Cases",
+            active: true,
+            icon: <AssignmentTurnedInOutlined fontSize="small" />,
+            onClick: () => navigate("/passenger-cases"),
+          },
+          {
+            label: "New Claim",
+            icon: <AddTaskOutlined fontSize="small" />,
+            onClick: () => navigate("/case-entry"),
+          },
+        ]}
+      />
+
       <Card
         elevation={1}
         sx={{
           maxWidth: 1080,
           mx: "auto",
+          mt: 3,
           border: "1px solid",
           borderColor: "divider",
           overflow: "hidden",
@@ -377,20 +406,6 @@ function PassengerCaseDetailsPage({
                 Review flight, passenger, and attached documents for this case.
               </Typography>
             </Box>
-
-            <Button
-              variant="outlined"
-              onClick={onLogout}
-              sx={{
-                mt: { xs: 2, md: 0 },
-                width: { xs: "100%", sm: "auto" },
-                position: { md: "absolute" },
-                top: { md: 0 },
-                right: { md: 0 },
-              }}
-            >
-              Log Out
-            </Button>
           </Box>
 
           <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
