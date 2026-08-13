@@ -2,10 +2,13 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from case.enums.case_state_enum import CaseState
+from case.enums.document_type_enum import DocumentType
 from case.models.case import Case
+from case.models.document import CaseDocument
 from case.models.flights import Flight
 from case.models.passengers import Passenger
 from user.models.users import Role, User
+from django.core.files.base import ContentFile
 
 
 class PassengerCaseListApiTests(APITestCase):
@@ -60,6 +63,14 @@ class PassengerCaseListApiTests(APITestCase):
             is_problem_flight=True,
             is_main_flight=True,
         )
+        CaseDocument.objects.create(
+            case=self.owned_case,
+            document_type=DocumentType.CONTRACT.value,
+            file=ContentFile(b"%PDF-test", name="case-1-contract.pdf"),
+            original_filename="case-1-contract.pdf",
+            content_type="application/pdf",
+            file_size=9,
+        )
 
         self.other_case = Case.objects.create(
             status=CaseState.NEW.value,
@@ -112,6 +123,7 @@ class PassengerCaseListApiTests(APITestCase):
         self.assertEqual(response.data[0]["passenger_name"], "Alice Passenger")
         self.assertEqual(response.data[0]["status"], CaseState.ASSIGNED.value)
         self.assertEqual(response.data[0]["assignee"], "Case Agent")
+        self.assertIn(f"/api/cases/{self.owned_case.id}/contract/", response.data[0]["contract_download_url"])
 
     def test_does_not_leak_other_passenger_cases(self):
         self.client.force_authenticate(user=self.other_passenger_user)

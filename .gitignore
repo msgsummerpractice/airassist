@@ -61,6 +61,7 @@ node_modules
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+AirAssistBackend/case_documents/
 
 # Flask stuff:
 instance/

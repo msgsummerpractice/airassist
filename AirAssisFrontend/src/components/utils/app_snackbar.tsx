@@ -11,14 +11,15 @@ import { AUTO_HIDE_DURATION_MS } from "../../constants/eu261";
 
 type AppSnackbarState = {
   open: boolean;
-  message: string;
+  message: ReactNode;
   severity: AlertColor;
 };
 
 type AppSnackbarProps = {
   open: boolean;
-  message: string;
+  message: ReactNode;
   severity: AlertColor;
+  autoHideDuration?: number;
   onClose: (
     event?: Event | SyntheticEvent,
     reason?: SnackbarCloseReason,
@@ -33,13 +34,14 @@ export function AppSnackbar({
   open,
   message,
   severity,
+  autoHideDuration = AUTO_HIDE_DURATION_MS,
   onClose,
 }: AppSnackbarProps) {
   return (
     <Snackbar
       open={open}
       onClose={onClose}
-      autoHideDuration={AUTO_HIDE_DURATION_MS}
+      autoHideDuration={autoHideDuration}
       anchorOrigin={{ vertical: "top", horizontal: "center" }}
       slots={{ transition: SlideDownTransition }}
     >

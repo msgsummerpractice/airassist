@@ -1,8 +1,14 @@
 import { useMemo, useState } from "react";
-import { Box, Button, Card, FormHelperText, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  FormHelperText,
+  Typography,
+} from "@mui/material";
 import {
   ArrowBack,
-  ArrowForward,
   BadgeOutlined,
   CloudUploadOutlined,
   DescriptionOutlined,
@@ -144,55 +150,74 @@ function DocumentUploadStep({
   };
 
   return (
-    <Card elevation={1} sx={{ p: 4, maxWidth: 720, mx: "auto" }}>
-      <Typography variant="h2" sx={{ mb: 0.5 }}>
-        Upload Supporting Documents
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Please upload both required documents so we can validate your
-        compensation case and continue with the claim process.
-      </Typography>
+    <Box sx={{ maxWidth: 760, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
+      <Card>
+        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+          <Box sx={{ textAlign: "left", mb: 3 }}>
+            <Typography variant="h2" sx={{ mb: 1 }}>
+              Upload Supporting Documents
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontSize: "0.875rem" }}
+            >
+              Please upload both required documents so we can validate your
+              compensation case and continue with the claim process.
+            </Typography>
+          </Box>
 
-      <Box sx={{ display: "grid", gap: 2.5 }}>
-        {uploadField(
-          "boarding-pass-upload",
-          "boardingPass",
-          "Boarding Pass",
-          "Upload a clear photo or PDF of your boarding pass.",
-          <DescriptionOutlined
-            sx={{ color: "text.secondary", fontSize: 24, mt: 0.25 }}
-          />,
-        )}
+          <Box sx={{ display: "grid", gap: 2.5 }}>
+            {uploadField(
+              "boarding-pass-upload",
+              "boardingPass",
+              "Boarding Pass",
+              "Upload a clear photo or PDF of your boarding pass.",
+              <DescriptionOutlined
+                sx={{ color: "text.secondary", fontSize: 24, mt: 0.25 }}
+              />,
+            )}
 
-        {uploadField(
-          "identity-document-upload",
-          "identityDocument",
-          "ID Card or Passport",
-          "Upload your government-issued identification document.",
-          <BadgeOutlined
-            sx={{ color: "text.secondary", fontSize: 24, mt: 0.25 }}
-          />,
-        )}
-      </Box>
+            {uploadField(
+              "identity-document-upload",
+              "identityDocument",
+              "ID Card or Passport",
+              "Upload your government-issued identification document.",
+              <BadgeOutlined
+                sx={{ color: "text.secondary", fontSize: 24, mt: 0.25 }}
+              />,
+            )}
+          </Box>
+        </CardContent>
 
-      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
-        <Button variant="outlined" startIcon={<ArrowBack />} onClick={onBack}>
-          Back
-        </Button>
-        <Button
-          variant="contained"
-          endIcon={<ArrowForward />}
-          onClick={() => {
-            setTouched({ boardingPass: true, identityDocument: true });
-            if (isDocumentUploadDataValid(data)) {
-              onNext?.();
-            }
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            px: { xs: 2, md: 4 },
+            py: 2,
+            borderTop: "1px solid",
+            borderColor: "divider",
           }}
         >
-          Continue
-        </Button>
-      </Box>
-    </Card>
+          <Button variant="outlined" startIcon={<ArrowBack />} onClick={onBack}>
+            Back
+          </Button>
+          <Button
+            variant="contained"
+            endIcon={<span>→</span>}
+            onClick={() => {
+              setTouched({ boardingPass: true, identityDocument: true });
+              if (isDocumentUploadDataValid(data)) {
+                onNext?.();
+              }
+            }}
+          >
+            Next
+          </Button>
+        </Box>
+      </Card>
+    </Box>
   );
 }
 

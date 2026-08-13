@@ -17,6 +17,7 @@ import {
   CardContent,
   Chip,
   Divider,
+  Link,
   Stack,
   Typography,
 } from "@mui/material";
@@ -159,7 +160,7 @@ const SummarySection = ({
 }) => (
   <Card variant="outlined">
     <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
-      <Stack spacing={2}>
+      <Stack spacing={2} sx={{ textAlign: "left" }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           <Box
             sx={{
@@ -196,12 +197,20 @@ const DetailRow = ({
       display: "grid",
       gridTemplateColumns: { xs: "1fr", sm: "180px 1fr" },
       gap: 1,
+      alignItems: "start",
+      textAlign: "left",
     }}
   >
-    <Typography variant="caption" color="text.secondary">
+    <Typography
+      variant="caption"
+      color="text.secondary"
+      sx={{ textAlign: "left" }}
+    >
       {label}
     </Typography>
-    <Typography variant="body1">{value}</Typography>
+    <Typography variant="body1" sx={{ textAlign: "left" }}>
+      {value}
+    </Typography>
   </Box>
 );
 
@@ -423,7 +432,30 @@ function OverviewStep({
         return;
       }
 
-      showSuccessSnackbar("Case submitted successfully.");
+      const contractDownloadUrl =
+        typeof submitData?.data?.contract_download_url === "string"
+          ? submitData.data.contract_download_url
+          : null;
+
+      showSuccessSnackbar(
+        contractDownloadUrl ? (
+          <>
+            Case submitted successfully. {" "}
+            <Link
+              href={contractDownloadUrl}
+              target="_blank"
+              rel="noreferrer"
+              underline="always"
+              color="inherit"
+              sx={{ fontWeight: 700 }}
+            >
+              Download contract PDF
+            </Link>
+          </>
+        ) : (
+          "Case submitted successfully."
+        ),
+      );
     } catch (error) {
       showErrorSnackbar(
         error instanceof Error
@@ -439,20 +471,21 @@ function OverviewStep({
     <Box sx={{ maxWidth: 920, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
-          <Stack spacing={1.5}>
+          <Stack spacing={1} sx={{ textAlign: "left" }}>
             <Chip
               label="Final step"
               color="primary"
               variant="outlined"
               sx={{ alignSelf: "flex-start" }}
             />
-            <Typography
-              variant="h1"
-              sx={{ fontSize: { xs: "1.75rem", md: "2.1rem" } }}
-            >
+            <Typography variant="h2" sx={{ mb: 0.25 }}>
               Overview
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontSize: "0.875rem" }}
+            >
               Review all claim details before final submission.
             </Typography>
           </Stack>
