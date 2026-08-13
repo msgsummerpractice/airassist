@@ -12,12 +12,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  EmailOutlined,
-  ShieldOutlined,
-  ArrowBack,
-  ArrowForward,
-} from "@mui/icons-material";
+import { EmailOutlined, ShieldOutlined, ArrowBack } from "@mui/icons-material";
 import type { GDPRData } from "../types/wizardTypes";
 import { validateGDPREmail } from "../utils/gdprStepValidation";
 

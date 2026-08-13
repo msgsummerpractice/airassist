@@ -9,7 +9,6 @@ import {
 } from "@mui/material";
 import {
   ArrowBack,
-  ArrowForward,
   BadgeOutlined,
   CloudUploadOutlined,
   DescriptionOutlined,

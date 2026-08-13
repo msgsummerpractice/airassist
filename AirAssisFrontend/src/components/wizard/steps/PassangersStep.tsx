@@ -20,7 +20,6 @@ import {
   HomeOutlined,
   MyLocationOutlined,
   AccountCircleOutlined,
-  ArrowForward,
 } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import type { PassengerData, PassengerFieldErrors } from "../types/wizardTypes";
