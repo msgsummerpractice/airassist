@@ -173,7 +173,6 @@ class CaseCreationSerializer(serializers.Serializer):
         gdpr_consent = validated_data.get("gdpr_consent", False)
         case = Case.objects.create(
             status=State.NEW.value,
-            reservation_number=validated_data.get("reservation_number"),
             gdpr_consent=gdpr_consent,
             gdpr_consent_at=timezone.now() if gdpr_consent else None,
             reservation_number=validated_data["reservation_number"],
