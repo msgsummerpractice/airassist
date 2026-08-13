@@ -42,8 +42,12 @@ const defaultDisruption: DisruptionFormData = {
 };
 
 
+type CaseEntryFormProps = {
+  isColleagueCaseEntry?: boolean;
+};
 
-function CaseEntryForm() {
+
+function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
   const [step, setStep] = useState(0);
   const [itinerary, setItinerary] = useState<Itinerary>(EMPTY_ITINERARY);
   const [legDetails, setLegDetails] = useState<Leg[]>([]);
@@ -115,6 +119,7 @@ function CaseEntryForm() {
 
             {step === 6 && (
             <OverviewStep
+              isColleagueCaseEntry={isColleagueCaseEntry}
               itinerary={itinerary}
               legDetails={legDetails}
               disruption={disruption}
