@@ -208,7 +208,13 @@ function OverviewStep({
     const formData = new FormData();
     const disruptedLegIndex = itinerary.disruptedLeg ?? 0;
     const mainLeg = legDetails[0];
-    const connectionLegs = legDetails.slice(1);
+
+    if (!mainLeg) {
+      throw new Error("At least one flight leg is required.");
+    }
+
+    const isConnectingTrip = legDetails.length > 1;
+    const finalLeg = legDetails[legDetails.length - 1] ?? mainLeg;
 
     const mainDepIso = toIsoDateTime(
       mainLeg.flightDate,
@@ -216,9 +222,9 @@ function OverviewStep({
       false,
     );
     const mainArrIso = toIsoDateTime(
-      mainLeg.flightDate,
-      mainLeg.plannedArrivalTime,
-      mainLeg.nextDayArrival,
+      finalLeg.flightDate,
+      finalLeg.plannedArrivalTime,
+      finalLeg.nextDayArrival,
     );
 
     if (!mainDepIso || !mainArrIso) {
@@ -232,35 +238,38 @@ function OverviewStep({
     formData.append("airline", mainLeg.airline);
     formData.append("reservation_number", mainLeg.reservationNumber);
     formData.append("departing_airport", mainLeg.departureIata);
-    formData.append("destination_airport", mainLeg.arrivalIata);
+    formData.append("destination_airport", finalLeg.arrivalIata);
     formData.append("planned_departure_time", mainDepIso);
     formData.append("planned_arrival_time", mainArrIso);
     formData.append("is_problem_flight", String(disruptedLegIndex === 0));
     formData.append("is_main_flight", "true");
 
-    const connectionPayload = connectionLegs.map((leg, index) => {
-      const depIso = toIsoDateTime(
-        leg.flightDate,
-        leg.plannedDepartureTime,
-        false,
-      );
-      const arrIso = toIsoDateTime(
-        leg.flightDate,
-        leg.plannedArrivalTime,
-        leg.nextDayArrival,
-      );
-      return {
-        flight_date: leg.flightDate?.format("YYYY-MM-DD") ?? "",
-        flight_number: leg.flightNumber,
-        airline: leg.airline,
-        reservation_number: leg.reservationNumber,
-        departing_airport: leg.departureIata,
-        destination_airport: leg.arrivalIata,
-        planned_departure_time: depIso,
-        planned_arrival_time: arrIso,
-        is_problem_flight: disruptedLegIndex === index + 1,
-      };
-    });
+    const connectionPayload = (isConnectingTrip ? legDetails : []).map(
+      (leg, index) => {
+        const depIso = toIsoDateTime(
+          leg.flightDate,
+          leg.plannedDepartureTime,
+          false,
+        );
+        const arrIso = toIsoDateTime(
+          leg.flightDate,
+          leg.plannedArrivalTime,
+          leg.nextDayArrival,
+        );
+        return {
+          flight_date: leg.flightDate?.format("YYYY-MM-DD") ?? "",
+          flight_number: leg.flightNumber,
+          airline: leg.airline,
+          reservation_number: leg.reservationNumber,
+          departing_airport: leg.departureIata,
+          destination_airport: leg.arrivalIata,
+          planned_departure_time: depIso,
+          planned_arrival_time: arrIso,
+          is_problem_flight:
+            disruptedLegIndex !== 0 && disruptedLegIndex === index,
+        };
+      },
+    );
     formData.append("connection_flights", JSON.stringify(connectionPayload));
     formData.append("disruption", JSON.stringify(disruption));
 

@@ -19,6 +19,7 @@ import {
   AccountCircleOutlined,
   ArrowForward,
 } from "@mui/icons-material";
+import { Link as RouterLink } from "react-router-dom";
 import type { PassengerData, PassengerFieldErrors } from "../types/wizardTypes";
 import { validatePassengerField } from "../utils/passengerStepValidation";
 
@@ -35,17 +36,37 @@ function PassangersStep({
   onBack,
   onFinalize,
 }: PassengersStepProps) {
+  const passengerFields = Object.keys(data) as (keyof PassengerData)[];
   const [touched, setTouched] = useState<
     Partial<Record<keyof PassengerData, boolean>>
   >({});
 
   const errors: PassengerFieldErrors = {};
-  for (const key of Object.keys(data) as (keyof PassengerData)[]) {
+  for (const key of passengerFields) {
     const error = validatePassengerField(key, data[key]);
     if (error && touched[key]) {
       errors[key] = error;
     }
   }
+
+  const handleNext = () => {
+    const touchedAll = passengerFields.reduce<
+      Partial<Record<keyof PassengerData, boolean>>
+    >((acc, key) => {
+      acc[key] = true;
+      return acc;
+    }, {});
+
+    setTouched(touchedAll);
+
+    const hasErrors = passengerFields.some(
+      (key) => validatePassengerField(key, data[key]) !== "",
+    );
+
+    if (!hasErrors) {
+      onFinalize?.();
+    }
+  };
 
   const handleChange =
     (field: keyof PassengerData) =>
@@ -97,7 +118,8 @@ function PassangersStep({
             Log in to autofill your details and speed up the process.
           </Typography>
           <Link
-            component="button"
+            component={RouterLink}
+            to="/login"
             underline="hover"
             sx={{ fontWeight: 600, color: "primary.main" }}
           >
@@ -250,9 +272,9 @@ function PassangersStep({
         <Button
           variant="contained"
           endIcon={<ArrowForward />}
-          onClick={onFinalize}
+          onClick={handleNext}
         >
-          Finalize Case
+          Next
         </Button>
       </Box>
     </Card>
