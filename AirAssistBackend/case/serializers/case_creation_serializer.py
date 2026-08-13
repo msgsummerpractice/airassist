@@ -147,6 +147,9 @@ class CaseCreationSerializer(serializers.Serializer):
 
         return value
 
+    def _validate_upload(self, value, field_name):
+        return self.validate_upload(value, field_name)
+
     def validate_boarding_pass(self, value):
         return self._validate_upload(value, "Boarding pass")
 
@@ -170,6 +173,7 @@ class CaseCreationSerializer(serializers.Serializer):
         gdpr_consent = validated_data.get("gdpr_consent", False)
         case = Case.objects.create(
             status=State.NEW.value,
+            reservation_number=validated_data.get("reservation_number"),
             gdpr_consent=gdpr_consent,
             gdpr_consent_at=timezone.now() if gdpr_consent else None,
         )
@@ -234,20 +238,6 @@ class CaseCreationSerializer(serializers.Serializer):
             "address": validated_data.pop("address"),
             "postal_code": validated_data.pop("postal_code"),
             }
-        
-        validated_data.pop("boarding_pass")
-        validated_data.pop("passport")
-
-        validated_data.pop("flight_date")
-        validated_data.pop("flight_number")
-        validated_data.pop("airline")
-        validated_data.pop("reservation_number")
-        validated_data.pop("departing_airport")
-        validated_data.pop("destination_airport")
-        validated_data.pop("connection_flights", [])
-        validated_data.pop("planned_departure_time")
-        validated_data.pop("planned_arrival_time")
-        validated_data.pop("is_problem_flight")
 
         Passenger.objects.create(case=case, **passenger_data)
         return case

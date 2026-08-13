@@ -4,6 +4,7 @@ from enum import Enum
 class DocumentType(Enum):
     BOARDING_PASS = "BOARDING_PASS"
     PASSPORT = "PASSPORT"
+    CONTRACT = "CONTRACT"
 
     @classmethod
     def choices(cls):
