@@ -11,13 +11,13 @@ import { AUTO_HIDE_DURATION_MS } from "../../constants/eu261";
 
 type AppSnackbarState = {
   open: boolean;
-  message: string;
+  message: ReactNode;
   severity: AlertColor;
 };
 
 type AppSnackbarProps = {
   open: boolean;
-  message: string;
+  message: ReactNode;
   severity: AlertColor;
   autoHideDuration?: number;
   onClose: (

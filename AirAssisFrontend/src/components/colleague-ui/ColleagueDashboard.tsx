@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./ColleagueDashboard.css";
 
 import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
 import ArrowOutwardOutlinedIcon from "@mui/icons-material/ArrowOutwardOutlined";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
 import {
   Alert,
-  Avatar,
   Box,
   Button,
   Card,
@@ -31,6 +33,8 @@ import {
 
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
+import PortalUserHeader from "../portal/PortalUserHeader";
+import { clearStoredUserIdentity, setStoredUserIdentity } from "../../utils/auth";
 
 type DashboardColleague = {
   id: number;
@@ -104,20 +108,11 @@ const formatDate = (value: string) => {
   }).format(date);
 };
 
-const getAvatarLabel = (colleague: DashboardColleague | null) => {
-  if (!colleague) {
-    return "C";
-  }
-
-  const firstInitial = colleague.firstname?.charAt(0) ?? "";
-  const lastInitial = colleague.lastname?.charAt(0) ?? "";
-
-  return `${firstInitial}${lastInitial}`.trim() || "C";
-};
-
 function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isClaimsVisible, setIsClaimsVisible] = useState(false);
 
   const [colleague, setColleague] = useState<DashboardColleague | null>(null);
 
@@ -166,6 +161,12 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
 
         setColleague(payload.data.colleague);
         setClaims(payload.data.claims ?? []);
+        setStoredUserIdentity({
+          name:
+            payload.data.colleague.full_name ||
+            `${payload.data.colleague.firstname} ${payload.data.colleague.lastname}`.trim(),
+          email: payload.data.colleague.email,
+        });
         setHasError(false);
       } catch (error) {
         if (!isActive) {
@@ -206,6 +207,14 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
     );
   }, [colleague]);
 
+  const handleLogout = () => {
+    localStorage.removeItem("airassist_access_token");
+    localStorage.removeItem("airassist_refresh_token");
+    clearStoredUserIdentity();
+    navigate("/case-entry", { replace: true });
+    window.location.reload();
+  };
+
   return (
     <Box className="colleague-dashboard">
       <AppSnackbar
@@ -217,95 +226,42 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
 
       <Box className="colleague-dashboard__shell">
         <Stack spacing={3}>
-          {/* Profile Card */}
-          <Card elevation={0} className="colleague-dashboard__profile-card">
+          <PortalUserHeader
+            name={isLoading ? "Colleague" : displayName}
+            email={colleague?.email || "Email unavailable"}
+            roleLabel="Colleague"
+            logoutAction={{
+              label: "Log Out",
+              icon: <LogoutOutlinedIcon fontSize="small" />,
+              onClick: handleLogout,
+            }}
+            actions={[
+              {
+                label: "See Cases",
+                icon: <VisibilityOutlinedIcon fontSize="small" />,
+                onClick: () => navigate("/colleague-cases"),
+              },
+              {
+                label: "Create Case",
+                icon: <AddTaskOutlinedIcon fontSize="small" />,
+                onClick: onCreateCase,
+              },
+            ]}
+          />
+
+          {/* Active Claims */}
+          <Card elevation={0} className="colleague-dashboard__claims-card">
             {isRefreshing ? (
               <LinearProgress className="colleague-dashboard__progress" />
             ) : null}
 
-            <CardContent className="colleague-dashboard__profile-content">
-              <Stack
-                direction={{ xs: "column", md: "row" }}
-                spacing={3}
-                className="colleague-dashboard__profile-layout"
-              >
-                {/* Colleague Identity */}
-                <Stack
-                  direction="row"
-                  spacing={2.5}
-                  className="colleague-dashboard__identity"
-                >
-                  {isLoading ? (
-                    <Skeleton variant="circular" width={92} height={92} />
-                  ) : (
-                    <Avatar
-                      src={colleague?.avatar_url ?? undefined}
-                      className="colleague-dashboard__avatar"
-                    >
-                      {getAvatarLabel(colleague)}
-                    </Avatar>
-                  )}
-
-                  <Stack
-                    spacing={1}
-                    className="colleague-dashboard__identity-copy"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Skeleton variant="text" width={220} height={44} />
-
-                        <Skeleton variant="text" width={150} height={26} />
-                      </>
-                    ) : (
-                      <>
-                        <Typography
-                          variant="h1"
-                          className="colleague-dashboard__identity-title"
-                        >
-                          {displayName}
-                        </Typography>
-
-                        <Typography variant="body1" color="text.secondary">
-                          Claims Adjudicator
-                        </Typography>
-
-                        <Typography
-                          variant="caption"
-                          className="colleague-dashboard__identity-meta"
-                        >
-                          {colleague?.email}
-                        </Typography>
-                      </>
-                    )}
-                  </Stack>
-                </Stack>
-
-                {/* Create Case Button */}
-                <Box className="colleague-dashboard__profile-action">
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size="large"
-                    onClick={onCreateCase}
-                    startIcon={<AddTaskOutlinedIcon />}
-                    className="colleague-dashboard__create-button"
-                  >
-                    Create Entry Form
-                  </Button>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-
-          {/* Active Claims */}
-          <Card elevation={0} className="colleague-dashboard__claims-card">
             <CardContent className="colleague-dashboard__claims-content">
               <Stack
-                direction="row"
+                direction={{ xs: "column", md: "row" }}
                 spacing={2}
                 sx={{
                   justifyContent: "space-between",
-                  alignItems: "center",
+                  alignItems: { xs: "stretch", md: "center" },
                 }}
               >
                 <Stack
@@ -320,26 +276,47 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                   </Box>
 
                   <Box>
+                    <Typography variant="h2">Case Views</Typography>
                     <Typography variant="body1" color="text.secondary">
-                      Cases currently assigned to you.
+                      Review the colleague case lists available in the current app.
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Assigned cases are available below. Additional views for
+                      created but unassigned cases can be added later without
+                      changing the current backend flow.
                     </Typography>
                   </Box>
                 </Stack>
 
-                {!isLoading && !hasError ? (
-                  <Chip
-                    icon={<DashboardOutlinedIcon />}
-                    label={`${claims.length} assigned`}
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  {!isLoading && !hasError ? (
+                    <Chip
+                      icon={<DashboardOutlinedIcon />}
+                      label={`${claims.length} assigned`}
+                      color="primary"
+                      variant="outlined"
+                    />
+                  ) : null}
+                  <Button
+                    variant={isClaimsVisible ? "contained" : "outlined"}
                     color="primary"
-                    variant="outlined"
-                  />
-                ) : null}
+                    startIcon={<AssignmentTurnedInOutlinedIcon />}
+                    onClick={() => setIsClaimsVisible((current) => !current)}
+                  >
+                    {isClaimsVisible ? "Hide Assigned Cases" : "Show Assigned Cases"}
+                  </Button>
+                </Stack>
               </Stack>
 
               <Divider />
 
-              {/* Loading */}
-              {isLoading ? (
+              {!isClaimsVisible ? (
+                <Box className="colleague-dashboard__empty-state">
+                  <Typography variant="body1" color="text.secondary">
+                    Use the button above to open the list of cases currently assigned to you.
+                  </Typography>
+                </Box>
+              ) : isLoading ? (
                 <Stack
                   spacing={1.5}
                   className="colleague-dashboard__table-skeleton"

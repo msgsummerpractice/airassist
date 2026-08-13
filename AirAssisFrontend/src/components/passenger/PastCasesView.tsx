@@ -20,6 +20,14 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
+import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
+import { useNavigate } from "react-router-dom";
+
+import PortalUserHeader from "../portal/PortalUserHeader";
+import { getStoredUserIdentity, setStoredUserIdentity } from "../../utils/auth";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -31,6 +39,7 @@ type PassengerCase = {
   passenger_name: string | null;
   status: string;
   assignee: string | null;
+  contract_download_url: string | null;
 };
 
 type SortValue = "-id" | "id" | "status" | "-status";
@@ -58,6 +67,7 @@ function mapStatusToChipColor(
 }
 
 function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
+  const navigate = useNavigate();
   const [cases, setCases] = useState<PassengerCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -108,6 +118,9 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
       }
 
       const payload = (await response.json()) as PassengerCase[];
+      if (payload[0]?.passenger_name) {
+        setStoredUserIdentity({ name: payload[0].passenger_name });
+      }
       setCases(payload);
     } catch (error) {
       if (error instanceof Error) {
@@ -149,6 +162,8 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
     );
   }, [cases, assigneeFilter]);
 
+  const currentUser = getStoredUserIdentity();
+
   return (
     <Box
       sx={{
@@ -160,11 +175,36 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
           "radial-gradient(circle at 88% 8%, rgba(27, 109, 36, 0.08), transparent 36%), #f8f9ff",
       }}
     >
+      <PortalUserHeader
+        name={currentUser.name}
+        email={currentUser.email}
+        roleLabel={currentUser.roleLabel}
+        logoutAction={{
+          label: "Log Out",
+          icon: <LogoutOutlinedIcon fontSize="small" />,
+          onClick: onLogout,
+        }}
+        actions={[
+          {
+            label: "My Cases",
+            active: true,
+            icon: <AssignmentTurnedInOutlinedIcon fontSize="small" />,
+            onClick: () => navigate("/passenger-cases"),
+          },
+          {
+            label: "New Claim",
+            icon: <AddTaskOutlinedIcon fontSize="small" />,
+            onClick: () => navigate("/case-entry"),
+          },
+        ]}
+      />
+
       <Card
         elevation={1}
         sx={{
           maxWidth: 1080,
           mx: "auto",
+          mt: 3,
           border: "1px solid",
           borderColor: "divider",
           overflow: "hidden",
@@ -199,20 +239,6 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
                 Review submitted compensation cases and current handling status.
               </Typography>
             </Box>
-
-            <Button
-              variant="outlined"
-              onClick={onLogout}
-              sx={{
-                mt: { xs: 2, md: 0 },
-                width: { xs: "100%", sm: "auto" },
-                position: { md: "absolute" },
-                top: { md: 0 },
-                right: { md: 0 },
-              }}
-            >
-              Log Out
-            </Button>
           </Box>
 
           <Stack
@@ -338,6 +364,7 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
                       <TableCell>Passenger Name</TableCell>
                       <TableCell>Status</TableCell>
                       <TableCell>Assignee</TableCell>
+                      <TableCell>Contract</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -357,6 +384,24 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
                           />
                         </TableCell>
                         <TableCell>{item.assignee ?? "Unassigned"}</TableCell>
+                        <TableCell>
+                          {item.contract_download_url ? (
+                            <Button
+                              component="a"
+                              href={item.contract_download_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              size="small"
+                              variant="text"
+                              endIcon={<OpenInNewOutlinedIcon fontSize="small" />}
+                              sx={{ px: 0, minWidth: 0 }}
+                            >
+                              PDF
+                            </Button>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -380,6 +425,21 @@ function PastCasesView({ onLogout, onUnauthorized }: PastCasesViewProps) {
                         <Typography variant="body1" color="text.secondary">
                           Assignee: {item.assignee ?? "Unassigned"}
                         </Typography>
+                        {item.contract_download_url ? (
+                          <Box>
+                            <Button
+                              component="a"
+                              href={item.contract_download_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              size="small"
+                              variant="outlined"
+                              endIcon={<OpenInNewOutlinedIcon fontSize="small" />}
+                            >
+                              Download contract
+                            </Button>
+                          </Box>
+                        ) : null}
                         <Box>
                           <Chip
                             size="small"

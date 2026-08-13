@@ -10,6 +10,7 @@ import "./App.css";
 import ColleagueDashboard from "./components/colleague-ui/ColleagueDashboard";
 import Login from "./components/login/login";
 import ResetPassword from "./components/login/reset_password";
+import PassengerCasesPage from "./components/passenger/PassengerCasesPage";
 import { useAuthView } from "./components/wizard/utils/use_auth_view";
 import CaseEntryForm from "./components/wizard/CaseEntryForm";
 import AdminUsersPage from "./components/admin/AdminUsersPage";
@@ -19,7 +20,11 @@ function App() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   useEffect(() => {
-    if (pathname === "/reset-password") {
+    if (
+      pathname === "/reset-password" ||
+      pathname === "/passenger-cases" ||
+      pathname === "/colleague-cases"
+    ) {
       return;
     }
 
@@ -57,6 +62,17 @@ function App() {
         }
       />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/passenger-cases" element={<PassengerCasesPage />} />
+      <Route
+        path="/colleague-cases"
+        element={
+          view === "colleague-dashboard" ? (
+            <ColleagueDashboard onCreateCase={showCaseEntry} />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
       <Route
         path="/case-entry"
         element={<CaseEntryForm isColleagueCaseEntry={role === "COLLEAGUE"} />}
