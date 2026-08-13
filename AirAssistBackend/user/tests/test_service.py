@@ -1,4 +1,6 @@
 from django.test import TestCase
+from django.contrib.auth.hashers import check_password
+
 
 from ..models.users import Role, User
 from ..service.user_service import UserService
@@ -24,7 +26,7 @@ class UserServiceTests(TestCase):
         self.assertEqual(user.firstname, "Jane")
         self.assertEqual(user.lastname, "Doe")
         self.assertEqual(user.email, "jane.doe@example.com")
-        self.assertEqual(user.password, "plain-password")
+        self.assertTrue(check_password("plain-password", user.password))
 
     def test_create_user_raises_error_when_email_already_exists(self):
         # Arrange
