@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import "./ColleagueDashboard.css";
 
 import {
   Alert,
   Box,
-  Button,
   Card,
   CardContent,
   Chip,
@@ -137,7 +135,6 @@ const formatDate = (value: string | null) => {
 };
 
 function ColleagueCaseList() {
-  const navigate = useNavigate();
   const [cases, setCases] = useState<ColleagueCaseListItem[]>([]);
   const [colleagues, setColleagues] = useState<ColleagueOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -434,15 +431,13 @@ function ColleagueCaseList() {
                   {displayedCases.map((caseItem) => (
                     <TableRow key={caseItem.id} hover>
                       <TableCell>
-                        <Button
-                          variant="text"
-                          onClick={() =>
-                            navigate(`/colleague-cases/${caseItem.id}`)
-                          }
-                          sx={{ minWidth: 0, px: 0, textTransform: "none" }}
+                        <Typography
+                          component="span"
+                          variant="button"
+                          color="primary"
                         >
                           #{caseItem.id}
-                        </Button>
+                        </Typography>
                       </TableCell>
                       <TableCell>{formatDate(caseItem.case_date)}</TableCell>
                       <TableCell>{caseItem.flight_number ?? "-"}</TableCell>
@@ -487,20 +482,9 @@ function ColleagueCaseList() {
                   <CardContent>
                     <Stack spacing={1}>
                       <Typography variant="caption" color="text.secondary">
-                        <Button
-                          variant="text"
-                          onClick={() =>
-                            navigate(`/colleague-cases/${caseItem.id}`)
-                          }
-                          sx={{
-                            minWidth: 0,
-                            px: 0,
-                            py: 0,
-                            textTransform: "none",
-                          }}
-                        >
+                        <Typography component="span" variant="button" color="primary">
                           CASE #{caseItem.id}
-                        </Button>
+                        </Typography>
                       </Typography>
                       <Typography variant="body1" sx={{ fontWeight: 600 }}>
                         Flight {caseItem.flight_number ?? "-"}

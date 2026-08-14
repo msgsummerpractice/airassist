@@ -73,12 +73,15 @@ type ColleagueDashboardProps = {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-const statusColorMap: Record<string, "warning" | "success" | "error" | "info"> =
+const statusColorMap: Record<
+  string,
+  "warning" | "success" | "error" | "info" | "primary"
+> =
   {
     NEW: "success",
     VALID: "success",
     INVALID: "error",
-    ASSIGNED: "info",
+    ASSIGNED: "primary",
   };
 
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
