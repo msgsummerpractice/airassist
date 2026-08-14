@@ -9,68 +9,60 @@ from django.template.loader import render_to_string
 from django.db import transaction
 
 
-def send_basic_email(to_email, subject, body):
+def send_template_email(to_email, subject, template_name, context):
+    html_body = render_to_string(template_name, context)
+
     email = EmailMessage(
         subject=subject,
-        body=body,
+        body=html_body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[to_email],
     )
+    email.content_subtype = "html"
+    email.mixed_subtype = "related"
+    logo_path = (
+        Path(settings.BASE_DIR)
+        / "case_email"
+        / "assets"
+        / "logo_placeholder.png"
+    )
+    with logo_path.open("rb") as image_file:
+        logo = MIMEImage(image_file.read())
+
+    logo.add_header("Content-ID", "<logo_placeholder>")
+    logo.add_header(
+        "Content-Disposition",
+        "inline",
+        filename=logo_path.name,
+    )
+    email.attach(logo)
 
     return email.send()
 
 
 def send_user_created_email(user, plain_password):
-    html_body = render_to_string("create_user.html",
-                                 {
-                                     "user_id": user.id,
-                                     "role_id": user.role.id,
-                                     "first_name": user.firstname,
-                                     "last_name": user.lastname,
-                                     "email": user.email,
-                                     "password": plain_password
-                                 },
-                                 )
-
-    email = EmailMessage(
-        subject="Acocunt creation",
-        body=html_body,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[user.email]
+    return send_template_email(
+        to_email=user.email,
+        subject="Account Created",
+        template_name="create_user.html",
+        context={
+            "user_id": user.id,
+            "role_id": user.role.id,
+            "first_name": user.firstname,
+            "last_name": user.lastname,
+            "email": user.email,
+            "password": plain_password,
+        },
     )
-
-    email.content_subtype = "html"
-    logo_path = (Path(settings.BASE_DIR)/"case_email" /
-                 "assets"/"logo_placeholder.png")
-    with open(logo_path, "rb") as image_file:
-        logo = MIMEImage(image_file.read())
-
-    logo.add_header("Content-ID", "<logo_placeholder>")
-
-    logo.add_header(
-        "Content-Disposition",
-        "inline",
-        filename="logo_placeholder.png"
-    )
-    email.attach(logo)
-    return email.send()
 
 
 def send_password_reset_email(user, reset_url):
-    body = f"""
- Hello {user.firstname},
-
- We received a request to reset your AirAssist password.
-
- Use the link below to choose a new password:
- {reset_url}
-
- If you did not request this change, you can ignore this email.
-
- AirAssist Team
- """
-    return send_basic_email(
+    return send_template_email(
         to_email=user.email,
         subject="Password Reset",
-        body=body,
+        template_name="emails/password_reset.html",
+        context={
+            "first_name": user.firstname,
+            "reset_url": reset_url,
+        },
     )
