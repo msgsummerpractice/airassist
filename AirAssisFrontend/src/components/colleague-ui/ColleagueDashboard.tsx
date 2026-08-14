@@ -407,16 +407,16 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                           <TableCell>{formatDate(claim.created_at)}</TableCell>
 
                           <TableCell align="right">
-                            <Tooltip title="Case detail navigation is not available in the current app flow.">
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  className="colleague-dashboard__action-button"
-                                  disabled
-                                >
-                                  <ArrowOutwardOutlinedIcon fontSize="small" />
-                                </IconButton>
-                              </span>
+                            <Tooltip title="Open case details">
+                              <IconButton
+                                size="small"
+                                className="colleague-dashboard__action-button"
+                                onClick={() =>
+                                  navigate(`/colleague-cases/${claim.case_id}`)
+                                }
+                              >
+                                <ArrowOutwardOutlinedIcon fontSize="small" />
+                              </IconButton>
                             </Tooltip>
                           </TableCell>
                         </TableRow>

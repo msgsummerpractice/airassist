@@ -7,6 +7,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import "./App.css";
+import ColleagueCasesPage from "./components/colleague-ui/ColleagueCasesPage";
 import ColleagueDashboard from "./components/colleague-ui/ColleagueDashboard";
 import Login from "./components/login/login";
 import ResetPassword from "./components/login/reset_password";
@@ -23,7 +24,7 @@ function App() {
     if (
       pathname === "/reset-password" ||
       pathname.startsWith("/passenger-cases") ||
-      pathname === "/colleague-cases"
+      pathname.startsWith("/colleague-cases")
     ) {
       return;
     }
@@ -67,11 +68,19 @@ function App() {
       <Route
         path="/colleague-cases"
         element={
-          view === "colleague-dashboard" ? (
-            <ColleagueDashboard onCreateCase={showCaseEntry} />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          <ColleagueCasesPage
+            isAllowed={view === "colleague-dashboard"}
+            onCreateCase={showCaseEntry}
+          />
+        }
+      />
+      <Route
+        path="/colleague-cases/:caseId"
+        element={
+          <ColleagueCasesPage
+            isAllowed={view === "colleague-dashboard"}
+            onCreateCase={showCaseEntry}
+          />
         }
       />
       <Route
