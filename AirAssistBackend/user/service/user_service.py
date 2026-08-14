@@ -18,8 +18,8 @@ from case.models.passengers import Passenger
 
 
 class UserService:
-    @transaction.atomic
     @staticmethod
+    @transaction.atomic
     def create_user(role_name: str, firstname: str, lastname: str, email: str, password: str, must_change_password = False) -> User:
         email = email.lower()
 
@@ -46,8 +46,8 @@ class UserService:
 
         return user
 
-    @transaction.atomic
     @staticmethod
+    @transaction.atomic
     def delete_user_account(requesting_user_id: int, target_user_id: int) -> dict:
         try:
             target_user = User.objects.select_related("role").get(pk=target_user_id)

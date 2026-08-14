@@ -58,7 +58,7 @@ const API_BASE_URL =
 
 const statusColorMap: Record<string, "warning" | "success" | "error" | "info"> =
   {
-    NEW: "warning",
+    NEW: "success",
     VALID: "success",
     INVALID: "error",
     ASSIGNED: "info",
