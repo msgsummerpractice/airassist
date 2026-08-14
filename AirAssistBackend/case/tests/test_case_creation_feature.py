@@ -264,6 +264,12 @@ class CaseCreationViewTests(TestCase):
 
     CREATE_URL = reverse("case-create")
 
+    def setUp(self):
+        from user.enums.roles import Roles
+        from user.models.users import Role
+
+        Role.objects.create(role=Roles.PASSENGER.value)
+
     @patch("case.views.case_creation_view.send_basic_email")
     @patch("case.services.case_service.DistanceService.calculate_orthodromic_distance", return_value=1200.0)
     def test_happy_path_creates_all_records(self, _mock_dist, _mock_email):
@@ -284,7 +290,7 @@ class CaseCreationViewTests(TestCase):
         self.assertEqual(Disruption.objects.filter(case=case).count(), 1)
         self.assertEqual(Flight.objects.filter(case=case).count(), 1)
         self.assertEqual(Passenger.objects.filter(case=case).count(), 1)
-        self.assertEqual(CaseDocument.objects.filter(case=case).count(), 2)
+        self.assertEqual(CaseDocument.objects.filter(case=case).count(), 3)
 
     @patch("case.views.case_creation_view.send_basic_email")
     @patch("case.services.case_service.DistanceService.calculate_orthodromic_distance", return_value=1200.0)
@@ -353,15 +359,16 @@ class CaseCreationViewTests(TestCase):
 
     @patch("case.views.case_creation_view.send_basic_email")
     @patch("case.services.case_service.DistanceService.calculate_orthodromic_distance", return_value=1200.0)
-    def test_two_case_documents_created(self, _mock_dist, _mock_email):
+    def test_case_documents_and_contract_are_created(self, _mock_dist, _mock_email):
         with self.captureOnCommitCallbacks(execute=True):
             self.client.post(self.CREATE_URL, data=_api_payload(), format="multipart")
 
         case = Case.objects.first()
         doc_types = list(CaseDocument.objects.filter(case=case).values_list("document_type", flat=True))
-        self.assertEqual(len(doc_types), 2)
+        self.assertEqual(len(doc_types), 3)
         self.assertIn("BOARDING_PASS", doc_types)
         self.assertIn("PASSPORT", doc_types)
+        self.assertIn("CONTRACT", doc_types)
 
     # --- ineligible disruption ---
 
@@ -417,11 +424,11 @@ class CaseCreationViewTests(TestCase):
     def test_email_failure_does_not_roll_back_case(self, _mock_dist, _mock_email):
         # Email is fired after transaction.on_commit; a failure there must not
         # affect the already-committed case record.
-        with self.captureOnCommitCallbacks(execute=True):
-            try:
+        try:
+            with self.captureOnCommitCallbacks(execute=True):
                 self.client.post(self.CREATE_URL, data=_api_payload(), format="multipart")
-            except Exception:
-                pass
+        except Exception:
+            pass
 
         self.assertEqual(Case.objects.count(), 1)
 
