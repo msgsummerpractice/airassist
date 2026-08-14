@@ -43,11 +43,6 @@ function App() {
       navigate("/admin/users", { replace: true });
       return;
     }
-    if (view === "login") {
-      if (pathname !== "/case-entry") {
-        navigate("/login", { replace: true });
-      }
-    }
   }, [view, navigate, pathname]);
 
   if (view === "resolving") return null;
