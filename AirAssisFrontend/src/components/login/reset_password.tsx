@@ -18,6 +18,12 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
+import {
+  WEAK_PASSWORD_SCORE,
+  MEDIUM_PASSWORD_SCORE,
+  STRONG_PASSWORD_SCORE,
+  VERY_STRONG_PASSWORD_SCORE,
+} from "../../constants/eu261";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -61,7 +67,7 @@ const getPasswordStrength = (value: string) => {
   if (score <= 2) {
     return {
       label: "Weak",
-      score: 25,
+      score: WEAK_PASSWORD_SCORE,
       color: "#ba1a1a",
     };
   }
@@ -69,7 +75,7 @@ const getPasswordStrength = (value: string) => {
   if (score === 3) {
     return {
       label: "Medium",
-      score: 50,
+      score: MEDIUM_PASSWORD_SCORE,
       color: "#c77700",
     };
   }
@@ -77,14 +83,14 @@ const getPasswordStrength = (value: string) => {
   if (score === 4) {
     return {
       label: "Strong",
-      score: 75,
+      score: STRONG_PASSWORD_SCORE,
       color: "#1b6d24",
     };
   }
 
   return {
     label: "Very strong",
-    score: 100,
+    score: VERY_STRONG_PASSWORD_SCORE,
     color: "#003178",
   };
 };
@@ -99,7 +105,9 @@ const ResetPassword = ({
   const resetUid = searchParams.get("uid") ?? "";
   const resetToken = searchParams.get("token") ?? "";
   const hasResetToken = Boolean(resetUid && resetToken);
-  const hasAccessToken = Boolean(localStorage.getItem("airassist_access_token"));
+  const hasAccessToken = Boolean(
+    localStorage.getItem("airassist_access_token"),
+  );
   const isRequestResetMode = !hasResetToken && !hasAccessToken;
 
   const [email, setEmail] = useState("");
@@ -108,12 +116,8 @@ const ResetPassword = ({
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {
-    snackbar,
-    closeSnackbar,
-    showErrorSnackbar,
-    showSuccessSnackbar,
-  } = useAppSnackbar();
+  const { snackbar, closeSnackbar, showErrorSnackbar, showSuccessSnackbar } =
+    useAppSnackbar();
 
   const passwordMismatch =
     confirmPassword.length > 0 && newPassword !== confirmPassword;
@@ -145,15 +149,18 @@ const ResetPassword = ({
       setIsSubmitting(true);
 
       try {
-        const response = await fetch(`${API_BASE_URL}/user/request-password-reset/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        const response = await fetch(
+          `${API_BASE_URL}/user/request-password-reset/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email,
+            }),
           },
-          body: JSON.stringify({
-            email,
-          }),
-        });
+        );
 
         const data = await readJsonSafely<{
           message?: string;
@@ -161,7 +168,9 @@ const ResetPassword = ({
         }>(response);
 
         if (!response.ok) {
-          throw new Error(data?.email?.[0] || data?.message || "Could not send reset email.");
+          throw new Error(
+            data?.email?.[0] || data?.message || "Could not send reset email.",
+          );
         }
 
         showSuccessSnackbar(
@@ -191,6 +200,13 @@ const ResetPassword = ({
       return;
     }
 
+    if (passwordStrength.score < MEDIUM_PASSWORD_SCORE) {
+      showErrorSnackbar(
+        "The new password is too weak. Please choose a stronger password.",
+      );
+      return;
+    }
+
     closeSnackbar();
     setIsSubmitting(true);
 
@@ -210,7 +226,9 @@ const ResetPassword = ({
           }),
         });
       } else {
-        const currentAccessToken = localStorage.getItem("airassist_access_token");
+        const currentAccessToken = localStorage.getItem(
+          "airassist_access_token",
+        );
 
         if (!currentAccessToken) {
           throw new Error(
@@ -288,123 +306,131 @@ const ResetPassword = ({
                 />
               ) : (
                 <>
-              {/* New Password */}
-              <TextField
-                label="New password"
-                type={showNewPassword ? "text" : "password"}
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-                fullWidth
-                required
-                autoComplete="new-password"
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() =>
-                            setShowNewPassword((previous) => !previous)
-                          }
-                          edge="end"
-                          aria-label={
-                            showNewPassword
-                              ? "Hide new password"
-                              : "Show new password"
-                          }
-                        >
-                          {showNewPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-
-              {/* Password Strength */}
-              <Box className="password-strength">
-                <Box className="password-strength-track">
-                  <Box
-                    className="password-strength-fill"
-                    sx={{
-                      width: `${passwordStrength.score}%`,
-                      backgroundColor: passwordStrength.color,
+                  {/* New Password */}
+                  <TextField
+                    label="New password"
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    fullWidth
+                    required
+                    autoComplete="new-password"
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() =>
+                                setShowNewPassword((previous) => !previous)
+                              }
+                              edge="end"
+                              aria-label={
+                                showNewPassword
+                                  ? "Hide new password"
+                                  : "Show new password"
+                              }
+                            >
+                              {showNewPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
-                </Box>
 
-                <Stack
-                  direction="row"
-                  sx={{
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography variant="caption" color="text.secondary">
-                    Password strength
-                  </Typography>
+                  {/* Password Strength */}
+                  <Box className="password-strength">
+                    <Box className="password-strength-track">
+                      <Box
+                        className="password-strength-fill"
+                        sx={{
+                          width: `${passwordStrength.score}%`,
+                          backgroundColor: passwordStrength.color,
+                        }}
+                      />
+                    </Box>
 
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: passwordStrength.color,
+                    <Stack
+                      direction="row"
+                      sx={{
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary">
+                        Password strength
+                      </Typography>
+
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: passwordStrength.color,
+                        }}
+                      >
+                        {passwordStrength.label}
+                      </Typography>
+                    </Stack>
+                  </Box>
+
+                  <Divider />
+
+                  {/* Confirm Password */}
+                  <TextField
+                    label="Confirm new password"
+                    type={showNewPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    fullWidth
+                    required
+                    autoComplete="new-password"
+                    error={passwordMismatch}
+                    color={passwordsMatch ? "success" : "primary"}
+                    helperText={
+                      passwordMismatch
+                        ? "Passwords do not match."
+                        : passwordsMatch
+                          ? "Passwords match."
+                          : " "
+                    }
+                    sx={
+                      passwordsMatch
+                        ? {
+                            "& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline":
+                              {
+                                borderColor: "success.main",
+                              },
+                          }
+                        : undefined
+                    }
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() =>
+                                setShowNewPassword((previous) => !previous)
+                              }
+                              edge="end"
+                              aria-label={
+                                showNewPassword
+                                  ? "Hide new password"
+                                  : "Show new password"
+                              }
+                            >
+                              {showNewPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
                     }}
-                  >
-                    {passwordStrength.label}
-                  </Typography>
-                </Stack>
-              </Box>
-
-              <Divider />
-
-              {/* Confirm Password */}
-              <TextField
-                label="Confirm new password"
-                type={showNewPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                fullWidth
-                required
-                autoComplete="new-password"
-                error={passwordMismatch}
-                color={passwordsMatch ? "success" : "primary"}
-                helperText={
-                  passwordMismatch
-                    ? "Passwords do not match."
-                    : passwordsMatch
-                      ? "Passwords match."
-                      : " "
-                }
-                sx={
-                  passwordsMatch
-                    ? {
-                        "& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline":
-                          {
-                            borderColor: "success.main",
-                          },
-                      }
-                    : undefined
-                }
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() =>
-                            setShowNewPassword((previous) => !previous)
-                          }
-                          edge="end"
-                          aria-label={
-                            showNewPassword
-                              ? "Hide new password"
-                              : "Show new password"
-                          }
-                        >
-                          {showNewPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
+                  />
                 </>
               )}
 
@@ -421,8 +447,10 @@ const ResetPassword = ({
               >
                 {isSubmitting ? (
                   <CircularProgress size={22} color="inherit" />
+                ) : isRequestResetMode ? (
+                  "Send reset link"
                 ) : (
-                  isRequestResetMode ? "Send reset link" : "Update password"
+                  "Update password"
                 )}
               </Button>
 
