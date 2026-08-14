@@ -73,12 +73,15 @@ type ColleagueDashboardProps = {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-const statusColorMap: Record<string, "warning" | "success" | "error" | "info"> =
+const statusColorMap: Record<
+  string,
+  "warning" | "success" | "error" | "info" | "primary"
+> =
   {
     NEW: "success",
     VALID: "success",
     INVALID: "error",
-    ASSIGNED: "info",
+    ASSIGNED: "primary",
   };
 
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
@@ -264,35 +267,10 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                 direction={{ xs: "column", md: "row" }}
                 spacing={2}
                 sx={{
-                  justifyContent: "space-between",
+                  justifyContent: "flex-end",
                   alignItems: { xs: "stretch", md: "center" },
                 }}
               >
-                <Stack
-                  direction="row"
-                  spacing={1.5}
-                  sx={{
-                    alignItems: "center",
-                  }}
-                >
-                  <Box className="colleague-dashboard__section-icon">
-                    <AssignmentTurnedInOutlinedIcon fontSize="small" />
-                  </Box>
-
-                  <Box>
-                    <Typography variant="h2">Case Views</Typography>
-                    <Typography variant="body1" color="text.secondary">
-                      Review the colleague case lists available in the current
-                      app.
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Assigned cases are available below. Additional views for
-                      created but unassigned cases can be added later without
-                      changing the current backend flow.
-                    </Typography>
-                  </Box>
-                </Stack>
-
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                   {!isLoading && !hasError ? (
                     <Chip
@@ -317,14 +295,7 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
 
               <Divider />
 
-              {!isClaimsVisible ? (
-                <Box className="colleague-dashboard__empty-state">
-                  <Typography variant="body1" color="text.secondary">
-                    Use the button above to open the list of cases currently
-                    assigned to you.
-                  </Typography>
-                </Box>
-              ) : isLoading ? (
+              {!isClaimsVisible ? null : isLoading ? (
                 <Stack
                   spacing={1.5}
                   className="colleague-dashboard__table-skeleton"
@@ -352,8 +323,14 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                 </Box>
               ) : (
                 /* Claims Table */
-                <TableContainer>
-                  <Table>
+                <TableContainer
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 2,
+                  }}
+                >
+                  <Table stickyHeader>
                     <TableHead>
                       <TableRow>
                         <TableCell>Claim ID</TableCell>
