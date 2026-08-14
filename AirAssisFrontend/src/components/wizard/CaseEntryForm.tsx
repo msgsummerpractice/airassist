@@ -226,6 +226,10 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
         <PassangersStep
           data={passenger}
           onChange={setPassenger}
+          isLoggedIn={!isGuest}
+          loggedInEmail={
+            !isColleagueCaseEntry && !isGuest ? currentUser.email : ""
+          }
           onBack={() => setStep(2)}
           onFinalize={() => setStep(4)}
         />

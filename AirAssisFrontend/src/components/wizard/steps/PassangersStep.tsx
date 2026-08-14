@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -30,6 +30,8 @@ interface PassengersStepProps {
   onChange: (data: PassengerData) => void;
   onBack?: () => void;
   onFinalize?: () => void;
+  isLoggedIn?: boolean;
+  loggedInEmail?: string;
 }
 
 function PassangersStep({
@@ -37,6 +39,8 @@ function PassangersStep({
   onChange,
   onBack,
   onFinalize,
+  isLoggedIn = false,
+  loggedInEmail = "",
 }: PassengersStepProps) {
   const passengerFields = Object.keys(data) as (keyof PassengerData)[];
   const [touched, setTouched] = useState<
@@ -86,6 +90,12 @@ function PassangersStep({
     startAdornment: <InputAdornment position="start">{icon}</InputAdornment>,
   });
 
+  useEffect(() => {
+    if (isLoggedIn && loggedInEmail && !data.email) {
+      onChange({ ...data, email: loggedInEmail });
+    }
+  }, [data, isLoggedIn, loggedInEmail, onChange]);
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ maxWidth: 1220, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
@@ -104,45 +114,47 @@ function PassangersStep({
                 your representation contract.
               </Typography>
             </Box>
+            {!isLoggedIn && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  alignItems: "center",
+                  textAlign: "center",
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  p: 2,
+                  mb: 4,
+                }}
+              >
+                <AccountCircleOutlined
+                  sx={{ color: "warning.main", fontSize: 32 }}
+                />
 
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                alignItems: "center",
-                textAlign: "center",
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 2,
-                p: 2,
-                mb: 4,
-              }}
-            >
-              <AccountCircleOutlined
-                sx={{ color: "warning.main", fontSize: 32 }}
-              />
-              <Box>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  Existing User?
-                </Typography>
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{ mb: 0.5 }}
-                >
-                  Log in to autofill your details and speed up the process.
-                </Typography>
-                <Link
-                  component={RouterLink}
-                  to="/login"
-                  underline="hover"
-                  sx={{ fontWeight: 600, color: "primary.main" }}
-                >
-                  Log In Securely
-                </Link>
+                <Box>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    Existing User?
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    Log in to autofill your details and speed up the process.
+                  </Typography>
+                  <Link
+                    component={RouterLink}
+                    to="/login"
+                    underline="hover"
+                    sx={{ fontWeight: 600, color: "primary.main" }}
+                  >
+                    Log In Securely
+                  </Link>
+                </Box>
               </Box>
-            </Box>
+            )}
 
             <Box
               sx={{
