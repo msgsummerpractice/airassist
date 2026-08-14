@@ -18,6 +18,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
 } from "@mui/material";
 import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
@@ -52,19 +53,44 @@ type PastCasesViewProps = {
 
 function mapStatusToChipColor(
   status: string,
-): "default" | "primary" | "secondary" | "success" | "warning" | "error" {
+):
+  | "default"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "error"
+  | "info" {
   switch (status) {
     case "NEW":
-      return "success";
+      return "info";
     case "VALID":
       return "success";
     case "ASSIGNED":
       return "primary";
-    case "INVALID":
-      return "error";
     default:
       return "default";
   }
+}
+
+function getStatusChipSx(status: string) {
+  if (status === "NEW") {
+    return {
+      color: "#2563eb",
+      borderColor: "#93c5fd",
+      backgroundColor: "#eff6ff",
+    };
+  }
+
+  if (status === "VALID") {
+    return {
+      color: "#2e7d32",
+      borderColor: "#a5d6a7",
+      backgroundColor: "#f1f8e9",
+    };
+  }
+
+  return undefined;
 }
 
 function PastCasesView({
@@ -167,6 +193,19 @@ function PastCasesView({
     );
   }, [cases, assigneeFilter]);
 
+  const caseIdSortDirection = sorting === "id" ? "asc" : "desc";
+  const statusSortDirection = sorting === "-status" ? "desc" : "asc";
+
+  const handleCaseIdSort = () => {
+    setSorting((previousSorting) => (previousSorting === "-id" ? "id" : "-id"));
+  };
+
+  const handleStatusSort = () => {
+    setSorting((previousSorting) =>
+      previousSorting === "status" ? "-status" : "status",
+    );
+  };
+
   const currentUser = getStoredUserIdentity();
 
   return (
@@ -266,7 +305,6 @@ function PastCasesView({
                 <MenuItem value="NEW">New</MenuItem>
                 <MenuItem value="VALID">Valid</MenuItem>
                 <MenuItem value="ASSIGNED">Assigned</MenuItem>
-                <MenuItem value="INVALID">Invalid</MenuItem>
               </Select>
             </FormControl>
 
@@ -285,23 +323,6 @@ function PastCasesView({
                     {assigneeName}
                   </MenuItem>
                 ))}
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
-              <InputLabel id="past-cases-sort-label">Sort by</InputLabel>
-              <Select
-                labelId="past-cases-sort-label"
-                label="Sort by"
-                value={sorting}
-                onChange={(event) =>
-                  setSorting(event.target.value as SortValue)
-                }
-              >
-                <MenuItem value="-id">Newest first</MenuItem>
-                <MenuItem value="id">Oldest first</MenuItem>
-                <MenuItem value="status">Status (A-Z)</MenuItem>
-                <MenuItem value="-status">Status (Z-A)</MenuItem>
               </Select>
             </FormControl>
           </Stack>
@@ -346,8 +367,8 @@ function PastCasesView({
               sx={{
                 maxHeight: { xs: 520, md: 640 },
                 overflowY: "auto",
-                pr: 1,
-                scrollbarGutter: "stable",
+                px: 1,
+                scrollbarGutter: "stable both-edges",
               }}
             >
               <TableContainer
@@ -361,10 +382,26 @@ function PastCasesView({
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Case ID</TableCell>
+                      <TableCell sortDirection={caseIdSortDirection}>
+                        <TableSortLabel
+                          active={sorting === "id" || sorting === "-id"}
+                          direction={caseIdSortDirection}
+                          onClick={handleCaseIdSort}
+                        >
+                          Case ID
+                        </TableSortLabel>
+                      </TableCell>
                       <TableCell>Flight Number</TableCell>
                       <TableCell>Passenger Name</TableCell>
-                      <TableCell>Status</TableCell>
+                      <TableCell sortDirection={statusSortDirection}>
+                        <TableSortLabel
+                          active={sorting === "status" || sorting === "-status"}
+                          direction={statusSortDirection}
+                          onClick={handleStatusSort}
+                        >
+                          Status
+                        </TableSortLabel>
+                      </TableCell>
                       <TableCell>Assignee</TableCell>
                       <TableCell>Contract</TableCell>
                     </TableRow>
@@ -388,6 +425,7 @@ function PastCasesView({
                             size="small"
                             label={item.status}
                             color={mapStatusToChipColor(item.status)}
+                            sx={getStatusChipSx(item.status)}
                             variant={
                               item.status === "ASSIGNED" ? "filled" : "outlined"
                             }
@@ -470,6 +508,7 @@ function PastCasesView({
                             size="small"
                             label={item.status}
                             color={mapStatusToChipColor(item.status)}
+                            sx={getStatusChipSx(item.status)}
                             variant={
                               item.status === "ASSIGNED" ? "filled" : "outlined"
                             }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./ColleagueDashboard.css";
 
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
@@ -7,6 +8,7 @@ import ListAltOutlinedIcon from "@mui/icons-material/ListAltOutlined";
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -98,6 +100,7 @@ const formatDate = (value: string | null) => {
 };
 
 function ColleagueCaseList() {
+  const navigate = useNavigate();
   const [cases, setCases] = useState<ColleagueCaseListItem[]>([]);
   const [colleagues, setColleagues] = useState<ColleagueOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -257,7 +260,13 @@ function ColleagueCaseList() {
                 {cases.map((caseItem) => (
                   <TableRow key={caseItem.id} hover>
                     <TableCell className="colleague-dashboard__case-id">
-                      #{caseItem.id}
+                      <Button
+                        variant="text"
+                        onClick={() => navigate(`/colleague-cases/${caseItem.id}`)}
+                        sx={{ minWidth: 0, px: 0, textTransform: "none" }}
+                      >
+                        #{caseItem.id}
+                      </Button>
                     </TableCell>
 
                     <TableCell>{formatDate(caseItem.case_date)}</TableCell>
