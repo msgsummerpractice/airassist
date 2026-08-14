@@ -2,7 +2,7 @@ import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import LoginOutlinedIcon from "@mui/icons-material/LoginOutlined";
-import { Box } from "@mui/material";
+import { Box, Link } from "@mui/material";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FlightItineraryStep from "./steps/FlightItineraryStep";
@@ -24,7 +24,12 @@ import GDPRStep from "./steps/GDPRStep";
 import OverviewStep from "./steps/OverviewStep.tsx";
 import WizardProgressBar from "./WizardProgressBar";
 import PortalUserHeader from "../portal/PortalUserHeader";
-import { clearStoredUserIdentity, getStoredUserIdentity } from "../../utils/auth";
+import {
+  clearStoredUserIdentity,
+  getStoredUserIdentity,
+} from "../../utils/auth";
+import { AppSnackbar } from "../utils/app_snackbar";
+import { useAppSnackbar } from "../utils/use_app_snackbar";
 
 const wizardSteps = [
   "Itinerary",
@@ -61,6 +66,7 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
   const [passenger, setPassenger] = useState(EMPTY_PASSENGER);
   const [documents, setDocuments] = useState(EMPTY_DOCUMENT_UPLOAD);
   const [gdpr, setGdpr] = useState(EMPTY_GDPR);
+  const { snackbar, closeSnackbar, showSuccessSnackbar } = useAppSnackbar();
 
   const handleItineraryNext = (confirmed: Itinerary) => {
     setItinerary(confirmed);
@@ -111,6 +117,39 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
     clearStoredUserIdentity();
     navigate("/case-entry", { replace: true });
     window.location.reload();
+  };
+
+  const resetForm = () => {
+    setStep(0);
+    setItinerary(EMPTY_ITINERARY);
+    setLegDetails([]);
+    setDisruption(defaultDisruption);
+    setPassenger(EMPTY_PASSENGER);
+    setDocuments(EMPTY_DOCUMENT_UPLOAD);
+    setGdpr(EMPTY_GDPR);
+  };
+
+  const handleSubmitted = (contractDownloadUrl: string | null) => {
+    showSuccessSnackbar(
+      contractDownloadUrl ? (
+        <>
+          Case submitted successfully.{" "}
+          <Link
+            href={contractDownloadUrl}
+            target="_blank"
+            rel="noreferrer"
+            underline="always"
+            color="inherit"
+            sx={{ fontWeight: 700 }}
+          >
+            Download contract PDF
+          </Link>
+        </>
+      ) : (
+        "Case submitted successfully."
+      ),
+    );
+    resetForm();
   };
 
   return (
@@ -212,7 +251,6 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
         />
       )}
 
-
       {step === 6 && (
         <OverviewStep
           isColleagueCaseEntry={isColleagueCaseEntry}
@@ -223,9 +261,16 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
           documents={documents}
           gdpr={gdpr}
           onBack={() => setStep(5)}
-          onEditDisruption={() => setStep(2)}
+          onSubmitted={handleSubmitted}
         />
       )}
+
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
     </Box>
   );
 }

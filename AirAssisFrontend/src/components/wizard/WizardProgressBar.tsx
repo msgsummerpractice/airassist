@@ -1,5 +1,5 @@
 import CheckIcon from "@mui/icons-material/Check";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 
 interface WizardProgressBarProps {
   steps: string[];
@@ -42,7 +42,6 @@ function WizardStepCircle({ active, completed, value }: WizardStepCircleProps) {
 
 function WizardProgressBar({ steps, activeStep }: WizardProgressBarProps) {
   const clampedStep = Math.min(Math.max(activeStep, 0), steps.length - 1);
-  const currentLabel = steps[clampedStep] ?? "";
 
   return (
     <Box sx={{ maxWidth: 1220, mx: "auto", px: { xs: 2, md: 4 }, pt: 3 }}>
@@ -88,14 +87,6 @@ function WizardProgressBar({ steps, activeStep }: WizardProgressBarProps) {
           );
         })}
       </Box>
-
-      <Typography
-        variant="body1"
-        align="center"
-        sx={{ fontWeight: 600, color: "text.primary" }}
-      >
-        Step {clampedStep + 1} of {steps.length}: {currentLabel}
-      </Typography>
     </Box>
   );
 }

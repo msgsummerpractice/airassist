@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -23,6 +24,9 @@ import {
   validateDisruptionStep,
 } from "../utils/DisruptionValidation";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+
 interface DisruptionStepProps {
   value: DisruptionFormData;
   onChange: (value: DisruptionFormData) => void;
@@ -37,6 +41,74 @@ function DisruptionStep({
   onNext,
 }: DisruptionStepProps) {
   const [submitted, setSubmitted] = useState(false);
+  const [eligibilityStatus, setEligibilityStatus] = useState<
+    "idle" | "checking" | "eligible" | "ineligible" | "error"
+  >("idle");
+  const [eligibilityMessage, setEligibilityMessage] = useState("");
+  const hasIncidentDescription = Boolean(value.incident_description.trim());
+  const eligibilityPayload = JSON.stringify({
+    ...value,
+    incident_description: "Eligibility check",
+  });
+
+  useEffect(() => {
+    const disruptionForEligibility = JSON.parse(
+      eligibilityPayload,
+    ) as DisruptionFormData;
+
+    if (!hasIncidentDescription) {
+      return;
+    }
+
+    if (!isDisruptionStepValid(disruptionForEligibility)) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const checkEligibility = async () => {
+      setEligibilityStatus("checking");
+      setEligibilityMessage("Checking case eligibility...");
+
+      try {
+        const body = new FormData();
+        body.append("disruption", eligibilityPayload);
+        const response = await fetch(
+          `${API_BASE_URL}/api/cases/eligibility-check/`,
+          { method: "POST", body, signal: controller.signal },
+        );
+        const data = (await response.json()) as {
+          is_eligible?: boolean;
+          message?: string;
+          reason?: string | null;
+        };
+
+        if (!response.ok) {
+          throw new Error(data.message ?? "Could not validate eligibility.");
+        }
+
+        const reason = data.reason?.trim();
+        setEligibilityStatus(data.is_eligible ? "eligible" : "ineligible");
+        setEligibilityMessage(
+          data.is_eligible
+            ? (data.message ?? "Case is eligible for submission.")
+            : reason || "The case does not meet the eligibility requirements.",
+        );
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+        setEligibilityStatus("error");
+        setEligibilityMessage(
+          error instanceof Error
+            ? error.message
+            : "Could not validate eligibility.",
+        );
+      }
+    };
+
+    void checkEligibility();
+    return () => controller.abort();
+  }, [eligibilityPayload, hasIncidentDescription]);
 
   function updateField<K extends keyof DisruptionFormData>(
     field: K,
@@ -54,6 +126,10 @@ function DisruptionStep({
     setSubmitted(true);
 
     if (!isDisruptionStepValid(value)) {
+      return;
+    }
+
+    if (eligibilityStatus !== "eligible") {
       return;
     }
 
@@ -354,6 +430,33 @@ function DisruptionStep({
             </Box>
           )}
 
+          {isDisruptionStepValid(value) && eligibilityStatus !== "idle" && (
+            <Alert
+              severity={
+                eligibilityStatus === "eligible"
+                  ? "success"
+                  : eligibilityStatus === "checking"
+                    ? "info"
+                    : "error"
+              }
+              sx={{
+                mt: 3,
+                ...(eligibilityStatus === "eligible" && {
+                  bgcolor: "secondary.main",
+                  color: "secondary.contrastText",
+                  "& .MuiAlert-icon": { color: "secondary.contrastText" },
+                }),
+                ...(eligibilityStatus === "ineligible" && {
+                  bgcolor: "error.main",
+                  color: "error.contrastText",
+                  "& .MuiAlert-icon": { color: "error.contrastText" },
+                }),
+              }}
+            >
+              {eligibilityMessage}
+            </Alert>
+          )}
+
           {value.motive && (
             <>
               <Divider sx={{ my: 3 }} />
@@ -402,6 +505,7 @@ function DisruptionStep({
             variant="contained"
             onClick={handleNext}
             endIcon={<span>→</span>}
+            disabled={eligibilityStatus === "ineligible"}
           >
             Next
           </Button>

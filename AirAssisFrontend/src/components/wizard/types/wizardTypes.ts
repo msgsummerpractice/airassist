@@ -21,12 +21,10 @@ export const EMPTY_PASSENGER: PassengerData = {
 export type PassengerFieldErrors = Partial<Record<keyof PassengerData, string>>;
 
 export interface GDPRData {
-  email: string;
   gdprConsent: boolean;
 }
 
 export const EMPTY_GDPR: GDPRData = {
-  email: "",
   gdprConsent: false,
 };
 

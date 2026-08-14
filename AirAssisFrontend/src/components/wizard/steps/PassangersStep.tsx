@@ -108,8 +108,10 @@ function PassangersStep({
             <Box
               sx={{
                 display: "flex",
+                flexDirection: "column",
                 gap: 2,
-                alignItems: "flex-start",
+                alignItems: "center",
+                textAlign: "center",
                 border: 1,
                 borderColor: "divider",
                 borderRadius: 2,
@@ -118,7 +120,7 @@ function PassangersStep({
               }}
             >
               <AccountCircleOutlined
-                sx={{ color: "warning.main", fontSize: 32, mt: 0.25 }}
+                sx={{ color: "warning.main", fontSize: 32 }}
               />
               <Box>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
