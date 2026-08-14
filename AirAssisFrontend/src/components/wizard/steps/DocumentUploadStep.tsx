@@ -100,7 +100,14 @@ function DocumentUploadStep({
         }}
       >
         <Box
-          sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", mb: 2 }}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            alignItems: "center",
+            textAlign: "center",
+            mb: 2,
+          }}
         >
           {icon}
           <Box>

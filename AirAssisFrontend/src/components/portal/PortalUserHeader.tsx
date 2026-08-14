@@ -45,6 +45,15 @@ function PortalUserHeader({
   authAction,
   logoutAction,
 }: PortalUserHeaderProps) {
+  const navigationActions = [
+    ...(authAction ? [authAction] : []),
+    ...actions,
+  ].sort(
+    (firstAction, secondAction) =>
+      Number(Boolean(secondAction.active)) -
+      Number(Boolean(firstAction.active)),
+  );
+
   return (
     <Box
       sx={{
@@ -67,15 +76,18 @@ function PortalUserHeader({
           py: 2,
         }}
       >
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
+        <Box
           sx={{
-            justifyContent: "space-between",
-            alignItems: { xs: "stretch", md: "center" },
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              lg: "minmax(0, 1fr) auto minmax(0, 1fr)",
+            },
+            gap: 2,
+            alignItems: "center",
           }}
         >
-          <Stack spacing={0.25}>
+          <Stack spacing={0.25} sx={{ justifySelf: { lg: "start" } }}>
             <Typography variant="h2" sx={{ color: "primary.main" }}>
               {title}
             </Typography>
@@ -85,84 +97,44 @@ function PortalUserHeader({
           </Stack>
 
           <Stack
-            direction={{ xs: "column", lg: "row" }}
-            spacing={2}
-            sx={{ alignItems: { xs: "stretch", lg: "center" } }}
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            sx={{
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
           >
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1}
-              sx={{ flexWrap: "wrap" }}
-            >
-              {authAction ? (
-                <Button
-                  key={authAction.label}
-                  variant={authAction.active ? "contained" : "text"}
-                  color={authAction.active ? "primary" : "inherit"}
-                  startIcon={authAction.icon}
-                  onClick={authAction.onClick}
-                  sx={{
-                    minHeight: 42,
-                    px: 2,
-                    justifyContent: "center",
-                    color: authAction.active
-                      ? "primary.contrastText"
-                      : "text.primary",
-                  }}
-                >
-                  {authAction.label}
-                </Button>
-              ) : null}
+            {navigationActions.map((action) => (
+              <Button
+                key={action.label}
+                variant={action.active ? "contained" : "text"}
+                color={action.active ? "primary" : "inherit"}
+                startIcon={action.icon}
+                onClick={action.onClick}
+                sx={{
+                  minHeight: 42,
+                  px: 2,
+                  justifyContent: "center",
+                  color: action.active
+                    ? "primary.contrastText"
+                    : "text.primary",
+                }}
+              >
+                {action.label}
+              </Button>
+            ))}
+          </Stack>
 
-              {actions.map((action) => (
-                <Button
-                  key={action.label}
-                  variant={action.active ? "contained" : "text"}
-                  color={action.active ? "primary" : "inherit"}
-                  startIcon={action.icon}
-                  onClick={action.onClick}
-                  sx={{
-                    minHeight: 42,
-                    px: 2,
-                    justifyContent: "center",
-                    color: action.active
-                      ? "primary.contrastText"
-                      : "text.primary",
-                  }}
-                >
-                  {action.label}
-                </Button>
-              ))}
-
-              {logoutAction ? (
-                <Button
-                  key={logoutAction.label}
-                  variant={logoutAction.active ? "contained" : "text"}
-                  color={logoutAction.active ? "primary" : "inherit"}
-                  startIcon={logoutAction.icon}
-                  onClick={logoutAction.onClick}
-                  sx={{
-                    minHeight: 42,
-                    px: 2,
-                    justifyContent: "center",
-                    color: logoutAction.active
-                      ? "primary.contrastText"
-                      : "text.primary",
-                  }}
-                >
-                  {logoutAction.label}
-                </Button>
-              ) : null}
-            </Stack>
-
-            <Stack
-              direction="row"
-              spacing={1.5}
-              sx={{
-                alignItems: "center",
-                pl: { lg: 1 },
-              }}
-            >
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{
+              justifySelf: { xs: "stretch", lg: "end" },
+              justifyContent: { xs: "space-between", sm: "flex-end" },
+              alignItems: "center",
+            }}
+          >
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
               <Stack spacing={0.15} sx={{ textAlign: "right" }}>
                 <Typography variant="body1" sx={{ fontWeight: 700 }}>
                   {name}
@@ -187,8 +159,28 @@ function PortalUserHeader({
                 )}
               </Avatar>
             </Stack>
+
+            {logoutAction ? (
+              <Button
+                key={logoutAction.label}
+                variant={logoutAction.active ? "contained" : "text"}
+                color={logoutAction.active ? "primary" : "inherit"}
+                startIcon={logoutAction.icon}
+                onClick={logoutAction.onClick}
+                sx={{
+                  minHeight: 42,
+                  px: 2,
+                  justifyContent: "center",
+                  color: logoutAction.active
+                    ? "primary.contrastText"
+                    : "text.primary",
+                }}
+              >
+                {logoutAction.label}
+              </Button>
+            ) : null}
           </Stack>
-        </Stack>
+        </Box>
       </Box>
     </Box>
   );

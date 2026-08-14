@@ -7,14 +7,11 @@ import {
   Checkbox,
   FormControlLabel,
   FormHelperText,
-  InputAdornment,
   Link,
-  TextField,
   Typography,
 } from "@mui/material";
-import { EmailOutlined, ShieldOutlined, ArrowBack } from "@mui/icons-material";
+import { ShieldOutlined, ArrowBack } from "@mui/icons-material";
 import type { GDPRData } from "../types/wizardTypes";
-import { validateGDPREmail } from "../utils/gdprStepValidation";
 
 interface GDPRStepProps {
   data: GDPRData;
@@ -24,10 +21,8 @@ interface GDPRStepProps {
 }
 
 function GDPRStep({ data, onChange, onBack, onNext }: GDPRStepProps) {
-  const [emailTouched, setEmailTouched] = useState(false);
   const [consentTouched, setConsentTouched] = useState(false);
 
-  const emailError = emailTouched ? validateGDPREmail(data.email) : "";
   const consentError =
     consentTouched && !data.gdprConsent ? "You must consent to continue" : "";
 
@@ -35,43 +30,6 @@ function GDPRStep({ data, onChange, onBack, onNext }: GDPRStepProps) {
     <Box sx={{ maxWidth: 1220, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
       <Card>
         <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-          <Box sx={{ textAlign: "left", mb: 3 }}>
-            <Typography variant="h2" sx={{ mb: 1 }}>
-              Where should we send updates?
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ fontSize: "0.875rem" }}
-            >
-              We need your email address to send you the official claim
-              documents and updates on your compensation status.
-            </Typography>
-          </Box>
-
-          <TextField
-            label="Email Address"
-            type="email"
-            placeholder="e.g. name@example.com"
-            value={data.email}
-            onChange={(e) => onChange({ ...data, email: e.target.value })}
-            onBlur={() => setEmailTouched(true)}
-            error={!!emailError}
-            helperText={emailError}
-            required
-            fullWidth
-            sx={{ mb: 3 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailOutlined fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-
           <Box
             sx={{
               border: 1,
@@ -123,8 +81,8 @@ function GDPRStep({ data, onChange, onBack, onNext }: GDPRStepProps) {
               label={
                 <Typography variant="body1">
                   I explicitly consent to the processing of my personal data
-                  (including email) for the purpose of claiming flight
-                  compensation, in accordance with the Privacy Policy.{" "}
+                  for the purpose of claiming flight compensation, in
+                  accordance with the Privacy Policy.{" "}
                   <Typography component="span" color="error">
                     *
                   </Typography>
@@ -164,9 +122,8 @@ function GDPRStep({ data, onChange, onBack, onNext }: GDPRStepProps) {
             variant="contained"
             endIcon={<span>→</span>}
             onClick={() => {
-              setEmailTouched(true);
               setConsentTouched(true);
-              if (!validateGDPREmail(data.email) && data.gdprConsent) {
+              if (data.gdprConsent) {
                 onNext?.();
               }
             }}

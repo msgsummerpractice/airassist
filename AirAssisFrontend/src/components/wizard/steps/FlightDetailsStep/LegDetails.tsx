@@ -17,7 +17,7 @@ import {
   TimePicker,
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import type { Leg } from "../../types/wizardTypes";
 
 interface LegDetailsProps {
@@ -111,6 +111,7 @@ function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
               <DatePicker
                 label="Flight Date"
                 value={leg.flightDate}
+                maxDate={dayjs()}
                 onChange={set("flightDate")}
                 slotProps={{
                   textField: {
@@ -158,6 +159,8 @@ function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
               <TimePicker
                 label="Planned Departure Time"
                 value={leg.plannedDepartureTime}
+                ampm={false}
+                format="HH:mm"
                 onChange={set("plannedDepartureTime")}
                 slotProps={{
                   textField: {
@@ -172,6 +175,8 @@ function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
               <TimePicker
                 label="Planned Arrival Time"
                 value={leg.plannedArrivalTime}
+                ampm={false}
+                format="HH:mm"
                 onChange={set("plannedArrivalTime")}
                 slotProps={{
                   textField: {
@@ -184,10 +189,20 @@ function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
             </Grid>
             {timeWarning && (
               <Grid size={{ xs: 12 }}>
-                <Alert severity="warning">
+                <Alert
+                  severity="warning"
+                  sx={{
+                    textAlign: "center",
+                    "& .MuiAlert-message": { flex: 1 },
+                  }}
+                >
                   Arrival time is before departure time.
                   <FormControlLabel
-                    sx={{ display: "block", mt: 0.5 }}
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      mt: 0.5,
+                    }}
                     control={
                       <Checkbox
                         checked={leg.nextDayArrival}
