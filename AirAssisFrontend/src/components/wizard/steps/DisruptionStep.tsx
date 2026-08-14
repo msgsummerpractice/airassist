@@ -261,7 +261,7 @@ function DisruptionStep({
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 2,
+                gap: 3,
                 p: 2,
                 mt: 3,
                 border: 1,
@@ -271,7 +271,7 @@ function DisruptionStep({
               }}
             >
               {value.motive === "CANCELATION" && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <Typography variant="caption" color="text.primary">
                     How many days before cancellation has the airline informed?
                   </Typography>
@@ -314,9 +314,9 @@ function DisruptionStep({
               {value.motive === "DELAY" && renderDelayTypeSelector()}
 
               {value.motive === "DENIED_BOARDING" && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                   <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
                   >
                     <Typography variant="caption" color="text.primary">
                       Did you give up your seat voluntarily?
@@ -358,7 +358,7 @@ function DisruptionStep({
 
                   {value.denied_boarding_type === "NO" && (
                     <Box
-                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
                     >
                       <Typography variant="caption" color="text.primary">
                         Reason behind denial of boarding
