@@ -1,8 +1,12 @@
-## Change the creation endpoint so that the user receives upon creation an email with his details: 
+# Change the creation endpoint so that the user receives upon creation an email with his details:
 # userId, roleId, firstName, lastName, email and password
 
 from django.conf import settings
 from django.core.mail import EmailMessage
+from pathlib import Path
+from email.mime.image import MIMEImage
+from django.template.loader import render_to_string
+from django.db import transaction
 
 
 def send_basic_email(to_email, subject, body):
@@ -15,27 +19,41 @@ def send_basic_email(to_email, subject, body):
 
     return email.send()
 
-def send_user_created_email(user,plain_password):
-    body = f"""
- Hello {user.firstname},
 
- Your AirAssist account has been crated succesfully.
+def send_user_created_email(user, plain_password):
+    html_body = render_to_string("create_user.html",
+                                 {
+                                     "user_id": user.id,
+                                     "role_id": user.role.id,
+                                     "first_name": user.firstname,
+                                     "last_name": user.lastname,
+                                     "email": user.email,
+                                     "password": plain_password
+                                 },
+                                 )
 
- User ID: {user.id}
- Role ID: {user.role.id}
- First Name: {user.firstname}
- Last Name: {user.lastname}
- Email: {user.email}
- Password: {plain_password}
-
- Have a nice day,
- AirAssist Team
- """
-    return send_basic_email(
-        to_email = user.email,
-        subject = "Account Created",
-        body= body
+    email = EmailMessage(
+        subject="Acocunt creation",
+        body=html_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email]
     )
+
+    email.content_subtype = "html"
+    logo_path = (Path(settings.BASE_DIR)/"case_email" /
+                 "assets"/"logo_placeholder.png")
+    with open(logo_path, "rb") as image_file:
+        logo = MIMEImage(image_file.read())
+
+    logo.add_header("Content-ID", "<logo_placeholder>")
+
+    logo.add_header(
+        "Content-Disposition",
+        "inline",
+        filename="logo_placeholder.png"
+    )
+    email.attach(logo)
+    return email.send()
 
 
 def send_password_reset_email(user, reset_url):
@@ -56,4 +74,3 @@ def send_password_reset_email(user, reset_url):
         subject="Password Reset",
         body=body,
     )
-    
