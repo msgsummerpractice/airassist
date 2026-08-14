@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ColleagueDashboard.css";
-
-import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
-import ListAltOutlinedIcon from "@mui/icons-material/ListAltOutlined";
 
 import {
   Alert,
@@ -12,8 +9,11 @@ import {
   Card,
   CardContent,
   Chip,
-  Divider,
-  Skeleton,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -21,6 +21,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
 } from "@mui/material";
 
@@ -53,16 +54,52 @@ type ColleagueCaseListResponse = {
   data?: ColleagueCaseListItem[];
 };
 
+type SortValue = "-id" | "id" | "status" | "-status";
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-const statusColorMap: Record<string, "warning" | "success" | "error" | "info"> =
-  {
-    NEW: "warning",
-    VALID: "success",
-    INVALID: "error",
-    ASSIGNED: "info",
-  };
+function mapStatusToChipColor(
+  status: string,
+):
+  | "default"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "error"
+  | "info" {
+  switch (status) {
+    case "NEW":
+      return "info";
+    case "VALID":
+      return "success";
+    case "ASSIGNED":
+      return "primary";
+    default:
+      return "default";
+  }
+}
+
+function getStatusChipSx(status: string) {
+  if (status === "NEW") {
+    return {
+      color: "#2563eb",
+      borderColor: "#93c5fd",
+      backgroundColor: "#eff6ff",
+    };
+  }
+
+  if (status === "VALID") {
+    return {
+      color: "#2e7d32",
+      borderColor: "#a5d6a7",
+      backgroundColor: "#f1f8e9",
+    };
+  }
+
+  return undefined;
+}
 
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   const responseText = await response.text();
@@ -106,6 +143,9 @@ function ColleagueCaseList() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [assigneeFilter, setAssigneeFilter] = useState("ALL");
+  const [sorting, setSorting] = useState<SortValue>("-id");
 
   useEffect(() => {
     let isActive = true;
@@ -182,138 +222,331 @@ function ColleagueCaseList() {
     };
   }, [reloadKey]);
 
+  const assigneeOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          cases
+            .map((caseItem) => caseItem.assigned_colleague_name)
+            .filter((assigneeName): assigneeName is string => Boolean(assigneeName)),
+        ),
+      ).sort((first, second) => first.localeCompare(second)),
+    [cases],
+  );
+
+  const displayedCases = useMemo(() => {
+    const filteredCases = cases.filter((caseItem) => {
+      const matchesStatus =
+        statusFilter === "ALL" || caseItem.status === statusFilter;
+      const matchesAssignee =
+        assigneeFilter === "ALL" ||
+        (assigneeFilter === "UNASSIGNED" &&
+          !caseItem.assigned_colleague_name) ||
+        caseItem.assigned_colleague_name === assigneeFilter;
+
+      return matchesStatus && matchesAssignee;
+    });
+
+    return [...filteredCases].sort((first, second) => {
+      if (sorting === "id") {
+        return first.id - second.id;
+      }
+
+      if (sorting === "-id") {
+        return second.id - first.id;
+      }
+
+      const statusComparison = first.status.localeCompare(second.status);
+
+      return sorting === "status" ? statusComparison : -statusComparison;
+    });
+  }, [assigneeFilter, cases, sorting, statusFilter]);
+
+  const caseIdSortDirection = sorting === "id" ? "asc" : "desc";
+  const statusSortDirection = sorting === "status" ? "asc" : "desc";
+
+  const handleCaseIdSort = () => {
+    setSorting((current) => (current === "-id" ? "id" : "-id"));
+  };
+
+  const handleStatusSort = () => {
+    setSorting((current) => (current === "status" ? "-status" : "status"));
+  };
+
   return (
-    <Card elevation={0} className="colleague-dashboard__claims-card">
-      <CardContent className="colleague-dashboard__claims-content">
-        <Stack
-          direction="row"
-          spacing={2}
+    <Card
+      elevation={1}
+      sx={{
+        maxWidth: 1220,
+        width: "100%",
+        mx: "auto",
+        border: "none",
+        overflow: "hidden",
+      }}
+    >
+      <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+        <Box
           sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
+            position: "relative",
+            mb: 3,
+            pb: { xs: 1, md: 0 },
           }}
         >
-          <Stack
-            direction="row"
-            spacing={1.5}
+          <Box
             sx={{
-              alignItems: "center",
+              width: "100%",
+              textAlign: "center",
+              px: { xs: 0, md: 10 },
             }}
           >
-            <Box className="colleague-dashboard__section-icon">
-              <ListAltOutlinedIcon fontSize="small" />
-            </Box>
+            <Typography variant="h2" sx={{ mt: 0.5 }}>
+              All Cases
+            </Typography>
+          </Box>
+        </Box>
 
-            <Box>
-              <Typography variant="body1" color="text.secondary">
-                All cases available to colleagues.
-              </Typography>
-            </Box>
-          </Stack>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
+            mb: 3,
+            width: "100%",
+            justifyContent: "center",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
+            <InputLabel id="colleague-cases-status-label">Status</InputLabel>
+            <Select
+              labelId="colleague-cases-status-label"
+              label="Status"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <MenuItem value="ALL">All</MenuItem>
+              <MenuItem value="NEW">New</MenuItem>
+              <MenuItem value="VALID">Valid</MenuItem>
+              <MenuItem value="ASSIGNED">Assigned</MenuItem>
+            </Select>
+          </FormControl>
 
-          {!isLoading && !hasError ? (
-            <Chip
-              icon={<DashboardOutlinedIcon />}
-              label={`${cases.length} cases`}
-              color="primary"
-              variant="outlined"
-            />
-          ) : null}
+          <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
+            <InputLabel id="colleague-cases-assignee-label">Assignee</InputLabel>
+            <Select
+              labelId="colleague-cases-assignee-label"
+              label="Assignee"
+              value={assigneeFilter}
+              onChange={(event) => setAssigneeFilter(event.target.value)}
+            >
+              <MenuItem value="ALL">All</MenuItem>
+              <MenuItem value="UNASSIGNED">Unassigned</MenuItem>
+              {assigneeOptions.map((assigneeName) => (
+                <MenuItem key={assigneeName} value={assigneeName}>
+                  {assigneeName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Stack>
 
-        <Divider />
-
         {isLoading ? (
-          <Stack spacing={1.5} className="colleague-dashboard__table-skeleton">
-            <Skeleton variant="rounded" height={46} />
-            <Skeleton variant="rounded" height={46} />
-            <Skeleton variant="rounded" height={46} />
-            <Skeleton variant="rounded" height={46} />
-          </Stack>
+          <Box
+            sx={{
+              py: 8,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <CircularProgress size={28} />
+            <Typography variant="body1" color="text.secondary">
+              Loading colleague cases...
+            </Typography>
+          </Box>
         ) : hasError ? (
-          <Alert severity="error" variant="outlined">
+          <Alert severity="error" sx={{ mb: 3 }}>
             We could not load the colleague case list right now.
           </Alert>
-        ) : cases.length === 0 ? (
-          <Box className="colleague-dashboard__empty-state">
+        ) : displayedCases.length === 0 ? (
+          <Box
+            sx={{
+              py: 6,
+              borderRadius: 2,
+              border: "1px dashed",
+              borderColor: "divider",
+              textAlign: "center",
+            }}
+          >
             <Typography variant="body1" color="text.secondary">
-              No cases are available yet.
+              No cases found for current filters.
             </Typography>
           </Box>
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Case Date</TableCell>
-                  <TableCell>Flight Number</TableCell>
-                  <TableCell>Flight Date</TableCell>
-                  <TableCell>Passenger Name</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Assigned Colleague</TableCell>
-                  <TableCell align="right">Action</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {cases.map((caseItem) => (
-                  <TableRow key={caseItem.id} hover>
-                    <TableCell className="colleague-dashboard__case-id">
-                      <Button
-                        variant="text"
-                        onClick={() => navigate(`/colleague-cases/${caseItem.id}`)}
-                        sx={{ minWidth: 0, px: 0, textTransform: "none" }}
+          <Box
+            sx={{
+              maxHeight: { xs: 520, md: 640 },
+              overflowY: "auto",
+              px: 1,
+              scrollbarGutter: "stable both-edges",
+            }}
+          >
+            <TableContainer
+              sx={{
+                display: { xs: "none", md: "block" },
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 2,
+              }}
+            >
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sortDirection={caseIdSortDirection}>
+                      <TableSortLabel
+                        active={sorting === "id" || sorting === "-id"}
+                        direction={caseIdSortDirection}
+                        onClick={handleCaseIdSort}
                       >
-                        #{caseItem.id}
-                      </Button>
+                        Case ID
+                      </TableSortLabel>
                     </TableCell>
-
-                    <TableCell>{formatDate(caseItem.case_date)}</TableCell>
-
-                    <TableCell>
-                      {caseItem.flight_number || "Not available"}
-                    </TableCell>
-
-                    <TableCell>{formatDate(caseItem.flight_date)}</TableCell>
-
-                    <TableCell>
-                      <Typography
-                        variant="body1"
-                        className="colleague-dashboard__passenger-name"
+                    <TableCell>Case Date</TableCell>
+                    <TableCell>Flight Number</TableCell>
+                    <TableCell>Flight Date</TableCell>
+                    <TableCell>Passenger Name</TableCell>
+                    <TableCell sortDirection={statusSortDirection}>
+                      <TableSortLabel
+                        active={sorting === "status" || sorting === "-status"}
+                        direction={statusSortDirection}
+                        onClick={handleStatusSort}
                       >
-                        {caseItem.passenger_name || "Passenger unavailable"}
-                      </Typography>
+                        Status
+                      </TableSortLabel>
                     </TableCell>
-
-                    <TableCell>
-                      <Chip
-                        label={formatStatusLabel(caseItem.status)}
-                        color={statusColorMap[caseItem.status] ?? "info"}
-                        size="small"
-                      />
-                    </TableCell>
-
-                    <TableCell>
-                      {caseItem.assigned_colleague_name || "Unassigned"}
-                    </TableCell>
-
-                    <TableCell align="right">
-                      <AssignColleagueButton
-                        caseId={caseItem.id}
-                        caseStatus={caseItem.status}
-                        colleagues={colleagues}
-                        assignedColleagueId={caseItem.assigned_colleague_id}
-                        onAssigned={() => {
-                          setReloadKey((current) => current + 1);
-                        }}
-                      />
-                    </TableCell>
+                    <TableCell>Assignee</TableCell>
+                    <TableCell>Action</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+
+                <TableBody>
+                  {displayedCases.map((caseItem) => (
+                    <TableRow key={caseItem.id} hover>
+                      <TableCell>
+                        <Button
+                          variant="text"
+                          onClick={() =>
+                            navigate(`/colleague-cases/${caseItem.id}`)
+                          }
+                          sx={{ minWidth: 0, px: 0, textTransform: "none" }}
+                        >
+                          #{caseItem.id}
+                        </Button>
+                      </TableCell>
+                      <TableCell>{formatDate(caseItem.case_date)}</TableCell>
+                      <TableCell>{caseItem.flight_number ?? "-"}</TableCell>
+                      <TableCell>{formatDate(caseItem.flight_date)}</TableCell>
+                      <TableCell>{caseItem.passenger_name ?? "-"}</TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={formatStatusLabel(caseItem.status)}
+                          color={mapStatusToChipColor(caseItem.status)}
+                          sx={getStatusChipSx(caseItem.status)}
+                          variant={
+                            caseItem.status === "ASSIGNED"
+                              ? "filled"
+                              : "outlined"
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {caseItem.assigned_colleague_name ?? "Unassigned"}
+                      </TableCell>
+                      <TableCell>
+                        <AssignColleagueButton
+                          caseId={caseItem.id}
+                          caseStatus={caseItem.status}
+                          colleagues={colleagues}
+                          assignedColleagueId={caseItem.assigned_colleague_id}
+                          onAssigned={() => {
+                            setReloadKey((current) => current + 1);
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Stack spacing={1.5} sx={{ display: { xs: "flex", md: "none" } }}>
+              {displayedCases.map((caseItem) => (
+                <Card key={caseItem.id} variant="outlined">
+                  <CardContent>
+                    <Stack spacing={1}>
+                      <Typography variant="caption" color="text.secondary">
+                        <Button
+                          variant="text"
+                          onClick={() =>
+                            navigate(`/colleague-cases/${caseItem.id}`)
+                          }
+                          sx={{
+                            minWidth: 0,
+                            px: 0,
+                            py: 0,
+                            textTransform: "none",
+                          }}
+                        >
+                          CASE #{caseItem.id}
+                        </Button>
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                        Flight {caseItem.flight_number ?? "-"}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">
+                        Case date: {formatDate(caseItem.case_date)}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">
+                        Flight date: {formatDate(caseItem.flight_date)}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">
+                        Passenger: {caseItem.passenger_name ?? "-"}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">
+                        Assignee: {caseItem.assigned_colleague_name ?? "Unassigned"}
+                      </Typography>
+                      <Box>
+                        <Chip
+                          size="small"
+                          label={formatStatusLabel(caseItem.status)}
+                          color={mapStatusToChipColor(caseItem.status)}
+                          sx={getStatusChipSx(caseItem.status)}
+                          variant={
+                            caseItem.status === "ASSIGNED"
+                              ? "filled"
+                              : "outlined"
+                          }
+                        />
+                      </Box>
+                      <Box>
+                        <AssignColleagueButton
+                          caseId={caseItem.id}
+                          caseStatus={caseItem.status}
+                          colleagues={colleagues}
+                          assignedColleagueId={caseItem.assigned_colleague_id}
+                          onAssigned={() => {
+                            setReloadKey((current) => current + 1);
+                          }}
+                        />
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              ))}
+            </Stack>
+          </Box>
         )}
       </CardContent>
     </Card>
