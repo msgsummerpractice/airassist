@@ -16,11 +16,10 @@ from django.db import transaction
 from case.models.passengers import Passenger
 
 
-
 class UserService:
     @transaction.atomic
     @staticmethod
-    def create_user(role_name: str, firstname: str, lastname: str, email: str, password: str, must_change_password = False) -> User:
+    def create_user(role_name: str, firstname: str, lastname: str, email: str, password: str, must_change_password=False) -> User:
         email = email.lower()
 
         if User.objects.filter(email=email).exists():
@@ -42,7 +41,8 @@ class UserService:
 
         user.must_change_password = must_change_password
         user.save(update_fields=["must_change_password"])
-        send_user_created_email(user,password)
+
+        send_user_created_email(user, password)
 
         return user
 
@@ -50,40 +50,41 @@ class UserService:
     @staticmethod
     def delete_user_account(requesting_user_id: int, target_user_id: int) -> dict:
         try:
-            target_user = User.objects.select_related("role").get(pk=target_user_id)
+            target_user = User.objects.select_related(
+                "role").get(pk=target_user_id)
         except User.DoesNotExist:
             raise ValueError("User not found.")
-    
+
         if requesting_user_id == target_user.id:
             raise ValueError("You cannot delete your own account.")
-    
+
         role_name = getattr(target_user.role, "role", None)
-    
+
         if role_name == Roles.SYSTEM_ADMIN.value:
             raise ValueError("System admin accounts cannot be deleted.")
-    
+
         if role_name not in {Roles.COLLEAGUE.value, Roles.PASSENGER.value}:
-            raise ValueError("Only colleague and passenger accounts can be deleted.")
-    
+            raise ValueError(
+                "Only colleague and passenger accounts can be deleted.")
+
         deleted_passenger_rows = 0
         if role_name == Roles.PASSENGER.value:
-            passenger_qs = Passenger.objects.filter(email__iexact=target_user.email)
+            passenger_qs = Passenger.objects.filter(
+                email__iexact=target_user.email)
             deleted_passenger_rows = passenger_qs.count()
             passenger_qs.delete()
-    
+
         deleted_user_id = target_user.id
         deleted_user_email = target_user.email
         deleted_user_role = role_name
         target_user.delete()
-    
+
         return {
             "deleted_user_id": deleted_user_id,
             "deleted_user_email": deleted_user_email,
             "deleted_user_role": deleted_user_role,
             "deleted_case_passenger_rows": deleted_passenger_rows,
         }
-
-            
 
     @staticmethod
     def get_user_role(user_id):
@@ -144,8 +145,6 @@ class UserService:
 
         return UserService.change_password(user, new_password)
 
-    
-
     @staticmethod
     def get_users_for_admin_list():
         passenger_case_subq = (
@@ -168,7 +167,8 @@ class UserService:
                     When(
                         role__role=Roles.PASSENGER.value,
                         then=Coalesce(
-                            Subquery(passenger_case_subq, output_field=IntegerField()),
+                            Subquery(passenger_case_subq,
+                                     output_field=IntegerField()),
                             0,
                         ),
                     ),
