@@ -356,7 +356,7 @@ function ColleagueCaseDetailsPage({
             label: "See Cases",
             active: true,
             icon: <AssignmentTurnedInOutlined fontSize="small" />,
-            onClick: () => navigate("/colleague-cases"),
+            onClick: () => navigate("/colleague-dashboard"),
           },
           {
             label: "Create Case",

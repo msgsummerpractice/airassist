@@ -46,7 +46,7 @@ function ColleagueCasesPage({ isAllowed }: ColleagueCasesPageProps) {
         caseId={selectedCaseId}
         onLogout={handleLogout}
         onUnauthorized={() => setIsAuthenticated(false)}
-        onBack={() => navigate("/colleague-cases")}
+        onBack={() => navigate("/colleague-dashboard")}
       />
     );
   }
