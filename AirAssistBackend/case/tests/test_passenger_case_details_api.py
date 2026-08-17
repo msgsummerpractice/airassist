@@ -39,7 +39,7 @@ class PassengerCaseDetailsApiTests(APITestCase):
         )
 
         self.owned_case = Case.objects.create(
-            status=CaseState.ASSIGNED.value,
+            status=CaseState.IN_REVIEW.value,
             gdpr_consent=True,
             assigned_colleague=self.colleague_user,
         )
@@ -93,7 +93,7 @@ class PassengerCaseDetailsApiTests(APITestCase):
         )
 
         self.other_case = Case.objects.create(
-            status=CaseState.NEW.value,
+            status=CaseState.PENDING.value,
             gdpr_consent=True,
         )
         Passenger.objects.create(
@@ -138,7 +138,7 @@ class PassengerCaseDetailsApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], self.owned_case.id)
-        self.assertEqual(response.data["status"], CaseState.ASSIGNED.value)
+        self.assertEqual(response.data["status"], CaseState.IN_REVIEW.value)
         self.assertEqual(response.data["flight"]["flight_number"], "RO123")
         self.assertEqual(response.data["flight"]["reservation_number"], "OWN123")
         self.assertEqual(len(response.data["connecting_flights"]), 1)
@@ -150,6 +150,11 @@ class PassengerCaseDetailsApiTests(APITestCase):
         self.assertEqual(response.data["passenger"]["email"], "alice@example.com")
         self.assertEqual(len(response.data["documents"]), 1)
         self.assertEqual(response.data["documents"][0]["filename"], "boarding-pass.pdf")
+        self.assertIn("download_url", response.data["documents"][0])
+        self.assertIn(
+            f"/api/cases/me/{self.owned_case.id}/documents/",
+            response.data["documents"][0]["download_url"],
+        )
 
     def test_returns_not_found_for_other_passenger_case(self):
         self.client.force_authenticate(user=self.passenger_user)

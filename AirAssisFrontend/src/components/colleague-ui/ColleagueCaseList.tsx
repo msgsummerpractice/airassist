@@ -20,6 +20,7 @@ import AssignColleagueButton, {
   type ColleagueOption,
 } from "./AssignColleagueButton";
 import { fetchWithAuth } from "../../utils/auth";
+import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import CaseListFilters from "../cases/shared/list/CaseListFilters";
 import CaseStatusChip from "../cases/shared/list/CaseStatusChip";
 import {
@@ -70,6 +71,24 @@ const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   } catch {
     return null;
   }
+};
+
+const formatDate = (value: string | null) => {
+  if (!value) {
+    return "Not available";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 };
 
 function ColleagueCaseList() {
@@ -244,6 +263,54 @@ function ColleagueCaseList() {
           </Box>
         </Box>
 
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
+            mb: 3,
+            width: "100%",
+            justifyContent: "center",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
+            <InputLabel id="colleague-cases-status-label">Status</InputLabel>
+            <Select
+              labelId="colleague-cases-status-label"
+              label="Status"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <MenuItem value="ALL">All</MenuItem>
+              <MenuItem value="PENDING">Pending</MenuItem>
+              <MenuItem value="IN_REVIEW">In review</MenuItem>
+              <MenuItem value="ELIGIBLE">Eligible</MenuItem>
+              <MenuItem value="NON_ELIGIBLE">Non-eligible</MenuItem>
+              <MenuItem value="AWAITING_DOCUMENTS">Awaiting documents</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
+            <InputLabel id="colleague-cases-assignee-label">
+              Assignee
+            </InputLabel>
+            <Select
+              labelId="colleague-cases-assignee-label"
+              label="Assignee"
+              value={assigneeFilter}
+              onChange={(event) => setAssigneeFilter(event.target.value)}
+            >
+              <MenuItem value="ALL">All</MenuItem>
+              <MenuItem value="UNASSIGNED">Unassigned</MenuItem>
+              {assigneeOptions.map((assigneeName) => (
+                <MenuItem key={assigneeName} value={assigneeName}>
+                  {assigneeName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
         <CaseListFilters
           statusFilter={statusFilter}
           assigneeFilter={assigneeFilter}
@@ -328,7 +395,17 @@ function ColleagueCaseList() {
                       </TableCell>
                       <TableCell>{caseItem.passenger_name ?? "-"}</TableCell>
                       <TableCell>
-                        <CaseStatusChip status={caseItem.status} />
+                        <Chip
+                          size="small"
+                          label={
+                            getCaseStatusPresentation(caseItem.status).label
+                          }
+                          color={
+                            getCaseStatusPresentation(caseItem.status).color
+                          }
+                          sx={getCaseStatusPresentation(caseItem.status).sx}
+                          variant="outlined"
+                        />
                       </TableCell>
                       <TableCell>
                         {caseItem.assigned_colleague_name ?? "Unassigned"}
@@ -381,7 +458,17 @@ function ColleagueCaseList() {
                         {caseItem.assigned_colleague_name ?? "Unassigned"}
                       </Typography>
                       <Box>
-                        <CaseStatusChip status={caseItem.status} />
+                        <Chip
+                          size="small"
+                          label={
+                            getCaseStatusPresentation(caseItem.status).label
+                          }
+                          color={
+                            getCaseStatusPresentation(caseItem.status).color
+                          }
+                          sx={getCaseStatusPresentation(caseItem.status).sx}
+                          variant="outlined"
+                        />
                       </Box>
                       <Box>
                         <AssignColleagueButton

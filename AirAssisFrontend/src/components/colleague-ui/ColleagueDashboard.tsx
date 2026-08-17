@@ -39,6 +39,7 @@ import {
   clearStoredUserIdentity,
   setStoredUserIdentity,
 } from "../../utils/auth";
+import { getCaseStatusPresentation } from "../../utils/caseStatus";
 
 type DashboardColleague = {
   id: number;
@@ -73,17 +74,6 @@ type ColleagueDashboardProps = {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-const statusColorMap: Record<
-  string,
-  "warning" | "success" | "error" | "info" | "primary"
-> =
-  {
-    NEW: "success",
-    VALID: "success",
-    INVALID: "error",
-    ASSIGNED: "primary",
-  };
-
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   const responseText = await response.text();
 
@@ -97,9 +87,6 @@ const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
     return null;
   }
 };
-
-const formatStatusLabel = (status: string) =>
-  status.charAt(0) + status.slice(1).toLowerCase();
 
 const formatDate = (value: string) => {
   const date = new Date(value);
@@ -375,9 +362,15 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
 
                           <TableCell>
                             <Chip
-                              label={formatStatusLabel(claim.status)}
-                              color={statusColorMap[claim.status] ?? "info"}
+                              label={
+                                getCaseStatusPresentation(claim.status).label
+                              }
+                              color={
+                                getCaseStatusPresentation(claim.status).color
+                              }
                               size="small"
+                              sx={getCaseStatusPresentation(claim.status).sx}
+                              variant="outlined"
                             />
                           </TableCell>
 

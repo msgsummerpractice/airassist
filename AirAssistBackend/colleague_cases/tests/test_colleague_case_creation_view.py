@@ -108,7 +108,7 @@ class ColleagueCaseCreationViewTests(TestCase):
         case = mock_serializer_class.return_value.save.return_value
 
         case.id = 123
-        case.status = "NEW"
+        case.status = "PENDING"
         case.created_at = datetime(2026, 8, 14, 10, 30)
 
         passenger = case.passengers.first.return_value
@@ -139,7 +139,7 @@ class ColleagueCaseCreationViewTests(TestCase):
         )
 
         self.assertEqual(response.data["data"]["case_id"], 123)
-        self.assertEqual(response.data["data"]["status"], "NEW")
+        self.assertEqual(response.data["data"]["status"], "PENDING")
         self.assertEqual(
             response.data["data"]["created_at"],
             case.created_at,
