@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 
+import ColleagueCaseList from "./ColleagueCaseList";
 import ColleagueCaseDetailsPage from "./ColleagueCaseDetailsPage";
-import ColleagueDashboard from "./ColleagueDashboard";
 import { clearStoredUserIdentity } from "../../utils/auth";
 
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
@@ -13,10 +13,7 @@ type ColleagueCasesPageProps = {
   onCreateCase: () => void;
 };
 
-function ColleagueCasesPage({
-  isAllowed,
-  onCreateCase,
-}: ColleagueCasesPageProps) {
+function ColleagueCasesPage({ isAllowed }: ColleagueCasesPageProps) {
   const navigate = useNavigate();
   const { caseId } = useParams();
 
@@ -54,7 +51,7 @@ function ColleagueCasesPage({
     );
   }
 
-  return <ColleagueDashboard onCreateCase={onCreateCase} />;
+  return <ColleagueCaseList />;
 }
 
 export default ColleagueCasesPage;

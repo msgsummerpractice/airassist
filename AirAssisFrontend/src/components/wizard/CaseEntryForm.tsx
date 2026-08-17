@@ -54,9 +54,13 @@ const defaultDisruption: DisruptionFormData = {
 
 type CaseEntryFormProps = {
   isColleagueCaseEntry?: boolean;
+  onShowColleagueDashboard?: () => void;
 };
 
-function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
+function CaseEntryForm({
+  isColleagueCaseEntry = false,
+  onShowColleagueDashboard,
+}: CaseEntryFormProps) {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [itinerary, setItinerary] = useState<Itinerary>(EMPTY_ITINERARY);
@@ -105,9 +109,6 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
   };
 
   const currentUser = useMemo(() => getStoredUserIdentity(), []);
-  const casesRoute = isColleagueCaseEntry
-    ? "/colleague-cases"
-    : "/passenger-cases";
   const casesLabel = isColleagueCaseEntry ? "See Cases" : "My Cases";
   const isGuest = currentUser.isGuest;
 
@@ -186,7 +187,14 @@ function CaseEntryForm({ isColleagueCaseEntry = false }: CaseEntryFormProps) {
           {
             label: casesLabel,
             icon: <AssignmentTurnedInOutlinedIcon fontSize="small" />,
-            onClick: () => navigate(casesRoute),
+            onClick: () => {
+              if (isColleagueCaseEntry) {
+                onShowColleagueDashboard?.();
+                return;
+              }
+
+              navigate("/passenger-cases");
+            },
           },
           {
             label: "New Claim",

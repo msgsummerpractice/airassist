@@ -17,7 +17,8 @@ import CaseEntryForm from "./components/wizard/CaseEntryForm";
 import AdminUsersPage from "./components/admin/AdminUsersPage";
 
 function App() {
-  const { view, role, resolveView, showCaseEntry } = useAuthView();
+  const { view, role, resolveView, showCaseEntry, showColleagueDashboard } =
+    useAuthView();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   useEffect(() => {
@@ -64,7 +65,7 @@ function App() {
         path="/colleague-cases"
         element={
           <ColleagueCasesPage
-            isAllowed={view === "colleague-dashboard"}
+            isAllowed={role === "COLLEAGUE"}
             onCreateCase={showCaseEntry}
           />
         }
@@ -73,19 +74,24 @@ function App() {
         path="/colleague-cases/:caseId"
         element={
           <ColleagueCasesPage
-            isAllowed={view === "colleague-dashboard"}
+            isAllowed={role === "COLLEAGUE"}
             onCreateCase={showCaseEntry}
           />
         }
       />
       <Route
         path="/case-entry"
-        element={<CaseEntryForm isColleagueCaseEntry={role === "COLLEAGUE"} />}
+        element={
+          <CaseEntryForm
+            isColleagueCaseEntry={role === "COLLEAGUE"}
+            onShowColleagueDashboard={showColleagueDashboard}
+          />
+        }
       />
       <Route
         path="/colleague-dashboard"
         element={
-          view === "colleague-dashboard" ? (
+          role === "COLLEAGUE" ? (
             <ColleagueDashboard onCreateCase={showCaseEntry} />
           ) : (
             <Navigate to="/login" replace />
