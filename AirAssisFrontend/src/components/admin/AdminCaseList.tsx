@@ -165,7 +165,9 @@ function AdminCaseList() {
                 <TableHead>
                   <TableRow>
                     <TableCell
-                      sortDirection={sort.field === "id" ? sort.direction : false}
+                      sortDirection={
+                        sort.field === "id" ? sort.direction : false
+                      }
                     >
                       <TableSortLabel
                         active={sort.field === "id"}
@@ -199,7 +201,9 @@ function AdminCaseList() {
                     >
                       <TableSortLabel
                         active={sort.field === "status"}
-                        direction={sort.field === "status" ? sort.direction : "asc"}
+                        direction={
+                          sort.field === "status" ? sort.direction : "asc"
+                        }
                         onClick={() => handleSort("status")}
                       >
                         Status
