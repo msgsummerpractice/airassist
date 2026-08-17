@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import {
@@ -14,6 +14,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -34,6 +35,13 @@ import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import DeleteCaseDialog from "./DeleteCaseDialog";
 
+type SortField = "id" | "flight_date" | "status";
+type SortDirection = "asc" | "desc";
+type SortState = {
+  field: SortField;
+  direction: SortDirection;
+};
+
 function AdminCaseList() {
   const [cases, setCases] = useState<AdminCaseListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +50,10 @@ function AdminCaseList() {
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sort, setSort] = useState<SortState>({
+    field: "id",
+    direction: "desc",
+  });
   const { snackbar, closeSnackbar, showErrorSnackbar, showSuccessSnackbar } =
     useAppSnackbar();
 
@@ -91,6 +103,34 @@ function AdminCaseList() {
 
   const caseDetailsPath = (caseId: number) => `/admin/cases/${caseId}`;
 
+  const sortedCases = useMemo(() => {
+    return [...cases].sort((firstCase, secondCase) => {
+      let comparison: number;
+
+      if (sort.field === "id") {
+        comparison = firstCase.id - secondCase.id;
+      } else if (sort.field === "flight_date") {
+        comparison = (firstCase.flight_date ?? "").localeCompare(
+          secondCase.flight_date ?? "",
+        );
+      } else {
+        comparison = firstCase.status.localeCompare(secondCase.status);
+      }
+
+      return sort.direction === "asc" ? comparison : -comparison;
+    });
+  }, [cases, sort]);
+
+  const handleSort = (field: SortField) => {
+    setSort((currentSort) => ({
+      field,
+      direction:
+        currentSort.field === field && currentSort.direction === "asc"
+          ? "desc"
+          : "asc",
+    }));
+  };
+
   return (
     <Card elevation={1} sx={{ maxWidth: 1220, width: "100%", mx: "auto" }}>
       <CardContent sx={{ p: { xs: 2, md: 4 } }}>
@@ -124,16 +164,52 @@ function AdminCaseList() {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Case ID</TableCell>
+                    <TableCell
+                      sortDirection={sort.field === "id" ? sort.direction : false}
+                    >
+                      <TableSortLabel
+                        active={sort.field === "id"}
+                        direction={sort.field === "id" ? sort.direction : "asc"}
+                        onClick={() => handleSort("id")}
+                      >
+                        Case ID
+                      </TableSortLabel>
+                    </TableCell>
                     <TableCell>Case Date</TableCell>
                     <TableCell>Flight Number</TableCell>
-                    <TableCell>Flight Date</TableCell>
-                    <TableCell>Status</TableCell>
+                    <TableCell
+                      sortDirection={
+                        sort.field === "flight_date" ? sort.direction : false
+                      }
+                    >
+                      <TableSortLabel
+                        active={sort.field === "flight_date"}
+                        direction={
+                          sort.field === "flight_date" ? sort.direction : "asc"
+                        }
+                        onClick={() => handleSort("flight_date")}
+                      >
+                        Flight Date
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell
+                      sortDirection={
+                        sort.field === "status" ? sort.direction : false
+                      }
+                    >
+                      <TableSortLabel
+                        active={sort.field === "status"}
+                        direction={sort.field === "status" ? sort.direction : "asc"}
+                        onClick={() => handleSort("status")}
+                      >
+                        Status
+                      </TableSortLabel>
+                    </TableCell>
                     <TableCell align="center">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {cases.map((caseItem) => (
+                  {sortedCases.map((caseItem) => (
                     <TableRow key={caseItem.id} hover>
                       <TableCell>
                         <Link
@@ -175,7 +251,7 @@ function AdminCaseList() {
               </Table>
             </TableContainer>
             <Stack spacing={1.5} sx={{ display: { xs: "flex", md: "none" } }}>
-              {cases.map((caseItem) => (
+              {sortedCases.map((caseItem) => (
                 <Card key={caseItem.id} variant="outlined">
                   <CardContent>
                     <Stack spacing={1}>
