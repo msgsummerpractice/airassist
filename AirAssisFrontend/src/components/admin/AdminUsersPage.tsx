@@ -33,6 +33,12 @@ import { fetchWithAuth } from "../../utils/auth";
 import CreateUserButton from "./CreateUserButton";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
+import {
+  PersonAddOutlined as PersonAddIcon,
+  GroupOutlined as GroupIcon,
+  FolderOutlined as FolderIcon,
+  SettingsOutlined as SettingsIcon,
+} from "@mui/icons-material";
 
 const USER_DELETE_SUCCESS_HIDE_MS = 15000;
 
@@ -193,6 +199,35 @@ function AdminUsersPage() {
         }
         onClose={closeSnackbar}
       />
+      <Box sx={{textAlign:"center",mb:5}}>
+        <Typography variant="h1" sx={{color:"primary.main",mb:1}}>
+          Welcome,Admin!
+        </Typography>
+        <Box sx={{display:"flex",justifyContent:"center",flexWrap:"wrap",gap:2}}>
+          <Button variant="contained"color="primary" startIcon={<GroupIcon/>} disabled> User View</Button>
+          <Tooltip title="Coming soon">
+            <span>
+              <Button variant="outlined" startIcon={<PersonAddIcon/>}>
+                New User View
+              </Button>
+            </span>
+          </Tooltip>
+          <Tooltip title="Coming soon">
+            <span>
+              <Button variant="outlined" startIcon={<FolderIcon/>}>
+                Case View
+              </Button>
+            </span>
+          </Tooltip>
+          <Tooltip title="Coming soon">
+            <span>
+              <Button variant="outlined" startIcon={<SettingsIcon/>}>
+                System View
+              </Button>
+            </span>
+          </Tooltip>
+        </Box>
+      </Box>
       <Typography variant="h2" sx={{ mb: 0.5 }}>
         User Management
       </Typography>
