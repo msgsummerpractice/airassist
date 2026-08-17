@@ -41,6 +41,7 @@ import {
 } from "./ColleagueCaseCommentApi";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity } from "../../utils/auth";
+import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import axios from "axios";
 
 const API_BASE_URL =
@@ -131,98 +132,6 @@ const formatDateTime = (value: string | null | undefined) => {
 
   return parsedDate.toLocaleString();
 };
-
-function mapStatusToChipColor(
-  status: string,
-):
-  | "default"
-  | "primary"
-  | "secondary"
-  | "success"
-  | "warning"
-  | "error"
-  | "info" {
-  switch (status) {
-    case "NEW":
-      return "info";
-    case "VALID":
-    case "ELIGIBLE":
-      return "success";
-    case "INVALID":
-    case "NON_ELIGIBLE":
-      return "error";
-    case "AWAITING_DOCUMENTS":
-      return "warning";
-    case "ASSIGNED":
-      return "primary";
-    default:
-      return "default";
-  }
-}
-
-function getStatusChipSx(status: string) {
-  if (status === "NEW") {
-    return {
-      color: "#2563eb",
-      borderColor: "#93c5fd",
-      backgroundColor: "#eff6ff",
-    };
-  }
-
-  if (status === "VALID") {
-    return {
-      color: "#2e7d32",
-      borderColor: "#a5d6a7",
-      backgroundColor: "#f1f8e9",
-    };
-  }
-
-  if (status === "ELIGIBLE") {
-    return {
-      color: "#ffffff",
-      borderColor: "#1b6d24",
-      backgroundColor: "#1b6d24",
-    };
-  }
-
-  if (status === "INVALID") {
-    return {
-      color: "#c62828",
-      borderColor: "#ef9a9a",
-      backgroundColor: "#ffebee",
-    };
-  }
-
-  if (status === "NON_ELIGIBLE") {
-    return {
-      color: "#ffffff",
-      borderColor: "#ba1a1a",
-      backgroundColor: "#ba1a1a",
-    };
-  }
-
-  if (status === "AWAITING_DOCUMENTS") {
-    return {
-      color: "#ffffff",
-      borderColor: "#d97706",
-      backgroundColor: "#d97706",
-    };
-  }
-
-  return undefined;
-}
-
-function formatStatusLabel(status: string) {
-  if (status === "NON_ELIGIBLE") {
-    return "Non-eligible";
-  }
-
-  if (status === "AWAITING_DOCUMENTS") {
-    return "Awaiting documents";
-  }
-
-  return status;
-}
 
 function ColleagueCaseDetailsPage({
   onLogout,
@@ -614,12 +523,10 @@ function ColleagueCaseDetailsPage({
                       <Typography variant="body1">Status:</Typography>
                       <Chip
                         size="small"
-                        label={formatStatusLabel(details.status)}
-                        color={mapStatusToChipColor(details.status)}
-                        sx={getStatusChipSx(details.status)}
-                        variant={
-                          details.status === "ASSIGNED" ? "filled" : "outlined"
-                        }
+                        label={getCaseStatusPresentation(details.status).label}
+                        color={getCaseStatusPresentation(details.status).color}
+                        sx={getCaseStatusPresentation(details.status).sx}
+                        variant="outlined"
                       />
                     </Box>
                     <Box sx={{ display: "flex", alignItems: "center" }}>

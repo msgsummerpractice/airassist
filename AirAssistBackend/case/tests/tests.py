@@ -94,7 +94,7 @@ class CaseCreationSerializerTests(TestCase):
 		self.assertTrue(serializer.is_valid(), serializer.errors)
 		case = serializer.save()
 
-		self.assertEqual(case.status, CaseState.NEW.value)
+		self.assertEqual(case.status, CaseState.PENDING.value)
 		self.assertEqual(Case.objects.count(), 1)
 		self.assertEqual(Flight.objects.count(), 1)
 		self.assertTrue(case.gdpr_consent)
@@ -105,21 +105,7 @@ class CaseStateServiceTests(TestCase):
 	def setUp(self):
 		self.colleague_role = Role.objects.create(role=Roles.COLLEAGUE.value)
 
-	def test_new_case_can_be_marked_valid(self):
-		case = Case.objects.create(gdpr_consent=True)
-
-		updated_case = CaseStateService.mark_case_as_valid(case)
-
-		self.assertEqual(updated_case.status, CaseState.VALID.value)
-
-	def test_new_case_can_be_marked_invalid(self):
-		case = Case.objects.create(gdpr_consent=True)
-
-		updated_case = CaseStateService.mark_case_as_invalid(case)
-
-		self.assertEqual(updated_case.status, CaseState.INVALID.value)
-
-	def test_assign_requires_valid_case(self):
+	def test_assign_requires_pending_case(self):
 		colleague = User.objects.create_user(
 			role=self.colleague_role,
 			email="colleague@example.com",
@@ -127,12 +113,15 @@ class CaseStateServiceTests(TestCase):
 			firstname="Case",
 			lastname="Worker",
 		)
-		case = Case.objects.create(gdpr_consent=True)
+		case = Case.objects.create(
+			gdpr_consent=True,
+			status=CaseState.IN_REVIEW.value,
+		)
 
 		with self.assertRaises(ValueError):
 			CaseStateService.mark_case_as_assigned(case, colleague)
 
-	def test_valid_case_can_be_assigned(self):
+	def test_pending_case_can_be_assigned_for_review(self):
 		colleague = User.objects.create_user(
 			role=self.colleague_role,
 			email="colleague2@example.com",
@@ -142,19 +131,10 @@ class CaseStateServiceTests(TestCase):
 		)
 		case = Case.objects.create(
 			gdpr_consent=True,
-			status=CaseState.VALID.value,
+			status=CaseState.PENDING.value,
 		)
 
 		updated_case = CaseStateService.mark_case_as_assigned(case, colleague)
 
-		self.assertEqual(updated_case.status, CaseState.ASSIGNED.value)
+		self.assertEqual(updated_case.status, CaseState.IN_REVIEW.value)
 		self.assertEqual(updated_case.assigned_colleague, colleague)
-
-	def test_mark_case_as_valid_rejects_non_new_case(self):
-		case = Case.objects.create(
-			gdpr_consent=True,
-			status=CaseState.VALID.value,
-		)
-
-		with self.assertRaises(ValueError):
-			CaseStateService.mark_case_as_valid(case)

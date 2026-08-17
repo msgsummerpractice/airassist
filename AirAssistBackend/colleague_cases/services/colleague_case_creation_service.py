@@ -79,7 +79,7 @@ class ColleagueCaseCreationService:
 
         gdpr_consent = validated_data["gdpr_consent"]
         case = Case.objects.create(
-            status=CaseState.NEW.value,
+            status=CaseState.PENDING.value,
             reservation_number=validated_data.get("reservation_number"),
             gdpr_consent=gdpr_consent,
             gdpr_consent_at=timezone.now() if gdpr_consent else None,

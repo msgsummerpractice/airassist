@@ -36,6 +36,7 @@ import {
 } from "./PassengerCaseCommentApi";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity } from "../../utils/auth";
+import { getCaseStatusPresentation } from "../../utils/caseStatus";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -123,48 +124,6 @@ const formatDateTime = (value: string | null | undefined) => {
 
   return parsedDate.toLocaleString();
 };
-
-function mapStatusToChipColor(
-  status: string,
-):
-  | "default"
-  | "primary"
-  | "secondary"
-  | "success"
-  | "warning"
-  | "error"
-  | "info" {
-  switch (status) {
-    case "NEW":
-      return "info";
-    case "VALID":
-      return "success";
-    case "ASSIGNED":
-      return "primary";
-    default:
-      return "default";
-  }
-}
-
-function getStatusChipSx(status: string) {
-  if (status === "NEW") {
-    return {
-      color: "#2563eb",
-      borderColor: "#93c5fd",
-      backgroundColor: "#eff6ff",
-    };
-  }
-
-  if (status === "VALID") {
-    return {
-      color: "#2e7d32",
-      borderColor: "#a5d6a7",
-      backgroundColor: "#f1f8e9",
-    };
-  }
-
-  return undefined;
-}
 
 function PassengerCaseDetailsPage({
   onLogout,
@@ -490,12 +449,10 @@ function PassengerCaseDetailsPage({
                       <Typography variant="body1">Status:</Typography>
                       <Chip
                         size="small"
-                        label={details.status}
-                        color={mapStatusToChipColor(details.status)}
-                        sx={getStatusChipSx(details.status)}
-                        variant={
-                          details.status === "ASSIGNED" ? "filled" : "outlined"
-                        }
+                        label={getCaseStatusPresentation(details.status).label}
+                        color={getCaseStatusPresentation(details.status).color}
+                        sx={getCaseStatusPresentation(details.status).sx}
+                        variant="outlined"
                       />
                     </Box>
                     <Box sx={{ display: "flex", alignItems: "center" }}>

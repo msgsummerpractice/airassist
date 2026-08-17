@@ -8,7 +8,7 @@ class Case(models.Model):
     status = models.CharField(
         max_length=20,
         choices=CaseState.choices(),
-        default=CaseState.NEW.value,
+        default=CaseState.PENDING.value,
     )
 
     assigned_colleague = models.ForeignKey(

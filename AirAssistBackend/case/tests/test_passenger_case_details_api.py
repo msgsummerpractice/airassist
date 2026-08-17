@@ -39,7 +39,7 @@ class PassengerCaseDetailsApiTests(APITestCase):
         )
 
         self.owned_case = Case.objects.create(
-            status=CaseState.ASSIGNED.value,
+            status=CaseState.IN_REVIEW.value,
             gdpr_consent=True,
             assigned_colleague=self.colleague_user,
         )
@@ -93,7 +93,7 @@ class PassengerCaseDetailsApiTests(APITestCase):
         )
 
         self.other_case = Case.objects.create(
-            status=CaseState.NEW.value,
+            status=CaseState.PENDING.value,
             gdpr_consent=True,
         )
         Passenger.objects.create(
@@ -138,7 +138,7 @@ class PassengerCaseDetailsApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], self.owned_case.id)
-        self.assertEqual(response.data["status"], CaseState.ASSIGNED.value)
+        self.assertEqual(response.data["status"], CaseState.IN_REVIEW.value)
         self.assertEqual(response.data["flight"]["flight_number"], "RO123")
         self.assertEqual(response.data["flight"]["reservation_number"], "OWN123")
         self.assertEqual(len(response.data["connecting_flights"]), 1)

@@ -27,6 +27,7 @@ import AssignColleagueButton, {
   type ColleagueOption,
 } from "./AssignColleagueButton";
 import { fetchWithAuth } from "../../utils/auth";
+import { getCaseStatusPresentation } from "../../utils/caseStatus";
 
 type ColleagueCaseListItem = {
   id: number;
@@ -57,78 +58,6 @@ type SortValue = "-id" | "id" | "status" | "-status";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-function mapStatusToChipColor(
-  status: string,
-):
-  | "default"
-  | "primary"
-  | "secondary"
-  | "success"
-  | "warning"
-  | "error"
-  | "info" {
-  switch (status) {
-    case "NEW":
-      return "info";
-    case "VALID":
-      return "success";
-    case "ELIGIBLE":
-      return "success";
-    case "NON_ELIGIBLE":
-      return "error";
-    case "AWAITING_DOCUMENTS":
-      return "warning";
-    case "ASSIGNED":
-      return "primary";
-    default:
-      return "default";
-  }
-}
-
-function getStatusChipSx(status: string) {
-  if (status === "NEW") {
-    return {
-      color: "#2563eb",
-      borderColor: "#93c5fd",
-      backgroundColor: "#eff6ff",
-    };
-  }
-
-  if (status === "VALID") {
-    return {
-      color: "#2e7d32",
-      borderColor: "#a5d6a7",
-      backgroundColor: "#f1f8e9",
-    };
-  }
-
-  if (status === "ELIGIBLE") {
-    return {
-      color: "#2e7d32",
-      borderColor: "#a5d6a7",
-      backgroundColor: "#f1f8e9",
-    };
-  }
-
-  if (status === "NON_ELIGIBLE") {
-    return {
-      color: "#ba1a1a",
-      borderColor: "#ef9a9a",
-      backgroundColor: "#ffebee",
-    };
-  }
-
-  if (status === "AWAITING_DOCUMENTS") {
-    return {
-      color: "#6c4300",
-      borderColor: "#ffcc80",
-      backgroundColor: "#fff8e1",
-    };
-  }
-
-  return undefined;
-}
-
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   const responseText = await response.text();
 
@@ -141,12 +70,6 @@ const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   } catch {
     return null;
   }
-};
-
-const formatStatusLabel = (status: string) => {
-  const normalizedStatus = status.replaceAll("_", "-").toLowerCase();
-
-  return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
 };
 
 const formatDate = (value: string | null) => {
@@ -359,9 +282,11 @@ function ColleagueCaseList() {
               onChange={(event) => setStatusFilter(event.target.value)}
             >
               <MenuItem value="ALL">All</MenuItem>
-              <MenuItem value="NEW">New</MenuItem>
-              <MenuItem value="VALID">Valid</MenuItem>
-              <MenuItem value="ASSIGNED">Assigned</MenuItem>
+              <MenuItem value="PENDING">Pending</MenuItem>
+              <MenuItem value="IN_REVIEW">In review</MenuItem>
+              <MenuItem value="ELIGIBLE">Eligible</MenuItem>
+              <MenuItem value="NON_ELIGIBLE">Non-eligible</MenuItem>
+              <MenuItem value="AWAITING_DOCUMENTS">Awaiting documents</MenuItem>
             </Select>
           </FormControl>
 
@@ -485,14 +410,14 @@ function ColleagueCaseList() {
                       <TableCell>
                         <Chip
                           size="small"
-                          label={formatStatusLabel(caseItem.status)}
-                          color={mapStatusToChipColor(caseItem.status)}
-                          sx={getStatusChipSx(caseItem.status)}
-                          variant={
-                            caseItem.status === "ASSIGNED"
-                              ? "filled"
-                              : "outlined"
+                          label={
+                            getCaseStatusPresentation(caseItem.status).label
                           }
+                          color={
+                            getCaseStatusPresentation(caseItem.status).color
+                          }
+                          sx={getCaseStatusPresentation(caseItem.status).sx}
+                          variant="outlined"
                         />
                       </TableCell>
                       <TableCell>
@@ -548,14 +473,14 @@ function ColleagueCaseList() {
                       <Box>
                         <Chip
                           size="small"
-                          label={formatStatusLabel(caseItem.status)}
-                          color={mapStatusToChipColor(caseItem.status)}
-                          sx={getStatusChipSx(caseItem.status)}
-                          variant={
-                            caseItem.status === "ASSIGNED"
-                              ? "filled"
-                              : "outlined"
+                          label={
+                            getCaseStatusPresentation(caseItem.status).label
                           }
+                          color={
+                            getCaseStatusPresentation(caseItem.status).color
+                          }
+                          sx={getCaseStatusPresentation(caseItem.status).sx}
+                          variant="outlined"
                         />
                       </Box>
                       <Box>

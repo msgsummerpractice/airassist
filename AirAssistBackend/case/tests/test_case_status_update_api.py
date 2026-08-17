@@ -34,7 +34,7 @@ class CaseStatusUpdateApiTests(APITestCase):
 
     def create_case_with_passenger(self, passenger_email="alice@example.com"):
         case = Case.objects.create(
-            status=CaseState.ASSIGNED.value,
+            status=CaseState.IN_REVIEW.value,
             gdpr_consent=True,
         )
         passenger = Passenger.objects.create(
@@ -60,7 +60,7 @@ class CaseStatusUpdateApiTests(APITestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         case.refresh_from_db()
-        self.assertEqual(case.status, CaseState.ASSIGNED.value)
+        self.assertEqual(case.status, CaseState.IN_REVIEW.value)
         self.assertEqual(len(mail.outbox), 0)
 
     def test_forbids_authenticated_non_colleague_users(self):
@@ -78,7 +78,7 @@ class CaseStatusUpdateApiTests(APITestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         case.refresh_from_db()
-        self.assertEqual(case.status, CaseState.ASSIGNED.value)
+        self.assertEqual(case.status, CaseState.IN_REVIEW.value)
         self.assertEqual(len(mail.outbox), 0)
 
     def test_returns_not_found_without_sending_an_email_for_missing_case(self):
@@ -105,7 +105,7 @@ class CaseStatusUpdateApiTests(APITestCase):
         # Act
         response = self.client.post(
             self.status_url(case),
-            {"status": CaseState.VALID.value},
+            {"status": CaseState.PENDING.value},
             format="json",
         )
 
@@ -113,7 +113,7 @@ class CaseStatusUpdateApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("Status must be", response.data["error"])
         case.refresh_from_db()
-        self.assertEqual(case.status, CaseState.ASSIGNED.value)
+        self.assertEqual(case.status, CaseState.IN_REVIEW.value)
         self.assertEqual(len(mail.outbox), 0)
 
     def test_colleague_can_apply_each_decision_and_notify_the_passenger(self):

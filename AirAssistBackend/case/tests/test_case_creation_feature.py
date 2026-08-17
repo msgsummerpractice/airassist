@@ -299,7 +299,7 @@ class CaseCreationViewTests(TestCase):
             self.client.post(self.CREATE_URL, data=_api_payload(), format="multipart")
 
         case = Case.objects.first()
-        self.assertEqual(case.status, CaseState.VALID.value)
+        self.assertEqual(case.status, CaseState.PENDING.value)
 
     @patch("case.views.case_creation_view.send_basic_email")
     @patch("case.services.case_service.DistanceService.calculate_orthodromic_distance", return_value=1200.0)

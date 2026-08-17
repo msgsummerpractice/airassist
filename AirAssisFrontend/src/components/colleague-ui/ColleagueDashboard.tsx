@@ -39,6 +39,7 @@ import {
   clearStoredUserIdentity,
   setStoredUserIdentity,
 } from "../../utils/auth";
+import { getCaseStatusPresentation } from "../../utils/caseStatus";
 
 type DashboardColleague = {
   id: number;
@@ -73,19 +74,6 @@ type ColleagueDashboardProps = {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-const statusColorMap: Record<
-  string,
-  "warning" | "success" | "error" | "info" | "primary"
-> = {
-  NEW: "success",
-  VALID: "success",
-  INVALID: "error",
-  ELIGIBLE: "success",
-  NON_ELIGIBLE: "error",
-  AWAITING_DOCUMENTS: "warning",
-  ASSIGNED: "primary",
-};
-
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   const responseText = await response.text();
 
@@ -98,12 +86,6 @@ const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   } catch {
     return null;
   }
-};
-
-const formatStatusLabel = (status: string) => {
-  const normalizedStatus = status.replaceAll("_", "-").toLowerCase();
-
-  return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
 };
 
 const formatDate = (value: string) => {
@@ -380,17 +362,15 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
 
                           <TableCell>
                             <Chip
-                              label={formatStatusLabel(claim.status)}
-                              color={statusColorMap[claim.status] ?? "info"}
-                              size="small"
-                              sx={
-                                claim.status === "AWAITING_DOCUMENTS"
-                                  ? {
-                                      color: "#ffffff",
-                                      backgroundColor: "#d97706",
-                                    }
-                                  : undefined
+                              label={
+                                getCaseStatusPresentation(claim.status).label
                               }
+                              color={
+                                getCaseStatusPresentation(claim.status).color
+                              }
+                              size="small"
+                              sx={getCaseStatusPresentation(claim.status).sx}
+                              variant="outlined"
                             />
                           </TableCell>
 

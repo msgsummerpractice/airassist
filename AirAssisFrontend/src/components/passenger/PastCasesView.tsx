@@ -29,6 +29,7 @@ import { useNavigate } from "react-router-dom";
 
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity, setStoredUserIdentity } from "../../utils/auth";
+import { getCaseStatusPresentation } from "../../utils/caseStatus";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -50,48 +51,6 @@ type PastCasesViewProps = {
   onUnauthorized?: () => void;
   onOpenCaseDetails?: (caseId: number) => void;
 };
-
-function mapStatusToChipColor(
-  status: string,
-):
-  | "default"
-  | "primary"
-  | "secondary"
-  | "success"
-  | "warning"
-  | "error"
-  | "info" {
-  switch (status) {
-    case "NEW":
-      return "info";
-    case "VALID":
-      return "success";
-    case "ASSIGNED":
-      return "primary";
-    default:
-      return "default";
-  }
-}
-
-function getStatusChipSx(status: string) {
-  if (status === "NEW") {
-    return {
-      color: "#2563eb",
-      borderColor: "#93c5fd",
-      backgroundColor: "#eff6ff",
-    };
-  }
-
-  if (status === "VALID") {
-    return {
-      color: "#2e7d32",
-      borderColor: "#a5d6a7",
-      backgroundColor: "#f1f8e9",
-    };
-  }
-
-  return undefined;
-}
 
 function PastCasesView({
   onLogout,
@@ -302,9 +261,13 @@ function PastCasesView({
                 onChange={(event) => setStatusFilter(event.target.value)}
               >
                 <MenuItem value="ALL">All</MenuItem>
-                <MenuItem value="NEW">New</MenuItem>
-                <MenuItem value="VALID">Valid</MenuItem>
-                <MenuItem value="ASSIGNED">Assigned</MenuItem>
+                <MenuItem value="PENDING">Pending</MenuItem>
+                <MenuItem value="IN_REVIEW">In review</MenuItem>
+                <MenuItem value="ELIGIBLE">Eligible</MenuItem>
+                <MenuItem value="NON_ELIGIBLE">Non-eligible</MenuItem>
+                <MenuItem value="AWAITING_DOCUMENTS">
+                  Awaiting documents
+                </MenuItem>
               </Select>
             </FormControl>
 
@@ -423,12 +386,10 @@ function PastCasesView({
                         <TableCell>
                           <Chip
                             size="small"
-                            label={item.status}
-                            color={mapStatusToChipColor(item.status)}
-                            sx={getStatusChipSx(item.status)}
-                            variant={
-                              item.status === "ASSIGNED" ? "filled" : "outlined"
-                            }
+                            label={getCaseStatusPresentation(item.status).label}
+                            color={getCaseStatusPresentation(item.status).color}
+                            sx={getCaseStatusPresentation(item.status).sx}
+                            variant="outlined"
                           />
                         </TableCell>
                         <TableCell>{item.assignee ?? "Unassigned"}</TableCell>
@@ -506,12 +467,10 @@ function PastCasesView({
                         <Box>
                           <Chip
                             size="small"
-                            label={item.status}
-                            color={mapStatusToChipColor(item.status)}
-                            sx={getStatusChipSx(item.status)}
-                            variant={
-                              item.status === "ASSIGNED" ? "filled" : "outlined"
-                            }
+                            label={getCaseStatusPresentation(item.status).label}
+                            color={getCaseStatusPresentation(item.status).color}
+                            sx={getCaseStatusPresentation(item.status).sx}
+                            variant="outlined"
                           />
                         </Box>
                       </Stack>
