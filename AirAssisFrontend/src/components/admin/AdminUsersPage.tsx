@@ -47,6 +47,7 @@ import {
   FolderOutlined as FolderIcon,
   SettingsOutlined as SettingsIcon,
   LogoutOutlined as LogoutOutlinedIcon,
+  SettingsOutlined as SettingsIcon,
 } from "@mui/icons-material";
 
 const USER_DELETE_SUCCESS_HIDE_MS = 15000;
@@ -89,13 +90,13 @@ function extractApiError(data: unknown, status: number): string {
 }
 
 function AdminUsersPage() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<UserEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserEntry | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
-  const navigate = useNavigate();
   const currentUser = getStoredUserIdentity();
 
   const handleLogout = () => {
@@ -236,7 +237,7 @@ function AdminUsersPage() {
           {
             label: "System View",
             icon: <SettingsIcon fontSize="small" />,
-            onClick: () => undefined,
+            onClick: () => navigate("/admin/system-options"),
           },
         ]}
       />

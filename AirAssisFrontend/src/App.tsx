@@ -16,6 +16,7 @@ import { useAuthView } from "./components/wizard/utils/use_auth_view";
 import CaseEntryForm from "./components/wizard/CaseEntryForm";
 import AdminUsersPage from "./components/admin/AdminUsersPage";
 import AdminCasesPage from "./components/admin/AdminCasesPage";
+import AdminSystemOptionsPage from "./components/admin/AdminSystemOptionsPage";
 
 function App() {
   const { view, role, resolveView, showCaseEntry, showColleagueDashboard } =
@@ -124,6 +125,16 @@ function App() {
         element={
           view === "admin-users" ? (
             <AdminCasesPage />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/admin/system-options"
+        element={
+          view === "admin-users" ? (
+            <AdminSystemOptionsPage />
           ) : (
             <Navigate to="/login" replace />
           )
