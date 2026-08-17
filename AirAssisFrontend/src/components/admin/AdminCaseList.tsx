@@ -7,6 +7,10 @@ import {
   CardContent,
   IconButton,
   Link,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -15,6 +19,7 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -54,6 +59,8 @@ function AdminCaseList() {
     field: "id",
     direction: "desc",
   });
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [flightDateFilter, setFlightDateFilter] = useState("");
   const { snackbar, closeSnackbar, showErrorSnackbar, showSuccessSnackbar } =
     useAppSnackbar();
 
@@ -103,8 +110,19 @@ function AdminCaseList() {
 
   const caseDetailsPath = (caseId: number) => `/admin/cases/${caseId}`;
 
+  const filteredCases = useMemo(() => {
+    return cases.filter((caseItem) => {
+      const matchesStatus =
+        statusFilter === "ALL" || caseItem.status === statusFilter;
+      const matchesFlightDate =
+        !flightDateFilter || caseItem.flight_date === flightDateFilter;
+
+      return matchesStatus && matchesFlightDate;
+    });
+  }, [cases, flightDateFilter, statusFilter]);
+
   const sortedCases = useMemo(() => {
-    return [...cases].sort((firstCase, secondCase) => {
+    return [...filteredCases].sort((firstCase, secondCase) => {
       let comparison: number;
 
       if (sort.field === "id") {
@@ -119,7 +137,7 @@ function AdminCaseList() {
 
       return sort.direction === "asc" ? comparison : -comparison;
     });
-  }, [cases, sort]);
+  }, [filteredCases, sort]);
 
   const handleSort = (field: SortField) => {
     setSort((currentSort) => ({
@@ -143,11 +161,48 @@ function AdminCaseList() {
         <Box sx={{ textAlign: "center", mb: 3 }}>
           <Typography variant="h2">All Cases</Typography>
         </Box>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
+            mb: 3,
+            width: "100%",
+            justifyContent: "center",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
+            <InputLabel id="admin-case-status-filter-label">Status</InputLabel>
+            <Select
+              labelId="admin-case-status-filter-label"
+              label="Status"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <MenuItem value="ALL">All</MenuItem>
+              <MenuItem value="NEW">New</MenuItem>
+              <MenuItem value="VALID">Valid</MenuItem>
+              <MenuItem value="ASSIGNED">Assigned</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            size="small"
+            label="Flight date"
+            type="date"
+            value={flightDateFilter}
+            onChange={(event) => setFlightDateFilter(event.target.value)}
+            slotProps={{
+              inputLabel: { shrink: true },
+            }}
+            sx={{ minWidth: 220, flex: "1 1 220px" }}
+          />
+        </Stack>
         {isLoading ? (
           <CaseListLoadingState label="Loading cases..." />
         ) : hasError ? (
           <CaseListErrorState message="We could not load the case list right now." />
-        ) : cases.length === 0 ? (
+        ) : filteredCases.length === 0 ? (
           <CaseListEmptyState />
         ) : (
           <Box

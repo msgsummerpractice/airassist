@@ -52,7 +52,12 @@ function AdminCasesPage() {
 
   return (
     <Box
-      sx={{ minHeight: "100vh", px: { xs: 2, md: 4 }, py: { xs: 3, md: 5 } }}
+      sx={{
+        minHeight: "100vh",
+        px: { xs: 2, md: 4 },
+        py: { xs: 3, md: 5 },
+        backgroundColor: "#ffffff",
+      }}
     >
       <PortalUserHeader
         name={currentUser.name}
