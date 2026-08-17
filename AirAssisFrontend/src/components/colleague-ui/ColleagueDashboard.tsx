@@ -246,7 +246,7 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
               {
                 label: "See Cases",
                 icon: <VisibilityOutlinedIcon fontSize="small" />,
-                onClick: () => navigate("/colleague-cases"),
+                onClick: () => navigate("/colleague-dashboard"),
               },
               {
                 label: "Create Case",
