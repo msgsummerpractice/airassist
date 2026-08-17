@@ -41,7 +41,7 @@ class ColleagueCaseListViewTests(TestCase):
         serialized_cases = [
             {
                 "id": 1,
-                "status": "NEW",
+                "status": "PENDING",
             },
             {
                 "id": 2,

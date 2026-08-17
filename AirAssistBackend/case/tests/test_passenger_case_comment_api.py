@@ -36,7 +36,7 @@ class PassengerCaseCommentApiTests(APITestCase):
         )
 
         self.owned_case = Case.objects.create(
-            status=CaseState.ASSIGNED.value,
+            status=CaseState.IN_REVIEW.value,
             gdpr_consent=True,
         )
         Passenger.objects.create(
@@ -48,7 +48,7 @@ class PassengerCaseCommentApiTests(APITestCase):
         )
 
         self.other_case = Case.objects.create(
-            status=CaseState.NEW.value,
+            status=CaseState.PENDING.value,
             gdpr_consent=True,
         )
         Passenger.objects.create(
