@@ -77,14 +77,21 @@ export function getStoredUserIdentity() {
   const storedEmail = localStorage.getItem(USER_EMAIL_STORAGE_KEY);
   const fallbackName = storedEmail
     ? formatNameFromEmail(storedEmail)
-    : role === "COLLEAGUE"
+    :role ==="SYSTEM_ADMIN"
+     ? "Admin"
+     : role === "COLLEAGUE"
       ? "Colleague"
       : "Passenger";
 
   return {
     name: storedName || fallbackName,
     email: storedEmail || "Email unavailable",
-    roleLabel: role === "COLLEAGUE" ? "Colleague" : "Passenger",
+    roleLabel:
+  role === "SYSTEM_ADMIN"
+    ? "System Administrator"
+    : role === "COLLEAGUE"
+      ? "Colleague"
+      : "Passenger",
     isGuest: false,
   };
 }

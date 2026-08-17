@@ -29,7 +29,13 @@ import {
   PersonSearch as PersonSearchIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
-import { fetchWithAuth } from "../../utils/auth";
+import {
+  clearStoredUserIdentity,
+  fetchWithAuth,
+  getStoredUserIdentity,
+} from "../../utils/auth";
+import { useNavigate } from "react-router-dom";
+import PortalUserHeader from "../portal/PortalUserHeader";
 import CreateUserButton from "./CreateUserButton";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
@@ -38,6 +44,7 @@ import {
   GroupOutlined as GroupIcon,
   FolderOutlined as FolderIcon,
   SettingsOutlined as SettingsIcon,
+  LogoutOutlined as LogoutOutlinedIcon,
 } from "@mui/icons-material";
 
 const USER_DELETE_SUCCESS_HIDE_MS = 15000;
@@ -86,6 +93,15 @@ function AdminUsersPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserEntry | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
+  const navigate = useNavigate();
+  const currentUser = getStoredUserIdentity();
+
+ const handleLogout = () => {
+  localStorage.removeItem("airassist_access_token");
+  localStorage.removeItem("airassist_refresh_token");
+  clearStoredUserIdentity();
+  window.location.assign("/login");
+};
 
   const { snackbar, closeSnackbar, showSuccessSnackbar, showErrorSnackbar } =
     useAppSnackbar();
@@ -186,6 +202,41 @@ function AdminUsersPage() {
   );
 
   return (
+  <Box>
+    <PortalUserHeader
+      name={currentUser.name}
+      email={currentUser.email}
+      roleLabel={currentUser.roleLabel}
+      logoutAction={{
+        label: "Log Out",
+        icon: <LogoutOutlinedIcon fontSize="small" />,
+        onClick: handleLogout,
+      }}
+      actions={[
+        {
+          label: "User View",
+          icon: <GroupIcon fontSize="small" />,
+          active: true,
+          onClick: () => navigate("/admin/users"),
+        },
+        {
+          label: "New User View",
+          icon: <PersonAddIcon fontSize="small" />,
+          onClick: () => undefined,
+        },
+        {
+          label: "Case View",
+          icon: <FolderIcon fontSize="small" />,
+          onClick: () => undefined,
+        },
+        {
+          label: "System View",
+          icon: <SettingsIcon fontSize="small" />,
+          onClick: () => undefined,
+        },
+      ]}
+    />
+
     <Box sx={{ maxWidth: 1100, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}>
       <AppSnackbar
         open={snackbar.open}
@@ -199,38 +250,11 @@ function AdminUsersPage() {
         }
         onClose={closeSnackbar}
       />
-      <Box sx={{textAlign:"center",mb:5}}>
-        <Typography variant="h1" sx={{color:"primary.main",mb:1}}>
-          Welcome,Admin!
-        </Typography>
-        <Box sx={{display:"flex",justifyContent:"center",flexWrap:"wrap",gap:2}}>
-          <Button variant="contained"color="primary" startIcon={<GroupIcon/>} disabled> User View</Button>
-          <Tooltip title="Coming soon">
-            <span>
-              <Button variant="outlined" startIcon={<PersonAddIcon/>}>
-                New User View
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title="Coming soon">
-            <span>
-              <Button variant="outlined" startIcon={<FolderIcon/>}>
-                Case View
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title="Coming soon">
-            <span>
-              <Button variant="outlined" startIcon={<SettingsIcon/>}>
-                System View
-              </Button>
-            </span>
-          </Tooltip>
-        </Box>
-      </Box>
+
       <Typography variant="h2" sx={{ mb: 0.5 }}>
         User Management
       </Typography>
+
       <Typography
         variant="body2"
         color="text.secondary"
@@ -254,6 +278,7 @@ function AdminUsersPage() {
         >
           {loaded ? "Reload Users" : "Load Users"}
         </Button>
+
         <CreateUserButton onUserCreated={loadUsers} />
       </Box>
 
@@ -270,7 +295,7 @@ function AdminUsersPage() {
               size="small"
               label="Search by name"
               value={nameFilter}
-              onChange={(e) => setNameFilter(e.target.value)}
+              onChange={(event) => setNameFilter(event.target.value)}
               sx={{ minWidth: 200 }}
               slotProps={{
                 input: {
@@ -282,19 +307,21 @@ function AdminUsersPage() {
                 },
               }}
             />
+
             <TextField
               size="small"
               label="Search by email"
               value={emailFilter}
-              onChange={(e) => setEmailFilter(e.target.value)}
+              onChange={(event) => setEmailFilter(event.target.value)}
               sx={{ minWidth: 220 }}
             />
+
             <TextField
               size="small"
               label="Min. assigned cases"
               type="number"
               value={minCasesFilter}
-              onChange={(e) => setMinCasesFilter(e.target.value)}
+              onChange={(event) => setMinCasesFilter(event.target.value)}
               slotProps={{ htmlInput: { min: 0 } }}
               sx={{ width: 170 }}
             />
@@ -313,21 +340,22 @@ function AdminUsersPage() {
               <TableHead>
                 <TableRow sx={{ bgcolor: "background.default" }}>
                   {["Name", "Email", "Role", "Assigned Cases", "Actions"].map(
-                    (h) => (
+                    (heading) => (
                       <TableCell
-                        key={h}
+                        key={heading}
                         align={
-                          h === "Assigned Cases" || h === "Actions"
+                          heading === "Assigned Cases" || heading === "Actions"
                             ? "center"
                             : "left"
                         }
                       >
-                        <Typography variant="caption">{h}</Typography>
+                        <Typography variant="caption">{heading}</Typography>
                       </TableCell>
                     ),
                   )}
                 </TableRow>
               </TableHead>
+
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
@@ -349,11 +377,13 @@ function AdminUsersPage() {
                           {user.firstname} {user.lastname}
                         </Typography>
                       </TableCell>
+
                       <TableCell>
                         <Typography variant="body1" color="text.secondary">
                           {user.email}
                         </Typography>
                       </TableCell>
+
                       <TableCell>
                         <Chip
                           label={user.role}
@@ -362,6 +392,7 @@ function AdminUsersPage() {
                           variant="outlined"
                         />
                       </TableCell>
+
                       <TableCell align="center">
                         <Typography
                           variant="body1"
@@ -376,6 +407,7 @@ function AdminUsersPage() {
                           {user.assigned_case_count}
                         </Typography>
                       </TableCell>
+
                       <TableCell align="center">
                         <Tooltip title="View details">
                           <IconButton
@@ -386,6 +418,7 @@ function AdminUsersPage() {
                             <InfoIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
+
                         <Tooltip title="Delete user">
                           <span>
                             <IconButton
@@ -410,6 +443,7 @@ function AdminUsersPage() {
               </TableBody>
             </Table>
           </TableContainer>
+
           <TablePagination
             component="div"
             count={filtered.length}
@@ -417,15 +451,14 @@ function AdminUsersPage() {
             rowsPerPage={rowsPerPage}
             rowsPerPageOptions={[5, 10, 25]}
             onPageChange={(_, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10));
+            onRowsPerPageChange={(event) => {
+              setRowsPerPage(parseInt(event.target.value, 10));
               setPage(0);
             }}
           />
         </>
       )}
 
-      {/* View Details Modal */}
       <Dialog
         open={!!detailUser}
         onClose={() => setDetailUser(null)}
@@ -433,6 +466,7 @@ function AdminUsersPage() {
         fullWidth
       >
         <DialogTitle>User Details</DialogTitle>
+
         <DialogContent dividers>
           {detailUser && (
             <Box
@@ -482,6 +516,7 @@ function AdminUsersPage() {
             </Box>
           )}
         </DialogContent>
+
         <DialogActions>
           <Button onClick={() => setDetailUser(null)}>Close</Button>
         </DialogActions>
@@ -498,18 +533,24 @@ function AdminUsersPage() {
             Delete User
           </Typography>
         </DialogTitle>
+
         <DialogContent dividers>
           {deleteUser && (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}
+            >
               <Typography variant="body1">
                 Are you sure you want to delete this user account?
               </Typography>
+
               <Typography variant="body1" sx={{ fontWeight: 600 }}>
                 {deleteUser.firstname} {deleteUser.lastname}
               </Typography>
+
               <Typography variant="body1" color="text.secondary">
                 {deleteUser.email}
               </Typography>
+
               <Chip
                 label={deleteUser.role}
                 color={roleChipColor(deleteUser.role)}
@@ -520,6 +561,7 @@ function AdminUsersPage() {
             </Box>
           )}
         </DialogContent>
+
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button
             onClick={closeDeleteDialog}
@@ -527,6 +569,7 @@ function AdminUsersPage() {
           >
             Cancel
           </Button>
+
           <Button
             variant="contained"
             color="error"
@@ -543,7 +586,8 @@ function AdminUsersPage() {
         </DialogActions>
       </Dialog>
     </Box>
-  );
+  </Box>
+);
 }
 
 export default AdminUsersPage;

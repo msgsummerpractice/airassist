@@ -9,5 +9,5 @@ export function validateGDPREmail(value: string): string {
 }
 
 export function isGDPRDataValid(data: GDPRData): boolean {
-  return validateGDPREmail(data.email) === "" && data.gdprConsent;
+  return data.gdprConsent;
 }

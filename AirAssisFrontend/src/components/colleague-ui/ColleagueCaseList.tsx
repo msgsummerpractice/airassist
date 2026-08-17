@@ -2,16 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import "./ColleagueDashboard.css";
 
 import {
-  Alert,
   Box,
   Card,
   CardContent,
-  Chip,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -27,6 +20,14 @@ import AssignColleagueButton, {
   type ColleagueOption,
 } from "./AssignColleagueButton";
 import { fetchWithAuth } from "../../utils/auth";
+import CaseListFilters from "../cases/shared/list/CaseListFilters";
+import CaseStatusChip from "../cases/shared/list/CaseStatusChip";
+import {
+  CaseListEmptyState,
+  CaseListErrorState,
+  CaseListLoadingState,
+} from "../cases/shared/list/CaseListStates";
+import { formatCaseDate } from "../cases/shared/list/caseListFormatting";
 
 type ColleagueCaseListItem = {
   id: number;
@@ -57,48 +58,6 @@ type SortValue = "-id" | "id" | "status" | "-status";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-function mapStatusToChipColor(
-  status: string,
-):
-  | "default"
-  | "primary"
-  | "secondary"
-  | "success"
-  | "warning"
-  | "error"
-  | "info" {
-  switch (status) {
-    case "NEW":
-      return "info";
-    case "VALID":
-      return "success";
-    case "ASSIGNED":
-      return "primary";
-    default:
-      return "default";
-  }
-}
-
-function getStatusChipSx(status: string) {
-  if (status === "NEW") {
-    return {
-      color: "#2563eb",
-      borderColor: "#93c5fd",
-      backgroundColor: "#eff6ff",
-    };
-  }
-
-  if (status === "VALID") {
-    return {
-      color: "#2e7d32",
-      borderColor: "#a5d6a7",
-      backgroundColor: "#f1f8e9",
-    };
-  }
-
-  return undefined;
-}
-
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   const responseText = await response.text();
 
@@ -111,27 +70,6 @@ const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   } catch {
     return null;
   }
-};
-
-const formatStatusLabel = (status: string) =>
-  status.charAt(0) + status.slice(1).toLowerCase();
-
-const formatDate = (value: string | null) => {
-  if (!value) {
-    return "Not available";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
 };
 
 function ColleagueCaseList() {
@@ -182,7 +120,9 @@ function ColleagueCaseList() {
 
     const loadColleagues = async () => {
       try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/user/colleagues/`);
+        const response = await fetchWithAuth(
+          `${API_BASE_URL}/user/colleagues/`,
+        );
         const payload = await readJsonSafely<UserListItem[]>(response);
 
         if (!isActive) {
@@ -195,13 +135,13 @@ function ColleagueCaseList() {
         }
 
         setColleagues(
-            payload.map((user) => ({
-                id: user.id,
-                firstname: user.firstname,
-                lastname: user.lastname,
-                email: user.email,
-            })),
-            );
+          payload.map((user) => ({
+            id: user.id,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+          })),
+        );
       } catch {
         if (!isActive) {
           return;
@@ -225,7 +165,9 @@ function ColleagueCaseList() {
         new Set(
           cases
             .map((caseItem) => caseItem.assigned_colleague_name)
-            .filter((assigneeName): assigneeName is string => Boolean(assigneeName)),
+            .filter((assigneeName): assigneeName is string =>
+              Boolean(assigneeName),
+            ),
         ),
       ).sort((first, second) => first.localeCompare(second)),
     [cases],
@@ -302,84 +244,22 @@ function ColleagueCaseList() {
           </Box>
         </Box>
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          sx={{
-            mb: 3,
-            width: "100%",
-            justifyContent: "center",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
-            <InputLabel id="colleague-cases-status-label">Status</InputLabel>
-            <Select
-              labelId="colleague-cases-status-label"
-              label="Status"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <MenuItem value="ALL">All</MenuItem>
-              <MenuItem value="NEW">New</MenuItem>
-              <MenuItem value="VALID">Valid</MenuItem>
-              <MenuItem value="ASSIGNED">Assigned</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
-            <InputLabel id="colleague-cases-assignee-label">Assignee</InputLabel>
-            <Select
-              labelId="colleague-cases-assignee-label"
-              label="Assignee"
-              value={assigneeFilter}
-              onChange={(event) => setAssigneeFilter(event.target.value)}
-            >
-              <MenuItem value="ALL">All</MenuItem>
-              <MenuItem value="UNASSIGNED">Unassigned</MenuItem>
-              {assigneeOptions.map((assigneeName) => (
-                <MenuItem key={assigneeName} value={assigneeName}>
-                  {assigneeName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Stack>
+        <CaseListFilters
+          statusFilter={statusFilter}
+          assigneeFilter={assigneeFilter}
+          assigneeOptions={assigneeOptions}
+          statusLabelId="colleague-cases-status-label"
+          assigneeLabelId="colleague-cases-assignee-label"
+          onStatusChange={setStatusFilter}
+          onAssigneeChange={setAssigneeFilter}
+        />
 
         {isLoading ? (
-          <Box
-            sx={{
-              py: 8,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: 1,
-            }}
-          >
-            <CircularProgress size={28} />
-            <Typography variant="body1" color="text.secondary">
-              Loading colleague cases...
-            </Typography>
-          </Box>
+          <CaseListLoadingState label="Loading colleague cases..." />
         ) : hasError ? (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            We could not load the colleague case list right now.
-          </Alert>
+          <CaseListErrorState message="We could not load the colleague case list right now." />
         ) : displayedCases.length === 0 ? (
-          <Box
-            sx={{
-              py: 6,
-              borderRadius: 2,
-              border: "1px dashed",
-              borderColor: "divider",
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="body1" color="text.secondary">
-              No cases found for current filters.
-            </Typography>
-          </Box>
+          <CaseListEmptyState />
         ) : (
           <Box
             sx={{
@@ -439,22 +319,16 @@ function ColleagueCaseList() {
                           #{caseItem.id}
                         </Typography>
                       </TableCell>
-                      <TableCell>{formatDate(caseItem.case_date)}</TableCell>
+                      <TableCell>
+                        {formatCaseDate(caseItem.case_date)}
+                      </TableCell>
                       <TableCell>{caseItem.flight_number ?? "-"}</TableCell>
-                      <TableCell>{formatDate(caseItem.flight_date)}</TableCell>
+                      <TableCell>
+                        {formatCaseDate(caseItem.flight_date)}
+                      </TableCell>
                       <TableCell>{caseItem.passenger_name ?? "-"}</TableCell>
                       <TableCell>
-                        <Chip
-                          size="small"
-                          label={formatStatusLabel(caseItem.status)}
-                          color={mapStatusToChipColor(caseItem.status)}
-                          sx={getStatusChipSx(caseItem.status)}
-                          variant={
-                            caseItem.status === "ASSIGNED"
-                              ? "filled"
-                              : "outlined"
-                          }
-                        />
+                        <CaseStatusChip status={caseItem.status} />
                       </TableCell>
                       <TableCell>
                         {caseItem.assigned_colleague_name ?? "Unassigned"}
@@ -482,7 +356,11 @@ function ColleagueCaseList() {
                   <CardContent>
                     <Stack spacing={1}>
                       <Typography variant="caption" color="text.secondary">
-                        <Typography component="span" variant="button" color="primary">
+                        <Typography
+                          component="span"
+                          variant="button"
+                          color="primary"
+                        >
                           CASE #{caseItem.id}
                         </Typography>
                       </Typography>
@@ -490,29 +368,20 @@ function ColleagueCaseList() {
                         Flight {caseItem.flight_number ?? "-"}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
-                        Case date: {formatDate(caseItem.case_date)}
+                        Case date: {formatCaseDate(caseItem.case_date)}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
-                        Flight date: {formatDate(caseItem.flight_date)}
+                        Flight date: {formatCaseDate(caseItem.flight_date)}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
                         Passenger: {caseItem.passenger_name ?? "-"}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
-                        Assignee: {caseItem.assigned_colleague_name ?? "Unassigned"}
+                        Assignee:{" "}
+                        {caseItem.assigned_colleague_name ?? "Unassigned"}
                       </Typography>
                       <Box>
-                        <Chip
-                          size="small"
-                          label={formatStatusLabel(caseItem.status)}
-                          color={mapStatusToChipColor(caseItem.status)}
-                          sx={getStatusChipSx(caseItem.status)}
-                          variant={
-                            caseItem.status === "ASSIGNED"
-                              ? "filled"
-                              : "outlined"
-                          }
-                        />
+                        <CaseStatusChip status={caseItem.status} />
                       </Box>
                       <Box>
                         <AssignColleagueButton
