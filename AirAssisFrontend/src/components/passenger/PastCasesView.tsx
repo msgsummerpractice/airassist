@@ -5,12 +5,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -29,6 +23,12 @@ import { useNavigate } from "react-router-dom";
 
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity, setStoredUserIdentity } from "../../utils/auth";
+import CaseListFilters from "../cases/shared/list/CaseListFilters";
+import CaseStatusChip from "../cases/shared/list/CaseStatusChip";
+import {
+  CaseListEmptyState,
+  CaseListLoadingState,
+} from "../cases/shared/list/CaseListStates";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -50,48 +50,6 @@ type PastCasesViewProps = {
   onUnauthorized?: () => void;
   onOpenCaseDetails?: (caseId: number) => void;
 };
-
-function mapStatusToChipColor(
-  status: string,
-):
-  | "default"
-  | "primary"
-  | "secondary"
-  | "success"
-  | "warning"
-  | "error"
-  | "info" {
-  switch (status) {
-    case "NEW":
-      return "info";
-    case "VALID":
-      return "success";
-    case "ASSIGNED":
-      return "primary";
-    default:
-      return "default";
-  }
-}
-
-function getStatusChipSx(status: string) {
-  if (status === "NEW") {
-    return {
-      color: "#2563eb",
-      borderColor: "#93c5fd",
-      backgroundColor: "#eff6ff",
-    };
-  }
-
-  if (status === "VALID") {
-    return {
-      color: "#2e7d32",
-      borderColor: "#a5d6a7",
-      backgroundColor: "#f1f8e9",
-    };
-  }
-
-  return undefined;
-}
 
 function PastCasesView({
   onLogout,
@@ -276,56 +234,19 @@ function PastCasesView({
                 variant="body1"
                 color="text.secondary"
                 sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
-              >
-                Review submitted compensation cases and current handling status.
-              </Typography>
+              ></Typography>
             </Box>
           </Box>
 
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{
-              mb: 3,
-              width: "100%",
-              justifyContent: "center",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
-              <InputLabel id="past-cases-status-label">Status</InputLabel>
-              <Select
-                labelId="past-cases-status-label"
-                label="Status"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <MenuItem value="ALL">All</MenuItem>
-                <MenuItem value="NEW">New</MenuItem>
-                <MenuItem value="VALID">Valid</MenuItem>
-                <MenuItem value="ASSIGNED">Assigned</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
-              <InputLabel id="past-cases-assignee-label">Assignee</InputLabel>
-              <Select
-                labelId="past-cases-assignee-label"
-                label="Assignee"
-                value={assigneeFilter}
-                onChange={(event) => setAssigneeFilter(event.target.value)}
-              >
-                <MenuItem value="ALL">All</MenuItem>
-                <MenuItem value="UNASSIGNED">Unassigned</MenuItem>
-                {assigneeOptions.map((assigneeName) => (
-                  <MenuItem key={assigneeName} value={assigneeName}>
-                    {assigneeName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
+          <CaseListFilters
+            statusFilter={statusFilter}
+            assigneeFilter={assigneeFilter}
+            assigneeOptions={assigneeOptions}
+            statusLabelId="past-cases-status-label"
+            assigneeLabelId="past-cases-assignee-label"
+            onStatusChange={setStatusFilter}
+            onAssigneeChange={setAssigneeFilter}
+          />
 
           {errorMessage && (
             <Alert severity="error" sx={{ mb: 3 }}>
@@ -334,34 +255,9 @@ function PastCasesView({
           )}
 
           {isLoading ? (
-            <Box
-              sx={{
-                py: 8,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <CircularProgress size={28} />
-              <Typography variant="body1" color="text.secondary">
-                Loading your cases...
-              </Typography>
-            </Box>
+            <CaseListLoadingState label="Loading your cases..." />
           ) : displayedCases.length === 0 ? (
-            <Box
-              sx={{
-                py: 6,
-                borderRadius: 2,
-                border: "1px dashed",
-                borderColor: "divider",
-                textAlign: "center",
-              }}
-            >
-              <Typography variant="body1" color="text.secondary">
-                No cases found for current filters.
-              </Typography>
-            </Box>
+            <CaseListEmptyState />
           ) : (
             <Box
               sx={{
@@ -421,14 +317,9 @@ function PastCasesView({
                         <TableCell>{item.flight_number ?? "-"}</TableCell>
                         <TableCell>{item.passenger_name ?? "-"}</TableCell>
                         <TableCell>
-                          <Chip
-                            size="small"
-                            label={item.status}
-                            color={mapStatusToChipColor(item.status)}
-                            sx={getStatusChipSx(item.status)}
-                            variant={
-                              item.status === "ASSIGNED" ? "filled" : "outlined"
-                            }
+                          <CaseStatusChip
+                            status={item.status}
+                            preserveStatusCase
                           />
                         </TableCell>
                         <TableCell>{item.assignee ?? "Unassigned"}</TableCell>
@@ -504,14 +395,9 @@ function PastCasesView({
                           </Box>
                         ) : null}
                         <Box>
-                          <Chip
-                            size="small"
-                            label={item.status}
-                            color={mapStatusToChipColor(item.status)}
-                            sx={getStatusChipSx(item.status)}
-                            variant={
-                              item.status === "ASSIGNED" ? "filled" : "outlined"
-                            }
+                          <CaseStatusChip
+                            status={item.status}
+                            preserveStatusCase
                           />
                         </Box>
                       </Stack>
