@@ -18,6 +18,9 @@ from django.contrib import admin
 from django.urls import include, path
 from .views.case_contract_download_view import CaseContractDownloadView
 
+from .views.admin_case_list_view import AdminCaseListView
+from .views.case_deletion_view import CaseDeletionView
+
 from .views.case_creation_view import CaseCreationView
 from .views.case_eligibility_view import CaseEligibilityView
 from .views.case_assigment_view import CaseAssignmentView
@@ -27,6 +30,8 @@ from .views.passenger_case_details_view import PassengerCaseDetailsView
 
 urlpatterns = [
     path('cases/', CaseCreationView.as_view(), name='case-create'),
+    path('cases/admin/', AdminCaseListView.as_view(), name='admin-case-list'),
+    path('cases/admin/<int:case_id>/', CaseDeletionView.as_view(), name='case-delete'),
     path('cases/<int:case_id>/contract/', CaseContractDownloadView.as_view(), name='case-contract-download'),
     path("cases/<int:case_id>/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),
     path("cases/me/", PassengerCaseListView.as_view(), name="passenger-case-list"),
