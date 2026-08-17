@@ -51,7 +51,12 @@ function AdminCasesPage() {
 
   return (
     <Box
-      sx={{ minHeight: "100vh", px: { xs: 2, md: 4 }, py: { xs: 3, md: 5 } }}
+      sx={{
+        minHeight: "100vh",
+        px: { xs: 2, md: 4 },
+        py: { xs: 3, md: 5 },
+        backgroundColor: "#ffffff",
+      }}
     >
       <PortalUserHeader
         name={currentUser.name}
@@ -67,6 +72,11 @@ function AdminCasesPage() {
             label: "System Options",
             icon: <SettingsIcon fontSize="small" />,
             onClick: () => navigate("/admin/system-options"),
+          },
+          {
+            label: "System View",
+            icon: <SettingsIcon fontSize="small" />,
+            onClick: () => undefined,
           },
         ]}
       />
