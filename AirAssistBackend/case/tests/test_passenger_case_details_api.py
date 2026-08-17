@@ -150,6 +150,11 @@ class PassengerCaseDetailsApiTests(APITestCase):
         self.assertEqual(response.data["passenger"]["email"], "alice@example.com")
         self.assertEqual(len(response.data["documents"]), 1)
         self.assertEqual(response.data["documents"][0]["filename"], "boarding-pass.pdf")
+        self.assertIn("download_url", response.data["documents"][0])
+        self.assertIn(
+            f"/api/cases/me/{self.owned_case.id}/documents/",
+            response.data["documents"][0]["download_url"],
+        )
 
     def test_returns_not_found_for_other_passenger_case(self):
         self.client.force_authenticate(user=self.passenger_user)

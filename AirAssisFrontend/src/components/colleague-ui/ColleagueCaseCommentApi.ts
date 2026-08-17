@@ -1,58 +1,50 @@
-const DEFAULT_API_BASE_URL =
+const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-type CommentValidationErrorPayload = {
-  text?: string[];
-  detail?: string;
-};
-
-export type ColleagueCaseCommentApiError = Error & {
-  status: number;
-};
-
-export type ColleagueCaseCommentCreateResponse = {
-  id: number;
+type CreateColleagueCaseCommentParams = {
+  caseId: number;
   text: string;
-  author_email: string;
-  author_role: string;
-  created_at: string;
+  accessToken: string;
 };
 
-const toApiError = (
-  status: number,
-  message: string,
-): ColleagueCaseCommentApiError => {
+type ColleagueCaseCommentApiError = Error & {
+  status?: number;
+};
+
+const buildApiError = (message: string, status?: number) => {
   const error = new Error(message) as ColleagueCaseCommentApiError;
   error.status = status;
   return error;
 };
 
-const readJsonSafely = async <T>(response: Response): Promise<T | null> => {
-  const responseText = await response.text();
-  if (!responseText) {
-    return null;
+const readErrorMessage = async (response: Response) => {
+  try {
+    const payload = (await response.json()) as { detail?: string; text?: string };
+
+    if (typeof payload.detail === "string" && payload.detail.trim()) {
+      return payload.detail;
+    }
+
+    if (typeof payload.text === "string" && payload.text.trim()) {
+      return payload.text;
+    }
+  } catch {
+    const responseText = await response.text().catch(() => "");
+    if (responseText.trim()) {
+      return responseText;
+    }
   }
 
-  try {
-    return JSON.parse(responseText) as T;
-  } catch {
-    return null;
-  }
+  return "Could not add comment.";
 };
 
-export const createColleagueCaseComment = async ({
+const createColleagueCaseComment = async ({
   caseId,
   text,
   accessToken,
-  apiBaseUrl = DEFAULT_API_BASE_URL,
-}: {
-  caseId: number;
-  text: string;
-  accessToken: string;
-  apiBaseUrl?: string;
-}): Promise<ColleagueCaseCommentCreateResponse> => {
+}: CreateColleagueCaseCommentParams) => {
   const response = await fetch(
-    `${apiBaseUrl}/api/cases/colleague/${caseId}/comments/`,
+    `${API_BASE_URL}/api/cases/colleague/${caseId}/comments/`,
     {
       method: "POST",
       headers: {
@@ -63,29 +55,12 @@ export const createColleagueCaseComment = async ({
     },
   );
 
-  if (response.status === 401 || response.status === 403) {
-    throw toApiError(response.status, "Unauthorized.");
-  }
-
   if (!response.ok) {
-    const payload =
-      await readJsonSafely<CommentValidationErrorPayload>(response);
-    const validationMessage = payload?.text?.[0];
-    const detailMessage = payload?.detail;
-    throw toApiError(
-      response.status,
-      validationMessage || detailMessage || "Could not add comment.",
-    );
+    throw buildApiError(await readErrorMessage(response), response.status);
   }
 
-  const payload =
-    await readJsonSafely<ColleagueCaseCommentCreateResponse>(response);
-  if (!payload) {
-    throw toApiError(
-      response.status,
-      "Could not read created comment response.",
-    );
-  }
-
-  return payload;
+  return response.json();
 };
+
+export { createColleagueCaseComment };
+export type { ColleagueCaseCommentApiError };

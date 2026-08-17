@@ -5,12 +5,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -30,6 +24,12 @@ import { useNavigate } from "react-router-dom";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity, setStoredUserIdentity } from "../../utils/auth";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
+import CaseListFilters from "../cases/shared/list/CaseListFilters";
+import CaseStatusChip from "../cases/shared/list/CaseStatusChip";
+import {
+  CaseListEmptyState,
+  CaseListLoadingState,
+} from "../cases/shared/list/CaseListStates";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -235,9 +235,7 @@ function PastCasesView({
                 variant="body1"
                 color="text.secondary"
                 sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
-              >
-                Review submitted compensation cases and current handling status.
-              </Typography>
+              ></Typography>
             </Box>
           </Box>
 
@@ -289,6 +287,15 @@ function PastCasesView({
               </Select>
             </FormControl>
           </Stack>
+          <CaseListFilters
+            statusFilter={statusFilter}
+            assigneeFilter={assigneeFilter}
+            assigneeOptions={assigneeOptions}
+            statusLabelId="past-cases-status-label"
+            assigneeLabelId="past-cases-assignee-label"
+            onStatusChange={setStatusFilter}
+            onAssigneeChange={setAssigneeFilter}
+          />
 
           {errorMessage && (
             <Alert severity="error" sx={{ mb: 3 }}>
@@ -297,34 +304,9 @@ function PastCasesView({
           )}
 
           {isLoading ? (
-            <Box
-              sx={{
-                py: 8,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <CircularProgress size={28} />
-              <Typography variant="body1" color="text.secondary">
-                Loading your cases...
-              </Typography>
-            </Box>
+            <CaseListLoadingState label="Loading your cases..." />
           ) : displayedCases.length === 0 ? (
-            <Box
-              sx={{
-                py: 6,
-                borderRadius: 2,
-                border: "1px dashed",
-                borderColor: "divider",
-                textAlign: "center",
-              }}
-            >
-              <Typography variant="body1" color="text.secondary">
-                No cases found for current filters.
-              </Typography>
-            </Box>
+            <CaseListEmptyState />
           ) : (
             <Box
               sx={{

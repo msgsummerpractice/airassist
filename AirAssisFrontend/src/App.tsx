@@ -15,9 +15,11 @@ import PassengerCasesPage from "./components/passenger/PassengerCasesPage";
 import { useAuthView } from "./components/wizard/utils/use_auth_view";
 import CaseEntryForm from "./components/wizard/CaseEntryForm";
 import AdminUsersPage from "./components/admin/AdminUsersPage";
+import AdminCasesPage from "./components/admin/AdminCasesPage";
 
 function App() {
-  const { view, role, resolveView, showCaseEntry } = useAuthView();
+  const { view, role, resolveView, showCaseEntry, showColleagueDashboard } =
+    useAuthView();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   useEffect(() => {
@@ -39,7 +41,7 @@ function App() {
       }
       return;
     }
-    if (view === "admin-users") {
+    if (view === "admin-users" && !pathname.startsWith("/admin/")) {
       navigate("/admin/users", { replace: true });
       return;
     }
@@ -64,7 +66,7 @@ function App() {
         path="/colleague-cases"
         element={
           <ColleagueCasesPage
-            isAllowed={view === "colleague-dashboard"}
+            isAllowed={role === "COLLEAGUE"}
             onCreateCase={showCaseEntry}
           />
         }
@@ -73,19 +75,24 @@ function App() {
         path="/colleague-cases/:caseId"
         element={
           <ColleagueCasesPage
-            isAllowed={view === "colleague-dashboard"}
+            isAllowed={role === "COLLEAGUE"}
             onCreateCase={showCaseEntry}
           />
         }
       />
       <Route
         path="/case-entry"
-        element={<CaseEntryForm isColleagueCaseEntry={role === "COLLEAGUE"} />}
+        element={
+          <CaseEntryForm
+            isColleagueCaseEntry={role === "COLLEAGUE"}
+            onShowColleagueDashboard={showColleagueDashboard}
+          />
+        }
       />
       <Route
         path="/colleague-dashboard"
         element={
-          view === "colleague-dashboard" ? (
+          role === "COLLEAGUE" ? (
             <ColleagueDashboard onCreateCase={showCaseEntry} />
           ) : (
             <Navigate to="/login" replace />
@@ -97,6 +104,26 @@ function App() {
         element={
           view === "admin-users" ? (
             <AdminUsersPage />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/admin/cases"
+        element={
+          view === "admin-users" ? (
+            <AdminCasesPage />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/admin/cases/:caseId"
+        element={
+          view === "admin-users" ? (
+            <AdminCasesPage />
           ) : (
             <Navigate to="/login" replace />
           )

@@ -2,16 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import "./ColleagueDashboard.css";
 
 import {
-  Alert,
   Box,
   Card,
   CardContent,
-  Chip,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -28,6 +21,14 @@ import AssignColleagueButton, {
 } from "./AssignColleagueButton";
 import { fetchWithAuth } from "../../utils/auth";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
+import CaseListFilters from "../cases/shared/list/CaseListFilters";
+import CaseStatusChip from "../cases/shared/list/CaseStatusChip";
+import {
+  CaseListEmptyState,
+  CaseListErrorState,
+  CaseListLoadingState,
+} from "../cases/shared/list/CaseListStates";
+import { formatCaseDate } from "../cases/shared/list/caseListFormatting";
 
 type ColleagueCaseListItem = {
   id: number;
@@ -310,40 +311,22 @@ function ColleagueCaseList() {
             </Select>
           </FormControl>
         </Stack>
+        <CaseListFilters
+          statusFilter={statusFilter}
+          assigneeFilter={assigneeFilter}
+          assigneeOptions={assigneeOptions}
+          statusLabelId="colleague-cases-status-label"
+          assigneeLabelId="colleague-cases-assignee-label"
+          onStatusChange={setStatusFilter}
+          onAssigneeChange={setAssigneeFilter}
+        />
 
         {isLoading ? (
-          <Box
-            sx={{
-              py: 8,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: 1,
-            }}
-          >
-            <CircularProgress size={28} />
-            <Typography variant="body1" color="text.secondary">
-              Loading colleague cases...
-            </Typography>
-          </Box>
+          <CaseListLoadingState label="Loading colleague cases..." />
         ) : hasError ? (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            We could not load the colleague case list right now.
-          </Alert>
+          <CaseListErrorState message="We could not load the colleague case list right now." />
         ) : displayedCases.length === 0 ? (
-          <Box
-            sx={{
-              py: 6,
-              borderRadius: 2,
-              border: "1px dashed",
-              borderColor: "divider",
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="body1" color="text.secondary">
-              No cases found for current filters.
-            </Typography>
-          </Box>
+          <CaseListEmptyState />
         ) : (
           <Box
             sx={{
@@ -403,9 +386,13 @@ function ColleagueCaseList() {
                           #{caseItem.id}
                         </Typography>
                       </TableCell>
-                      <TableCell>{formatDate(caseItem.case_date)}</TableCell>
+                      <TableCell>
+                        {formatCaseDate(caseItem.case_date)}
+                      </TableCell>
                       <TableCell>{caseItem.flight_number ?? "-"}</TableCell>
-                      <TableCell>{formatDate(caseItem.flight_date)}</TableCell>
+                      <TableCell>
+                        {formatCaseDate(caseItem.flight_date)}
+                      </TableCell>
                       <TableCell>{caseItem.passenger_name ?? "-"}</TableCell>
                       <TableCell>
                         <Chip
@@ -458,10 +445,10 @@ function ColleagueCaseList() {
                         Flight {caseItem.flight_number ?? "-"}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
-                        Case date: {formatDate(caseItem.case_date)}
+                        Case date: {formatCaseDate(caseItem.case_date)}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
-                        Flight date: {formatDate(caseItem.flight_date)}
+                        Flight date: {formatCaseDate(caseItem.flight_date)}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
                         Passenger: {caseItem.passenger_name ?? "-"}
