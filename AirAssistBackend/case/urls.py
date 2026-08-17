@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+
+from .views.case_status_update_view import CaseStatusUpdateView
 from .views.case_contract_download_view import CaseContractDownloadView
 
 from .views.admin_case_list_view import AdminCaseListView
@@ -28,14 +30,31 @@ from .views.passenger_case_comment_view import PassengerCaseCommentCreateView
 from .views.passenger_case_document_download_view import PassengerCaseDocumentDownloadView
 from .views.passenger_case_list_view import PassengerCaseListView
 from .views.passenger_case_details_view import PassengerCaseDetailsView
+from .views.pdf_history_list_view import PdfHistoryListView
+from .views.pdf_history_download_view import PdfHistoryDownloadView
 
 urlpatterns = [
     path('cases/', CaseCreationView.as_view(), name='case-create'),
     path('cases/admin/', AdminCaseListView.as_view(), name='admin-case-list'),
-    path('cases/admin/<int:case_id>/', CaseDeletionView.as_view(), name='case-delete'),
-    path('cases/<int:case_id>/contract/', CaseContractDownloadView.as_view(), name='case-contract-download'),
-    path("cases/<int:case_id>/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),
+    path('cases/admin/<int:case_id>/',
+         CaseDeletionView.as_view(), name='case-delete'),
+    path('cases/<int:case_id>/contract/',
+         CaseContractDownloadView.as_view(), name='case-contract-download'),
+    path("cases/<int:case_id>/eligibility-check/",
+         CaseEligibilityView.as_view(), name="case-eligibility-check"),
     path("cases/me/", PassengerCaseListView.as_view(), name="passenger-case-list"),
+    path("cases/eligibility-check/", CaseEligibilityView.as_view(),
+         name="case-eligibility-check"),
+    path("cases/<int:case_id>/assign/",
+         CaseAssignmentView.as_view(), name="case-assign"),
+    path("cases/me/<int:pk>/", PassengerCaseDetailsView.as_view(),
+         name="passenger-case-details"),
+    path("cases/me/<int:pk>/comments/", PassengerCaseCommentCreateView.as_view(),
+         name="passenger-case-comment-create"),
+    path("cases/documents/", PdfHistoryListView.as_view(), name="pdf-history-list"),
+    path("cases/documents/<int:document_id>/download/",
+         PdfHistoryDownloadView.as_view(), name="pdf-history-download"),
+]
     path("cases/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),
     path("cases/<int:case_id>/assign/", CaseAssignmentView.as_view(), name="case-assign"),
     path("cases/me/<int:pk>/", PassengerCaseDetailsView.as_view(), name="passenger-case-details"),
@@ -45,4 +64,9 @@ urlpatterns = [
         name="passenger-case-document-download",
     ),
     path("cases/me/<int:pk>/comments/", PassengerCaseCommentCreateView.as_view(), name="passenger-case-comment-create"),
+    path(
+    "cases/<int:case_id>/status/",
+    CaseStatusUpdateView.as_view(),
+    name="case-status-update",
+)
 ] 

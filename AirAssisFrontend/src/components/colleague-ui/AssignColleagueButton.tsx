@@ -50,7 +50,7 @@ function AssignColleagueButton({
   );
   const [error, setError] = useState<string | null>(null);
 
-  const canAssign = caseStatus === "VALID";
+  const canAssign = caseStatus === "PENDING";
 
   const handleAssign = async (colleague: ColleagueOption) => {
     setAssigningColleagueId(colleague.id);

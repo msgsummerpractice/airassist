@@ -28,7 +28,7 @@ class ColleagueCaseCommentApiTests(APITestCase):
         )
 
         self.case = Case.objects.create(
-            status=CaseState.ASSIGNED.value,
+            status=CaseState.IN_REVIEW.value,
             gdpr_consent=True,
         )
         self.url = f"/api/cases/colleague/{self.case.id}/comments/"

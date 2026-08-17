@@ -40,7 +40,7 @@ class ColleagueCaseDetailsViewTests(TestCase):
 
         self.case = Case.objects.create(
             gdpr_consent=True,
-            status="VALID",
+            status="PENDING",
             reservation_number="ABC123",
             departure_airport="OTP",
             arrival_airport="FRA",
@@ -104,7 +104,7 @@ class ColleagueCaseDetailsViewTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], self.case.id)
-        self.assertEqual(response.data["status"], "VALID")
+        self.assertEqual(response.data["status"], "PENDING")
         self.assertEqual(response.data["flight"]["flight_number"], "LH123")
         self.assertEqual(len(response.data["connecting_flights"]), 1)
         self.assertEqual(response.data["connecting_flights"][0]["flight_number"], "LH456")

@@ -4,10 +4,11 @@ from django.db import models
     
 
 class CaseState(Enum):
-    NEW = "NEW"
-    VALID = "VALID"
-    ASSIGNED = "ASSIGNED"
-    INVALID = "INVALID"
+    PENDING = "PENDING"
+    IN_REVIEW = "IN_REVIEW"
+    ELIGIBLE = "ELIGIBLE"
+    NON_ELIGIBLE = "NON_ELIGIBLE"
+    AWAITING_DOCUMENTS = "AWAITING_DOCUMENTS"
 
     @classmethod
     def choices(cls):

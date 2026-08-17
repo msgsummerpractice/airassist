@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
 import {
   Box,
+  Button,
   Card,
   CardContent,
   IconButton,
@@ -39,6 +42,8 @@ import { formatCaseDate } from "../cases/shared/list/caseListFormatting";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import DeleteCaseDialog from "./DeleteCaseDialog";
+import PdfHistoryList from "./PdfHistoryList";
+import { useEffect } from "react";
 
 type SortField = "id" | "flight_date" | "status";
 type SortDirection = "asc" | "desc";
@@ -54,6 +59,7 @@ function AdminCaseList() {
   const [caseToDelete, setCaseToDelete] = useState<AdminCaseListItem | null>(
     null,
   );
+  const [showPdfHistory, setShowPdfHistory] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sort, setSort] = useState<SortState>({
     field: "id",
@@ -160,6 +166,14 @@ function AdminCaseList() {
         />
         <Box sx={{ textAlign: "center", mb: 3 }}>
           <Typography variant="h2">All Cases</Typography>
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdfOutlinedIcon fontSize="small" />}
+            onClick={() => setShowPdfHistory((current) => !current)}
+            sx={{ mt: 1.5 }}
+          >
+            {showPdfHistory ? "Back to Case List" : "PDF History"}
+          </Button>
         </Box>
         <Stack
           direction={{ xs: "column", sm: "row" }}
@@ -199,6 +213,10 @@ function AdminCaseList() {
           />
         </Stack>
         {isLoading ? (
+
+        {showPdfHistory ? (
+          <PdfHistoryList />
+        ) : isLoading ? (
           <CaseListLoadingState label="Loading cases..." />
         ) : hasError ? (
           <CaseListErrorState message="We could not load the case list right now." />

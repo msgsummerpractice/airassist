@@ -48,7 +48,7 @@ class CaseCreationSerializer(serializers.Serializer):
 
     # GDPR consent
     gdpr_consent = serializers.BooleanField()
-    case_state = serializers.CharField(default=State.NEW.value, read_only=True)
+    case_state = serializers.CharField(default=State.PENDING.value, read_only=True)
 
     # disruption
     disruption = serializers.CharField(required=True)
@@ -172,7 +172,7 @@ class CaseCreationSerializer(serializers.Serializer):
 
         gdpr_consent = validated_data.get("gdpr_consent", False)
         case = Case.objects.create(
-            status=State.NEW.value,
+            status=State.PENDING.value,
             gdpr_consent=gdpr_consent,
             gdpr_consent_at=timezone.now() if gdpr_consent else None,
             reservation_number=validated_data["reservation_number"],
