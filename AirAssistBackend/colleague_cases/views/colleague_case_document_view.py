@@ -6,7 +6,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ..permissions import IsColleague
-from ..serializers.colleague_case_document_serializer import (ColleagueCaseDocumentSerializer, ColleagueCaseDocumentUploadSerializer)
+from ..serializers.colleague_case_document_serializer import (
+    ColleagueCaseDocumentSerializer,
+    ColleagueCaseDocumentUploadSerializer,
+)
 from ..services.colleague_case_document_service import ColleagueCaseDocumentService
 
 
