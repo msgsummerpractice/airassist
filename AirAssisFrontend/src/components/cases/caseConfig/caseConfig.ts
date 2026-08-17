@@ -3,9 +3,10 @@ import type { CaseScope } from "../types";
 export type CaseDetailsConfig = {
   scope: CaseScope;
   casesLabel: string;
-  createCaseLabel: string;
+  createCaseLabel?: string;
   listPath: string;
   description: string;
+  canAddComments?: boolean;
 };
 
 export const passengerCaseConfig: CaseDetailsConfig = {
@@ -24,4 +25,13 @@ export const colleagueCaseConfig: CaseDetailsConfig = {
   listPath: "/colleague-cases",
   description:
     "Review flight, passenger, and attached documents for this case.",
+};
+
+export const adminCaseConfig: CaseDetailsConfig = {
+  scope: "admin",
+  casesLabel: "Case View",
+  listPath: "/admin/cases",
+  description:
+    "Review the case record, passengers, flights, documents, and comments.",
+  canAddComments: false,
 };
