@@ -119,10 +119,15 @@ export const useAuthView = () => {
     setView("case-entry");
   }, []);
 
+  const showColleagueDashboard = useCallback(() => {
+    setView("colleague-dashboard");
+  }, []);
+
   return {
     view,
     role,
     resolveView,
     showCaseEntry,
+    showColleagueDashboard,
   };
 };
