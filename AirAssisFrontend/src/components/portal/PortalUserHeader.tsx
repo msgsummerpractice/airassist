@@ -45,14 +45,13 @@ function PortalUserHeader({
   authAction,
   logoutAction,
 }: PortalUserHeaderProps) {
-  const navigationActions = [
-    ...(authAction ? [authAction] : []),
-    ...actions,
-  ].sort(
+  const navigationActions = [...actions].sort(
     (firstAction, secondAction) =>
       Number(Boolean(secondAction.active)) -
       Number(Boolean(firstAction.active)),
   );
+
+  const accountAction = logoutAction ?? authAction;
 
   return (
     <Box
@@ -160,23 +159,23 @@ function PortalUserHeader({
               </Avatar>
             </Stack>
 
-            {logoutAction ? (
+            {accountAction ? (
               <Button
-                key={logoutAction.label}
-                variant={logoutAction.active ? "contained" : "text"}
-                color={logoutAction.active ? "primary" : "inherit"}
-                startIcon={logoutAction.icon}
-                onClick={logoutAction.onClick}
+                key={accountAction.label}
+                variant={accountAction.active ? "contained" : "text"}
+                color={accountAction.active ? "primary" : "inherit"}
+                startIcon={accountAction.icon}
+                onClick={accountAction.onClick}
                 sx={{
                   minHeight: 42,
                   px: 2,
                   justifyContent: "center",
-                  color: logoutAction.active
+                  color: accountAction.active
                     ? "primary.contrastText"
                     : "text.primary",
                 }}
               >
-                {logoutAction.label}
+                {accountAction.label}
               </Button>
             ) : null}
           </Stack>
