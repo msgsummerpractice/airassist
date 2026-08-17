@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import {
-  FolderOutlined as FolderIcon,
-  GroupOutlined as GroupIcon,
   LogoutOutlined as LogoutOutlinedIcon,
+  SettingsOutlined as SettingsIcon,
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
 
@@ -65,15 +64,9 @@ function AdminCasesPage() {
         }}
         actions={[
           {
-            label: "User View",
-            icon: <GroupIcon fontSize="small" />,
-            onClick: () => navigate("/admin/users"),
-          },
-          {
-            label: "Case View",
-            active: true,
-            icon: <FolderIcon fontSize="small" />,
-            onClick: () => navigate("/admin/cases"),
+            label: "System Options",
+            icon: <SettingsIcon fontSize="small" />,
+            onClick: () => navigate("/admin/system-options"),
           },
         ]}
       />

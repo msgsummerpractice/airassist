@@ -61,7 +61,8 @@ INSTALLED_APPS = [
     'case',
     'case_email',
     'colleague_cases',
-    'airports'
+    'airports',
+    'system_options',
 ]
 
 AIRPORT_GAP_API_TOKEN = os.getenv("AIRPORT_GAP_API_TOKEN")

@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/', include("case.urls")),
     path('api/', include("colleague_cases.urls")),
     path('api/', include("airports.urls")),
+    path('api/', include("system_options.urls")),
 ]

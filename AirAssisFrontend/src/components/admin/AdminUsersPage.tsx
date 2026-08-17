@@ -40,11 +40,8 @@ import CreateUserButton from "./CreateUserButton";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import {
-  PersonAddOutlined as PersonAddIcon,
-  GroupOutlined as GroupIcon,
-  FolderOutlined as FolderIcon,
-  SettingsOutlined as SettingsIcon,
   LogoutOutlined as LogoutOutlinedIcon,
+  SettingsOutlined as SettingsIcon,
 } from "@mui/icons-material";
 
 const USER_DELETE_SUCCESS_HIDE_MS = 15000;
@@ -87,13 +84,13 @@ function extractApiError(data: unknown, status: number): string {
 }
 
 function AdminUsersPage() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<UserEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserEntry | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
-  const navigate = useNavigate();
   const currentUser = getStoredUserIdentity();
 
   const handleLogout = () => {
@@ -214,25 +211,9 @@ function AdminUsersPage() {
         }}
         actions={[
           {
-            label: "User View",
-            icon: <GroupIcon fontSize="small" />,
-            active: true,
-            onClick: () => navigate("/admin/users"),
-          },
-          {
-            label: "New User View",
-            icon: <PersonAddIcon fontSize="small" />,
-            onClick: () => undefined,
-          },
-          {
-            label: "Case View",
-            icon: <FolderIcon fontSize="small" />,
-            onClick: () => navigate("/admin/cases"),
-          },
-          {
-            label: "System View",
+            label: "System Options",
             icon: <SettingsIcon fontSize="small" />,
-            onClick: () => undefined,
+            onClick: () => navigate("/admin/system-options"),
           },
         ]}
       />

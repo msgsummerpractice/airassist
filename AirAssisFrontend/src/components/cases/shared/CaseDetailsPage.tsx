@@ -4,6 +4,7 @@ import {
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
   LogoutOutlined,
+  SettingsOutlined,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -75,6 +76,32 @@ function CaseDetailsPage({
   });
 
   const handleBack = () => (onBack ? onBack() : navigate(-1));
+  const headerActions =
+    config.scope === "admin"
+      ? [
+          {
+            label: "System Options",
+            icon: <SettingsOutlined fontSize="small" />,
+            onClick: () => navigate("/admin/system-options"),
+          },
+        ]
+      : [
+          {
+            label: config.casesLabel,
+            active: true,
+            icon: <AssignmentTurnedInOutlined fontSize="small" />,
+            onClick: () => navigate(config.listPath),
+          },
+          ...(config.createCaseLabel
+            ? [
+                {
+                  label: config.createCaseLabel,
+                  icon: <AddTaskOutlined fontSize="small" />,
+                  onClick: () => navigate("/case-entry"),
+                },
+              ]
+            : []),
+        ];
 
   return (
     <Box
@@ -94,23 +121,7 @@ function CaseDetailsPage({
           icon: <LogoutOutlined fontSize="small" />,
           onClick: onLogout,
         }}
-        actions={[
-          {
-            label: config.casesLabel,
-            active: true,
-            icon: <AssignmentTurnedInOutlined fontSize="small" />,
-            onClick: () => navigate(config.listPath),
-          },
-          ...(config.createCaseLabel
-            ? [
-                {
-                  label: config.createCaseLabel,
-                  icon: <AddTaskOutlined fontSize="small" />,
-                  onClick: () => navigate("/case-entry"),
-                },
-              ]
-            : []),
-        ]}
+        actions={headerActions}
       />
       <Card
         elevation={1}
