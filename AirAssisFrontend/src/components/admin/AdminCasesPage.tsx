@@ -4,6 +4,7 @@ import {
   FolderOutlined as FolderIcon,
   GroupOutlined as GroupIcon,
   LogoutOutlined as LogoutOutlinedIcon,
+  SettingsOutlined as SettingsIcon,
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
 
@@ -52,7 +53,12 @@ function AdminCasesPage() {
 
   return (
     <Box
-      sx={{ minHeight: "100vh", px: { xs: 2, md: 4 }, py: { xs: 3, md: 5 } }}
+      sx={{
+        minHeight: "100vh",
+        px: { xs: 2, md: 4 },
+        py: { xs: 3, md: 5 },
+        backgroundColor: "#ffffff",
+      }}
     >
       <PortalUserHeader
         name={currentUser.name}
@@ -74,6 +80,11 @@ function AdminCasesPage() {
             active: true,
             icon: <FolderIcon fontSize="small" />,
             onClick: () => navigate("/admin/cases"),
+          },
+          {
+            label: "System View",
+            icon: <SettingsIcon fontSize="small" />,
+            onClick: () => undefined,
           },
         ]}
       />

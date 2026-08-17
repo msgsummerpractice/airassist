@@ -225,9 +225,6 @@ function PastCasesView({
                 px: { xs: 0, md: 10 },
               }}
             >
-              <Typography variant="caption" color="secondary.main">
-                AIRASSIST PORTAL
-              </Typography>
               <Typography variant="h2" sx={{ mt: 0.5 }}>
                 Your Past Cases
               </Typography>
