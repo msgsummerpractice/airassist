@@ -54,135 +54,141 @@ function PortalUserHeader({
   const accountAction = logoutAction ?? authAction;
 
   return (
+  <Box
+    sx={{
+      position: "sticky",
+      top: 0,
+      zIndex: 20,
+      width: "100%",
+      backgroundColor: "#ffffff",
+      borderBottom: "1px solid",
+      borderColor: "divider",
+      boxShadow: "0 6px 20px rgba(18, 28, 42, 0.04)",
+      backdropFilter: "blur(10px)",
+    }}
+  >
     <Box
       sx={{
-        position: "sticky",
-        top: 0,
-        zIndex: 20,
         width: "100%",
-        backgroundColor: "#ffffff",
-        borderBottom: "1px solid",
-        borderColor: "divider",
-        boxShadow: "0 6px 20px rgba(18, 28, 42, 0.04)",
-        backdropFilter: "blur(10px)",
+        px: { xs: 2, md: 5 },
+        py: { xs: 2, md: 2.5 },
       }}
     >
       <Box
         sx={{
-          maxWidth: 1220,
-          mx: "auto",
-          px: { xs: 2, md: 4 },
-          py: 2,
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            lg: "auto minmax(0, 1fr) auto",
+          },
+          gap: { xs: 2, lg: 4 },
+          alignItems: "center",
+          width: "100%",
         }}
       >
-        <Box
+        <Stack spacing={0.25}>
+          <Typography variant="h2" sx={{ color: "primary.main" }}>
+            {title}
+          </Typography>
+
+          <Typography variant="caption" color="text.secondary">
+            {roleLabel}
+          </Typography>
+        </Stack>
+
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={{ xs: 1, md: 2 }}
           sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              lg: "minmax(0, 1fr) auto minmax(0, 1fr)",
+            width: "100%",
+            flexWrap: "wrap",
+            justifyContent: {
+              xs: "flex-start",
+              lg: "space-evenly",
             },
-            gap: 2,
+          }}
+        >
+          {navigationActions.map((action) => (
+            <Button
+              key={action.label}
+              variant={action.active ? "contained" : "text"}
+              color={action.active ? "primary" : "inherit"}
+              startIcon={action.icon}
+              onClick={action.onClick}
+              sx={{
+                minHeight: 46,
+                px: { xs: 2, md: 2.5 },
+                justifyContent: "center",
+                color: action.active
+                  ? "primary.contrastText"
+                  : "text.primary",
+              }}
+            >
+              {action.label}
+            </Button>
+          ))}
+        </Stack>
+
+        <Stack
+          direction="row"
+          spacing={{ xs: 2, md: 3 }}
+          sx={{
+            justifySelf: { xs: "stretch", lg: "end" },
+            justifyContent: { xs: "space-between", sm: "flex-end" },
             alignItems: "center",
           }}
         >
-          <Stack spacing={0.25} sx={{ justifySelf: { lg: "start" } }}>
-            <Typography variant="h2" sx={{ color: "primary.main" }}>
-              {title}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {roleLabel}
-            </Typography>
-          </Stack>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Stack spacing={0.15} sx={{ textAlign: "right" }}>
+              <Typography variant="body1" sx={{ fontWeight: 700 }}>
+                {name}
+              </Typography>
 
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1}
-            sx={{
-              flexWrap: "wrap",
-              justifyContent: "center",
-            }}
-          >
-            {navigationActions.map((action) => (
-              <Button
-                key={action.label}
-                variant={action.active ? "contained" : "text"}
-                color={action.active ? "primary" : "inherit"}
-                startIcon={action.icon}
-                onClick={action.onClick}
-                sx={{
-                  minHeight: 42,
-                  px: 2,
-                  justifyContent: "center",
-                  color: action.active
-                    ? "primary.contrastText"
-                    : "text.primary",
-                }}
-              >
-                {action.label}
-              </Button>
-            ))}
-          </Stack>
-
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{
-              justifySelf: { xs: "stretch", lg: "end" },
-              justifyContent: { xs: "space-between", sm: "flex-end" },
-              alignItems: "center",
-            }}
-          >
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-              <Stack spacing={0.15} sx={{ textAlign: "right" }}>
-                <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                  {name}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {email}
-                </Typography>
-              </Stack>
-
-              <Avatar
-                sx={{
-                  width: 42,
-                  height: 42,
-                  bgcolor: "rgba(0, 49, 120, 0.08)",
-                  color: "primary.main",
-                }}
-              >
-                {name === "Guest" ? (
-                  <PersonOutlineOutlinedIcon fontSize="small" />
-                ) : (
-                  getAvatarLabel(name)
-                )}
-              </Avatar>
+              <Typography variant="caption" color="text.secondary">
+                {email}
+              </Typography>
             </Stack>
 
-            {accountAction ? (
-              <Button
-                key={accountAction.label}
-                variant={accountAction.active ? "contained" : "text"}
-                color={accountAction.active ? "primary" : "inherit"}
-                startIcon={accountAction.icon}
-                onClick={accountAction.onClick}
-                sx={{
-                  minHeight: 42,
-                  px: 2,
-                  justifyContent: "center",
-                  color: accountAction.active
-                    ? "primary.contrastText"
-                    : "text.primary",
-                }}
-              >
-                {accountAction.label}
-              </Button>
-            ) : null}
+            <Avatar
+              sx={{
+                width: 42,
+                height: 42,
+                bgcolor: "rgba(0, 49, 120, 0.08)",
+                color: "primary.main",
+              }}
+            >
+              {name === "Guest" ? (
+                <PersonOutlineOutlinedIcon fontSize="small" />
+              ) : (
+                getAvatarLabel(name)
+              )}
+            </Avatar>
           </Stack>
-        </Box>
+
+          {accountAction ? (
+            <Button
+              key={accountAction.label}
+              variant={accountAction.active ? "contained" : "text"}
+              color={accountAction.active ? "primary" : "inherit"}
+              startIcon={accountAction.icon}
+              onClick={accountAction.onClick}
+              sx={{
+                minHeight: 46,
+                px: { xs: 2, md: 2.5 },
+                justifyContent: "center",
+                color: accountAction.active
+                  ? "primary.contrastText"
+                  : "text.primary",
+              }}
+            >
+              {accountAction.label}
+            </Button>
+          ) : null}
+        </Stack>
       </Box>
     </Box>
-  );
+  </Box>
+);
 }
 
 export type { PortalUserHeaderAction };
