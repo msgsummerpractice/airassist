@@ -9,6 +9,16 @@ from django.template.loader import render_to_string
 from django.db import transaction
 
 
+def send_basic_email(to_email, subject, body):
+    email = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[to_email],
+    )
+    return email.send()
+
+
 def send_template_email(to_email, subject, template_name, context):
     html_body = render_to_string(template_name, context)
 
