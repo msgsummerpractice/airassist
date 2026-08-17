@@ -72,6 +72,12 @@ function mapStatusToChipColor(
       return "info";
     case "VALID":
       return "success";
+    case "ELIGIBLE":
+      return "success";
+    case "NON_ELIGIBLE":
+      return "error";
+    case "AWAITING_DOCUMENTS":
+      return "warning";
     case "ASSIGNED":
       return "primary";
     default:
@@ -96,6 +102,30 @@ function getStatusChipSx(status: string) {
     };
   }
 
+  if (status === "ELIGIBLE") {
+    return {
+      color: "#2e7d32",
+      borderColor: "#a5d6a7",
+      backgroundColor: "#f1f8e9",
+    };
+  }
+
+  if (status === "NON_ELIGIBLE") {
+    return {
+      color: "#ba1a1a",
+      borderColor: "#ef9a9a",
+      backgroundColor: "#ffebee",
+    };
+  }
+
+  if (status === "AWAITING_DOCUMENTS") {
+    return {
+      color: "#6c4300",
+      borderColor: "#ffcc80",
+      backgroundColor: "#fff8e1",
+    };
+  }
+
   return undefined;
 }
 
@@ -113,8 +143,11 @@ const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   }
 };
 
-const formatStatusLabel = (status: string) =>
-  status.charAt(0) + status.slice(1).toLowerCase();
+const formatStatusLabel = (status: string) => {
+  const normalizedStatus = status.replaceAll("_", "-").toLowerCase();
+
+  return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+};
 
 const formatDate = (value: string | null) => {
   if (!value) {
@@ -182,7 +215,9 @@ function ColleagueCaseList() {
 
     const loadColleagues = async () => {
       try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/user/colleagues/`);
+        const response = await fetchWithAuth(
+          `${API_BASE_URL}/user/colleagues/`,
+        );
         const payload = await readJsonSafely<UserListItem[]>(response);
 
         if (!isActive) {
@@ -195,13 +230,13 @@ function ColleagueCaseList() {
         }
 
         setColleagues(
-            payload.map((user) => ({
-                id: user.id,
-                firstname: user.firstname,
-                lastname: user.lastname,
-                email: user.email,
-            })),
-            );
+          payload.map((user) => ({
+            id: user.id,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+          })),
+        );
       } catch {
         if (!isActive) {
           return;
@@ -225,7 +260,9 @@ function ColleagueCaseList() {
         new Set(
           cases
             .map((caseItem) => caseItem.assigned_colleague_name)
-            .filter((assigneeName): assigneeName is string => Boolean(assigneeName)),
+            .filter((assigneeName): assigneeName is string =>
+              Boolean(assigneeName),
+            ),
         ),
       ).sort((first, second) => first.localeCompare(second)),
     [cases],
@@ -329,7 +366,9 @@ function ColleagueCaseList() {
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
-            <InputLabel id="colleague-cases-assignee-label">Assignee</InputLabel>
+            <InputLabel id="colleague-cases-assignee-label">
+              Assignee
+            </InputLabel>
             <Select
               labelId="colleague-cases-assignee-label"
               label="Assignee"
@@ -482,7 +521,11 @@ function ColleagueCaseList() {
                   <CardContent>
                     <Stack spacing={1}>
                       <Typography variant="caption" color="text.secondary">
-                        <Typography component="span" variant="button" color="primary">
+                        <Typography
+                          component="span"
+                          variant="button"
+                          color="primary"
+                        >
                           CASE #{caseItem.id}
                         </Typography>
                       </Typography>
@@ -499,7 +542,8 @@ function ColleagueCaseList() {
                         Passenger: {caseItem.passenger_name ?? "-"}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
-                        Assignee: {caseItem.assigned_colleague_name ?? "Unassigned"}
+                        Assignee:{" "}
+                        {caseItem.assigned_colleague_name ?? "Unassigned"}
                       </Typography>
                       <Box>
                         <Chip

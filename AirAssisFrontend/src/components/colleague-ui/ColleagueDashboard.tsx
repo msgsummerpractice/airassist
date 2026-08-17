@@ -76,13 +76,15 @@ const API_BASE_URL =
 const statusColorMap: Record<
   string,
   "warning" | "success" | "error" | "info" | "primary"
-> =
-  {
-    NEW: "success",
-    VALID: "success",
-    INVALID: "error",
-    ASSIGNED: "primary",
-  };
+> = {
+  NEW: "success",
+  VALID: "success",
+  INVALID: "error",
+  ELIGIBLE: "success",
+  NON_ELIGIBLE: "error",
+  AWAITING_DOCUMENTS: "warning",
+  ASSIGNED: "primary",
+};
 
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   const responseText = await response.text();
@@ -98,8 +100,11 @@ const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   }
 };
 
-const formatStatusLabel = (status: string) =>
-  status.charAt(0) + status.slice(1).toLowerCase();
+const formatStatusLabel = (status: string) => {
+  const normalizedStatus = status.replaceAll("_", "-").toLowerCase();
+
+  return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+};
 
 const formatDate = (value: string) => {
   const date = new Date(value);
@@ -378,6 +383,14 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                               label={formatStatusLabel(claim.status)}
                               color={statusColorMap[claim.status] ?? "info"}
                               size="small"
+                              sx={
+                                claim.status === "AWAITING_DOCUMENTS"
+                                  ? {
+                                      color: "#ffffff",
+                                      backgroundColor: "#d97706",
+                                    }
+                                  : undefined
+                              }
                             />
                           </TableCell>
 
