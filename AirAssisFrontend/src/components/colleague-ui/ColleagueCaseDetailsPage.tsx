@@ -13,6 +13,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -51,6 +52,8 @@ import { getStoredUserIdentity } from "../../utils/auth";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import { validateDocumentFile } from "../wizard/utils/documentUploadStepValidation";
+import { getCaseStatusPresentation } from "../../utils/caseStatus";
+import axios from "axios";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -114,6 +117,8 @@ type ColleagueCaseDetailsPageProps = {
   caseId?: number;
   onBack?: () => void;
 };
+
+type CaseDecision = "ELIGIBLE" | "NON_ELIGIBLE" | "AWAITING_DOCUMENTS";
 
 const formatDate = (value: string | null | undefined) => {
   if (!value) {
@@ -215,6 +220,14 @@ function ColleagueCaseDetailsPage({
   const [commentSubmitError, setCommentSubmitError] = useState("");
   const [commentSubmitSuccess, setCommentSubmitSuccess] = useState("");
 
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
+  const [statusUpdateError, setStatusUpdateError] = useState<string>("");
+  const [selectedDecision, setSelectedDecision] = useState<CaseDecision | "">(
+    "",
+  );
+  const [decisionNote, setDecisionNote] = useState("");
+  const [isStatusUpdateSuccessOpen, setIsStatusUpdateSuccessOpen] =
+    useState(false);
   const resolvedCaseId = useMemo(() => {
     if (typeof caseId === "number" && Number.isInteger(caseId)) {
       return caseId;
@@ -241,6 +254,16 @@ function ColleagueCaseDetailsPage({
     normalizedCommentText.length > 0 &&
     normalizedCommentText.length <= COMMENT_MAX_LENGTH &&
     !isSubmittingComment;
+  const normalizedDecisionNote = decisionNote.trim();
+  const decisionRequiresNote =
+    selectedDecision === "NON_ELIGIBLE" ||
+    selectedDecision === "AWAITING_DOCUMENTS";
+  const canApplyDecision =
+    selectedDecision !== "" &&
+    (!decisionRequiresNote ||
+      (normalizedDecisionNote.length > 0 &&
+        normalizedDecisionNote.length <= COMMENT_MAX_LENGTH)) &&
+    !isUpdatingStatus;
 
   const getAccessToken = useCallback(() => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -503,6 +526,66 @@ function ColleagueCaseDetailsPage({
     }
   }, [fetchDetails, normalizedCommentText, onUnauthorized, resolvedCaseId]);
 
+  const updateCaseStatus = useCallback(
+    async (status: CaseDecision, note: string) => {
+      const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+
+      if (!accessToken) {
+        onUnauthorized?.();
+        return;
+      }
+
+      if (resolvedCaseId === null) {
+        setStatusUpdateError("Invalid case id.");
+        return;
+      }
+
+      setIsUpdatingStatus(true);
+      setStatusUpdateError("");
+
+      try {
+        if (note) {
+          await createColleagueCaseComment({
+            caseId: resolvedCaseId,
+            text: note,
+            accessToken,
+          });
+        }
+
+        await axios.post(
+          `${API_BASE_URL}/api/cases/${resolvedCaseId}/status/`,
+          { status, note },
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+        await fetchDetails();
+        setSelectedDecision("");
+        setDecisionNote("");
+        setIsStatusUpdateSuccessOpen(true);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          if (
+            error.response?.status === 401 ||
+            error.response?.status === 403
+          ) {
+            onUnauthorized?.();
+            return;
+          }
+          setStatusUpdateError(
+            error.response?.data?.message || "Could not update case status.",
+          );
+          return;
+        }
+        setStatusUpdateError("Could not update case status.");
+      } finally {
+        setIsUpdatingStatus(false);
+      }
+    },
+    [fetchDetails, onUnauthorized, resolvedCaseId],
+  );
   return (
     <Box
       sx={{
@@ -562,9 +645,7 @@ function ColleagueCaseDetailsPage({
                 px: { xs: 0, md: 10 },
               }}
             >
-              <Typography variant="h2">
-                Case Details
-              </Typography>
+              <Typography variant="h2">Case Details</Typography>
             </Box>
           </Box>
 
@@ -650,12 +731,10 @@ function ColleagueCaseDetailsPage({
                       <Typography variant="body1">Status:</Typography>
                       <Chip
                         size="small"
-                        label={details.status}
-                        color={mapStatusToChipColor(details.status)}
-                        sx={getStatusChipSx(details.status)}
-                        variant={
-                          details.status === "ASSIGNED" ? "filled" : "outlined"
-                        }
+                        label={getCaseStatusPresentation(details.status).label}
+                        color={getCaseStatusPresentation(details.status).color}
+                        sx={getCaseStatusPresentation(details.status).sx}
+                        variant="outlined"
                       />
                     </Box>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -1111,6 +1190,102 @@ function ColleagueCaseDetailsPage({
                   )}
                 </CardContent>
               </Card>
+
+              <Card
+                variant="outlined"
+                sx={{
+                  borderColor: "divider",
+                  backgroundColor: "background.default",
+                }}
+              >
+                <CardContent sx={{ py: { xs: 5, md: 5 } }}>
+                  <Stack spacing={2.5} sx={{ alignItems: "center" }}>
+                    <Box sx={{ textAlign: "center" }}>
+                      <Typography variant="h5">Eligibility decision</Typography>
+                    </Box>
+                    <Stack spacing={2} sx={{ width: "100%", maxWidth: 640 }}>
+                      <FormControl fullWidth>
+                        <InputLabel id="case-decision-label">
+                          Decision
+                        </InputLabel>
+                        <Select
+                          labelId="case-decision-label"
+                          id="case-decision"
+                          value={selectedDecision}
+                          label="Decision"
+                          disabled={isUpdatingStatus}
+                          onChange={(event) => {
+                            setSelectedDecision(
+                              event.target.value as CaseDecision,
+                            );
+                            setDecisionNote("");
+                          }}
+                        >
+                          <MenuItem value="ELIGIBLE">Eligible</MenuItem>
+                          <MenuItem value="NON_ELIGIBLE">Non-eligible</MenuItem>
+                          <MenuItem value="AWAITING_DOCUMENTS">
+                            Awaiting documents
+                          </MenuItem>
+                        </Select>
+                      </FormControl>
+                      {decisionRequiresNote && (
+                        <TextField
+                          fullWidth
+                          multiline
+                          minRows={4}
+                          maxRows={8}
+                          value={decisionNote}
+                          onChange={(event) =>
+                            setDecisionNote(event.target.value)
+                          }
+                          label={
+                            selectedDecision === "NON_ELIGIBLE"
+                              ? "Reason for non-eligibility"
+                              : "Requested documents"
+                          }
+                          placeholder={
+                            selectedDecision === "NON_ELIGIBLE"
+                              ? "Explain why this case is not eligible."
+                              : "List the documents the passenger must provide."
+                          }
+                          disabled={isUpdatingStatus}
+                          slotProps={{
+                            htmlInput: { maxLength: COMMENT_MAX_LENGTH },
+                          }}
+                        />
+                      )}
+                      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                        <Button
+                          variant="contained"
+                          size="large"
+                          disabled={!canApplyDecision}
+                          onClick={() =>
+                            selectedDecision &&
+                            void updateCaseStatus(
+                              selectedDecision,
+                              normalizedDecisionNote,
+                            )
+                          }
+                          sx={{
+                            minWidth: { xs: "100%", sm: 200 },
+                            minHeight: 52,
+                          }}
+                        >
+                          {isUpdatingStatus ? "Saving..." : "Apply decision"}
+                        </Button>
+                      </Box>
+                    </Stack>
+                    {statusUpdateError && (
+                      <Alert
+                        severity="error"
+                        sx={{ width: "100%", maxWidth: 640, mx: "auto" }}
+                      >
+                        {statusUpdateError}
+                      </Alert>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
             </Stack>
           )}
         </CardContent>
@@ -1121,6 +1296,20 @@ function ColleagueCaseDetailsPage({
         severity={snackbar.severity}
         onClose={closeSnackbar}
       />
+      <Snackbar
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        autoHideDuration={4000}
+        open={isStatusUpdateSuccessOpen}
+        onClose={() => setIsStatusUpdateSuccessOpen(false)}
+      >
+        <Alert
+          severity="success"
+          variant="filled"
+          onClose={() => setIsStatusUpdateSuccessOpen(false)}
+        >
+          The case status was changed successfully.
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

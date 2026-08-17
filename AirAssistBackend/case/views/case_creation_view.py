@@ -49,7 +49,6 @@ class CaseCreationView(APIView):
         try:
             with transaction.atomic():
                 case = serializer.save()
-                case = CaseStateService.mark_case_as_valid(case)
 
                 CaseService.calculate_case_compensation(case)
 

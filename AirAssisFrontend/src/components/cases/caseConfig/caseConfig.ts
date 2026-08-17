@@ -31,7 +31,6 @@ export const adminCaseConfig: CaseDetailsConfig = {
   scope: "admin",
   casesLabel: "Case View",
   listPath: "/admin/cases",
-  description:
-    "Review the case record, passengers, flights, documents, and comments.",
+  description: "",
   canAddComments: false,
 };

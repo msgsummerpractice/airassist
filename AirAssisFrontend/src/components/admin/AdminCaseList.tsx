@@ -1,12 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
 import {
   Box,
+  Button,
   Card,
   CardContent,
   IconButton,
   Link,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -14,6 +21,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -33,6 +42,15 @@ import { formatCaseDate } from "../cases/shared/list/caseListFormatting";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import DeleteCaseDialog from "./DeleteCaseDialog";
+import PdfHistoryList from "./PdfHistoryList";
+import { useEffect } from "react";
+
+type SortField = "id" | "flight_date" | "status";
+type SortDirection = "asc" | "desc";
+type SortState = {
+  field: SortField;
+  direction: SortDirection;
+};
 
 function AdminCaseList() {
   const [cases, setCases] = useState<AdminCaseListItem[]>([]);
@@ -41,7 +59,14 @@ function AdminCaseList() {
   const [caseToDelete, setCaseToDelete] = useState<AdminCaseListItem | null>(
     null,
   );
+  const [showPdfHistory, setShowPdfHistory] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sort, setSort] = useState<SortState>({
+    field: "id",
+    direction: "desc",
+  });
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [flightDateFilter, setFlightDateFilter] = useState("");
   const { snackbar, closeSnackbar, showErrorSnackbar, showSuccessSnackbar } =
     useAppSnackbar();
 
@@ -91,6 +116,45 @@ function AdminCaseList() {
 
   const caseDetailsPath = (caseId: number) => `/admin/cases/${caseId}`;
 
+  const filteredCases = useMemo(() => {
+    return cases.filter((caseItem) => {
+      const matchesStatus =
+        statusFilter === "ALL" || caseItem.status === statusFilter;
+      const matchesFlightDate =
+        !flightDateFilter || caseItem.flight_date === flightDateFilter;
+
+      return matchesStatus && matchesFlightDate;
+    });
+  }, [cases, flightDateFilter, statusFilter]);
+
+  const sortedCases = useMemo(() => {
+    return [...filteredCases].sort((firstCase, secondCase) => {
+      let comparison: number;
+
+      if (sort.field === "id") {
+        comparison = firstCase.id - secondCase.id;
+      } else if (sort.field === "flight_date") {
+        comparison = (firstCase.flight_date ?? "").localeCompare(
+          secondCase.flight_date ?? "",
+        );
+      } else {
+        comparison = firstCase.status.localeCompare(secondCase.status);
+      }
+
+      return sort.direction === "asc" ? comparison : -comparison;
+    });
+  }, [filteredCases, sort]);
+
+  const handleSort = (field: SortField) => {
+    setSort((currentSort) => ({
+      field,
+      direction:
+        currentSort.field === field && currentSort.direction === "asc"
+          ? "desc"
+          : "asc",
+    }));
+  };
+
   return (
     <Card elevation={1} sx={{ maxWidth: 1220, width: "100%", mx: "auto" }}>
       <CardContent sx={{ p: { xs: 2, md: 4 } }}>
@@ -102,12 +166,61 @@ function AdminCaseList() {
         />
         <Box sx={{ textAlign: "center", mb: 3 }}>
           <Typography variant="h2">All Cases</Typography>
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdfOutlinedIcon fontSize="small" />}
+            onClick={() => setShowPdfHistory((current) => !current)}
+            sx={{ mt: 1.5 }}
+          >
+            {showPdfHistory ? "Back to Case List" : "PDF History"}
+          </Button>
         </Box>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
+            mb: 3,
+            width: "100%",
+            justifyContent: "center",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
+            <InputLabel id="admin-case-status-filter-label">Status</InputLabel>
+            <Select
+              labelId="admin-case-status-filter-label"
+              label="Status"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <MenuItem value="ALL">All</MenuItem>
+              <MenuItem value="NEW">New</MenuItem>
+              <MenuItem value="VALID">Valid</MenuItem>
+              <MenuItem value="ASSIGNED">Assigned</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            size="small"
+            label="Flight date"
+            type="date"
+            value={flightDateFilter}
+            onChange={(event) => setFlightDateFilter(event.target.value)}
+            slotProps={{
+              inputLabel: { shrink: true },
+            }}
+            sx={{ minWidth: 220, flex: "1 1 220px" }}
+          />
+        </Stack>
         {isLoading ? (
+
+        {showPdfHistory ? (
+          <PdfHistoryList />
+        ) : isLoading ? (
           <CaseListLoadingState label="Loading cases..." />
         ) : hasError ? (
           <CaseListErrorState message="We could not load the case list right now." />
-        ) : cases.length === 0 ? (
+        ) : filteredCases.length === 0 ? (
           <CaseListEmptyState />
         ) : (
           <Box
@@ -124,16 +237,56 @@ function AdminCaseList() {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Case ID</TableCell>
+                    <TableCell
+                      sortDirection={
+                        sort.field === "id" ? sort.direction : false
+                      }
+                    >
+                      <TableSortLabel
+                        active={sort.field === "id"}
+                        direction={sort.field === "id" ? sort.direction : "asc"}
+                        onClick={() => handleSort("id")}
+                      >
+                        Case ID
+                      </TableSortLabel>
+                    </TableCell>
                     <TableCell>Case Date</TableCell>
                     <TableCell>Flight Number</TableCell>
-                    <TableCell>Flight Date</TableCell>
-                    <TableCell>Status</TableCell>
+                    <TableCell
+                      sortDirection={
+                        sort.field === "flight_date" ? sort.direction : false
+                      }
+                    >
+                      <TableSortLabel
+                        active={sort.field === "flight_date"}
+                        direction={
+                          sort.field === "flight_date" ? sort.direction : "asc"
+                        }
+                        onClick={() => handleSort("flight_date")}
+                      >
+                        Flight Date
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell
+                      sortDirection={
+                        sort.field === "status" ? sort.direction : false
+                      }
+                    >
+                      <TableSortLabel
+                        active={sort.field === "status"}
+                        direction={
+                          sort.field === "status" ? sort.direction : "asc"
+                        }
+                        onClick={() => handleSort("status")}
+                      >
+                        Status
+                      </TableSortLabel>
+                    </TableCell>
                     <TableCell align="center">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {cases.map((caseItem) => (
+                  {sortedCases.map((caseItem) => (
                     <TableRow key={caseItem.id} hover>
                       <TableCell>
                         <Link
@@ -175,7 +328,7 @@ function AdminCaseList() {
               </Table>
             </TableContainer>
             <Stack spacing={1.5} sx={{ display: { xs: "flex", md: "none" } }}>
-              {cases.map((caseItem) => (
+              {sortedCases.map((caseItem) => (
                 <Card key={caseItem.id} variant="outlined">
                   <CardContent>
                     <Stack spacing={1}>

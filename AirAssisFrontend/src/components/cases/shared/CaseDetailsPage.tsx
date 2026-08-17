@@ -128,9 +128,6 @@ function CaseDetailsPage({
       >
         <CardContent sx={{ p: { xs: 2, md: 4 } }}>
           <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Typography variant="caption" color="secondary.main">
-              AIRASSIST PORTAL
-            </Typography>
             <Typography variant="h2" sx={{ mt: 0.5 }}>
               Case Details
             </Typography>

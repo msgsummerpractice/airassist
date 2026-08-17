@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity, setStoredUserIdentity } from "../../utils/auth";
+import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import CaseListFilters from "../cases/shared/list/CaseListFilters";
 import CaseStatusChip from "../cases/shared/list/CaseStatusChip";
 import {
@@ -224,9 +225,6 @@ function PastCasesView({
                 px: { xs: 0, md: 10 },
               }}
             >
-              <Typography variant="caption" color="secondary.main">
-                AIRASSIST PORTAL
-              </Typography>
               <Typography variant="h2" sx={{ mt: 0.5 }}>
                 Your Past Cases
               </Typography>
@@ -238,6 +236,54 @@ function PastCasesView({
             </Box>
           </Box>
 
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{
+              mb: 3,
+              width: "100%",
+              justifyContent: "center",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
+              <InputLabel id="past-cases-status-label">Status</InputLabel>
+              <Select
+                labelId="past-cases-status-label"
+                label="Status"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <MenuItem value="ALL">All</MenuItem>
+                <MenuItem value="PENDING">Pending</MenuItem>
+                <MenuItem value="IN_REVIEW">In review</MenuItem>
+                <MenuItem value="ELIGIBLE">Eligible</MenuItem>
+                <MenuItem value="NON_ELIGIBLE">Non-eligible</MenuItem>
+                <MenuItem value="AWAITING_DOCUMENTS">
+                  Awaiting documents
+                </MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
+              <InputLabel id="past-cases-assignee-label">Assignee</InputLabel>
+              <Select
+                labelId="past-cases-assignee-label"
+                label="Assignee"
+                value={assigneeFilter}
+                onChange={(event) => setAssigneeFilter(event.target.value)}
+              >
+                <MenuItem value="ALL">All</MenuItem>
+                <MenuItem value="UNASSIGNED">Unassigned</MenuItem>
+                {assigneeOptions.map((assigneeName) => (
+                  <MenuItem key={assigneeName} value={assigneeName}>
+                    {assigneeName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
           <CaseListFilters
             statusFilter={statusFilter}
             assigneeFilter={assigneeFilter}
@@ -317,9 +363,12 @@ function PastCasesView({
                         <TableCell>{item.flight_number ?? "-"}</TableCell>
                         <TableCell>{item.passenger_name ?? "-"}</TableCell>
                         <TableCell>
-                          <CaseStatusChip
-                            status={item.status}
-                            preserveStatusCase
+                          <Chip
+                            size="small"
+                            label={getCaseStatusPresentation(item.status).label}
+                            color={getCaseStatusPresentation(item.status).color}
+                            sx={getCaseStatusPresentation(item.status).sx}
+                            variant="outlined"
                           />
                         </TableCell>
                         <TableCell>{item.assignee ?? "Unassigned"}</TableCell>
@@ -395,9 +444,12 @@ function PastCasesView({
                           </Box>
                         ) : null}
                         <Box>
-                          <CaseStatusChip
-                            status={item.status}
-                            preserveStatusCase
+                          <Chip
+                            size="small"
+                            label={getCaseStatusPresentation(item.status).label}
+                            color={getCaseStatusPresentation(item.status).color}
+                            sx={getCaseStatusPresentation(item.status).sx}
+                            variant="outlined"
                           />
                         </Box>
                       </Stack>
