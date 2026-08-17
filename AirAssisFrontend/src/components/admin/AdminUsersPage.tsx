@@ -3,6 +3,8 @@ import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
   Chip,
   CircularProgress,
   Dialog,
@@ -11,7 +13,7 @@ import {
   DialogTitle,
   IconButton,
   InputAdornment,
-  Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -22,6 +24,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Toolbar,
 } from "@mui/material";
 import {
   InfoOutlined as InfoIcon,
@@ -40,7 +43,6 @@ import CreateUserButton from "./CreateUserButton";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import {
-  PersonAddOutlined as PersonAddIcon,
   GroupOutlined as GroupIcon,
   FolderOutlined as FolderIcon,
   SettingsOutlined as SettingsIcon,
@@ -202,7 +204,14 @@ function AdminUsersPage() {
   );
 
   return (
-    <Box>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        px: { xs: 2, md: 4 },
+        py: { xs: 3, md: 5 },
+        backgroundColor: "#ffffff",
+      }}
+    >
       <PortalUserHeader
         name={currentUser.name}
         email={currentUser.email}
@@ -220,11 +229,6 @@ function AdminUsersPage() {
             onClick: () => navigate("/admin/users"),
           },
           {
-            label: "New User View",
-            icon: <PersonAddIcon fontSize="small" />,
-            onClick: () => undefined,
-          },
-          {
             label: "Case View",
             icon: <FolderIcon fontSize="small" />,
             onClick: () => navigate("/admin/cases"),
@@ -237,354 +241,389 @@ function AdminUsersPage() {
         ]}
       />
 
-      <Box sx={{ maxWidth: 1100, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}>
-        <AppSnackbar
-          open={snackbar.open}
-          message={snackbar.message}
-          severity={snackbar.severity}
-          autoHideDuration={
-            snackbar.severity === "success" &&
-            snackbar.message === "User account deleted succesfully."
-              ? USER_DELETE_SUCCESS_HIDE_MS
-              : undefined
-          }
-          onClose={closeSnackbar}
-        />
-
-        <Typography variant="h2" sx={{ mb: 0.5 }}>
-          User Management
-        </Typography>
-
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mb: 3, fontSize: "0.875rem" }}
-        >
-          Colleagues and passengers registered in the system.
-        </Typography>
-
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 3 }}>
-          <Button
-            variant="outlined"
-            startIcon={
-              loading ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : (
-                <RefreshIcon />
-              )
+      <Card
+        elevation={1}
+        sx={{
+          maxWidth: 1220,
+          mx: "auto",
+          mt: 3,
+          border: "none",
+          overflow: "hidden",
+        }}
+      >
+        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+          <AppSnackbar
+            open={snackbar.open}
+            message={snackbar.message}
+            severity={snackbar.severity}
+            autoHideDuration={
+              snackbar.severity === "success" &&
+              snackbar.message === "User account deleted succesfully."
+                ? USER_DELETE_SUCCESS_HIDE_MS
+                : undefined
             }
-            onClick={loadUsers}
-            disabled={loading}
+            onClose={closeSnackbar}
+          />
+
+          <Box sx={{ textAlign: "center", mb: 3 }}>
+            <Typography variant="h2">User Management</Typography>
+          </Box>
+
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{
+              mb: 3,
+              justifyContent: "center",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
           >
-            {loaded ? "Reload Users" : "Load Users"}
-          </Button>
-
-          <CreateUserButton onUserCreated={loadUsers} />
-        </Box>
-
-        {loadError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {loadError}
-          </Alert>
-        )}
-
-        {loaded && (
-          <>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 1.5 }}>
-              <TextField
-                size="small"
-                label="Search by name"
-                value={nameFilter}
-                onChange={(event) => setNameFilter(event.target.value)}
-                sx={{ minWidth: 200 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonSearchIcon fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-
-              <TextField
-                size="small"
-                label="Search by email"
-                value={emailFilter}
-                onChange={(event) => setEmailFilter(event.target.value)}
-                sx={{ minWidth: 220 }}
-              />
-
-              <TextField
-                size="small"
-                label="Min. assigned cases"
-                type="number"
-                value={minCasesFilter}
-                onChange={(event) => setMinCasesFilter(event.target.value)}
-                slotProps={{ htmlInput: { min: 0 } }}
-                sx={{ width: 170 }}
-              />
-            </Box>
-
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mb: 1 }}
+            <Button
+              variant="outlined"
+              startIcon={
+                loading ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <RefreshIcon />
+                )
+              }
+              onClick={loadUsers}
+              disabled={loading}
             >
-              {filtered.length} user{filtered.length !== 1 ? "s" : ""} shown
-            </Typography>
+              {loaded ? "Reload Users" : "Load Users"}
+            </Button>
 
-            <TableContainer component={Paper} elevation={1}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: "background.default" }}>
-                    {["Name", "Email", "Role", "Assigned Cases", "Actions"].map(
-                      (heading) => (
-                        <TableCell
-                          key={heading}
-                          align={
-                            heading === "Assigned Cases" ||
-                            heading === "Actions"
-                              ? "center"
-                              : "left"
-                          }
-                        >
-                          <Typography variant="caption">{heading}</Typography>
-                        </TableCell>
-                      ),
-                    )}
-                  </TableRow>
-                </TableHead>
+            <CreateUserButton onUserCreated={loadUsers} />
+          </Stack>
 
-                <TableBody>
-                  {filtered.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ py: 2 }}
-                        >
-                          No users match the current filters.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    paginated.map((user) => (
-                      <TableRow key={user.id} hover>
-                        <TableCell>
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            {user.firstname} {user.lastname}
-                          </Typography>
-                        </TableCell>
+          {loadError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {loadError}
+            </Alert>
+          )}
 
-                        <TableCell>
-                          <Typography variant="body1" color="text.secondary">
-                            {user.email}
-                          </Typography>
-                        </TableCell>
+          <Toolbar></Toolbar>
 
-                        <TableCell>
-                          <Chip
-                            label={user.role}
-                            color={roleChipColor(user.role)}
-                            size="small"
-                            variant="outlined"
-                          />
-                        </TableCell>
-
-                        <TableCell align="center">
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              fontWeight: 500,
-                              color:
-                                user.assigned_case_count > 0
-                                  ? "primary.main"
-                                  : "text.secondary",
-                            }}
-                          >
-                            {user.assigned_case_count}
-                          </Typography>
-                        </TableCell>
-
-                        <TableCell align="center">
-                          <Tooltip title="View details">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => setDetailUser(user)}
-                            >
-                              <InfoIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-
-                          <Tooltip title="Delete user">
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => openDeleteDialog(user)}
-                                disabled={deletingUserId === user.id}
-                                sx={{ ml: 0.5 }}
-                              >
-                                {deletingUserId === user.id ? (
-                                  <CircularProgress size={16} color="inherit" />
-                                ) : (
-                                  <DeleteOutlineIcon fontSize="small" />
-                                )}
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            <TablePagination
-              component="div"
-              count={filtered.length}
-              page={page}
-              rowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[5, 10, 25]}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              onRowsPerPageChange={(event) => {
-                setRowsPerPage(parseInt(event.target.value, 10));
-                setPage(0);
-              }}
-            />
-          </>
-        )}
-
-        <Dialog
-          open={!!detailUser}
-          onClose={() => setDetailUser(null)}
-          maxWidth="xs"
-          fullWidth
-        >
-          <DialogTitle>User Details</DialogTitle>
-
-          <DialogContent dividers>
-            {detailUser && (
-              <Box
+          {loaded && (
+            <>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "120px 1fr",
-                  gap: 1.5,
-                  alignItems: "start",
+                  mb: 1.5,
+                  width: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flexWrap: "wrap",
                 }}
               >
-                <Typography variant="caption" color="text.secondary">
-                  ID
-                </Typography>
-                <Typography variant="body1">{detailUser.id}</Typography>
-
-                <Typography variant="caption" color="text.secondary">
-                  First Name
-                </Typography>
-                <Typography variant="body1">{detailUser.firstname}</Typography>
-
-                <Typography variant="caption" color="text.secondary">
-                  Last Name
-                </Typography>
-                <Typography variant="body1">{detailUser.lastname}</Typography>
-
-                <Typography variant="caption" color="text.secondary">
-                  Email
-                </Typography>
-                <Typography variant="body1">{detailUser.email}</Typography>
-
-                <Typography variant="caption" color="text.secondary">
-                  Role
-                </Typography>
-                <Chip
-                  label={detailUser.role}
-                  color={roleChipColor(detailUser.role)}
+                <TextField
                   size="small"
-                  variant="outlined"
+                  label="Search by name"
+                  value={nameFilter}
+                  onChange={(event) => setNameFilter(event.target.value)}
+                  sx={{ minWidth: 180, flex: "1 1 180px" }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonSearchIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
 
-                <Typography variant="caption" color="text.secondary">
-                  Assigned Cases
-                </Typography>
-                <Typography variant="body1">
-                  {detailUser.assigned_case_count}
-                </Typography>
-              </Box>
-            )}
-          </DialogContent>
-
-          <DialogActions>
-            <Button onClick={() => setDetailUser(null)}>Close</Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog
-          open={!!deleteUser}
-          onClose={closeDeleteDialog}
-          maxWidth="xs"
-          fullWidth
-        >
-          <DialogTitle>
-            <Typography variant="h2" component="span">
-              Delete User
-            </Typography>
-          </DialogTitle>
-
-          <DialogContent dividers>
-            {deleteUser && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
-                <Typography variant="body1">
-                  Are you sure you want to delete this user account?
-                </Typography>
-
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {deleteUser.firstname} {deleteUser.lastname}
-                </Typography>
-
-                <Typography variant="body1" color="text.secondary">
-                  {deleteUser.email}
-                </Typography>
-
-                <Chip
-                  label={deleteUser.role}
-                  color={roleChipColor(deleteUser.role)}
+                <TextField
                   size="small"
-                  variant="outlined"
-                  sx={{ alignSelf: "flex-start" }}
+                  label="Search by email"
+                  value={emailFilter}
+                  onChange={(event) => setEmailFilter(event.target.value)}
+                  sx={{ minWidth: 220, flex: "1 1 220px" }}
                 />
+
+                <TextField
+                  size="small"
+                  label="Min. assigned cases"
+                  type="number"
+                  value={minCasesFilter}
+                  onChange={(event) => setMinCasesFilter(event.target.value)}
+                  slotProps={{ htmlInput: { min: 0 } }}
+                  sx={{ minWidth: 170, flex: "1 1 170px" }}
+                />
+              </Stack>
+
+              <Box
+                sx={{
+                  maxHeight: { xs: 520, md: 640 },
+                  overflowY: "auto",
+                  px: 1,
+                }}
+              >
+                <TableContainer
+                  sx={{
+                    display: { xs: "none", md: "block" },
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 2,
+                  }}
+                >
+                  <Table stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        {[
+                          "Name",
+                          "Email",
+                          "Role",
+                          "Assigned Cases",
+                          "Actions",
+                        ].map((heading) => (
+                          <TableCell
+                            key={heading}
+                            align={
+                              heading === "Assigned Cases" ||
+                              heading === "Actions"
+                                ? "center"
+                                : "left"
+                            }
+                          >
+                            {heading}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {filtered.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} align="center">
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ py: 2 }}
+                            >
+                              No users match the current filters.
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        paginated.map((user) => (
+                          <TableRow key={user.id} hover>
+                            <TableCell>
+                              {user.firstname} {user.lastname}
+                            </TableCell>
+
+                            <TableCell>{user.email}</TableCell>
+
+                            <TableCell>
+                              <Chip
+                                label={user.role}
+                                color={roleChipColor(user.role)}
+                                size="small"
+                                variant="outlined"
+                              />
+                            </TableCell>
+
+                            <TableCell align="center">
+                              <Box
+                                component="span"
+                                sx={{
+                                  color:
+                                    user.assigned_case_count > 0
+                                      ? "primary.main"
+                                      : "text.secondary",
+                                }}
+                              >
+                                {user.assigned_case_count}
+                              </Box>
+                            </TableCell>
+
+                            <TableCell align="center">
+                              <Tooltip title="View details">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => setDetailUser(user)}
+                                >
+                                  <InfoIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+
+                              <Tooltip title="Delete user">
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => openDeleteDialog(user)}
+                                    disabled={deletingUserId === user.id}
+                                    sx={{ ml: 0.5 }}
+                                  >
+                                    {deletingUserId === user.id ? (
+                                      <CircularProgress
+                                        size={16}
+                                        color="inherit"
+                                      />
+                                    ) : (
+                                      <DeleteOutlineIcon fontSize="small" />
+                                    )}
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </Box>
-            )}
-          </DialogContent>
 
-          <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button
-              onClick={closeDeleteDialog}
-              disabled={deletingUserId !== null}
-            >
-              Cancel
-            </Button>
+              <TablePagination
+                component="div"
+                count={filtered.length}
+                page={page}
+                rowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 25]}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(event) => {
+                  setRowsPerPage(parseInt(event.target.value, 10));
+                  setPage(0);
+                }}
+              />
+            </>
+          )}
 
-            <Button
-              variant="contained"
-              color="error"
-              onClick={confirmDelete}
-              disabled={deletingUserId !== null}
-              startIcon={
-                deletingUserId !== null ? (
-                  <CircularProgress size={16} color="inherit" />
-                ) : undefined
-              }
-            >
-              {deletingUserId !== null ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
+          <Dialog
+            open={!!detailUser}
+            onClose={() => setDetailUser(null)}
+            maxWidth="xs"
+            fullWidth
+          >
+            <DialogTitle>User Details</DialogTitle>
+
+            <DialogContent dividers>
+              {detailUser && (
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "120px 1fr",
+                    gap: 1.5,
+                    alignItems: "start",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    ID
+                  </Typography>
+                  <Typography variant="body1">{detailUser.id}</Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    First Name
+                  </Typography>
+                  <Typography variant="body1">
+                    {detailUser.firstname}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Last Name
+                  </Typography>
+                  <Typography variant="body1">{detailUser.lastname}</Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Email
+                  </Typography>
+                  <Typography variant="body1">{detailUser.email}</Typography>
+
+                  <Typography variant="caption" color="text.secondary">
+                    Role
+                  </Typography>
+                  <Chip
+                    label={detailUser.role}
+                    color={roleChipColor(detailUser.role)}
+                    size="small"
+                    variant="outlined"
+                  />
+
+                  <Typography variant="caption" color="text.secondary">
+                    Assigned Cases
+                  </Typography>
+                  <Typography variant="body1">
+                    {detailUser.assigned_case_count}
+                  </Typography>
+                </Box>
+              )}
+            </DialogContent>
+
+            <DialogActions>
+              <Button onClick={() => setDetailUser(null)}>Close</Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={!!deleteUser}
+            onClose={closeDeleteDialog}
+            maxWidth="xs"
+            fullWidth
+          >
+            <DialogTitle>
+              <Typography variant="h2" component="span">
+                Delete User
+              </Typography>
+            </DialogTitle>
+
+            <DialogContent dividers>
+              {deleteUser && (
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}
+                >
+                  <Typography variant="body1">
+                    Are you sure you want to delete this user account?
+                  </Typography>
+
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {deleteUser.firstname} {deleteUser.lastname}
+                  </Typography>
+
+                  <Typography variant="body1" color="text.secondary">
+                    {deleteUser.email}
+                  </Typography>
+
+                  <Chip
+                    label={deleteUser.role}
+                    color={roleChipColor(deleteUser.role)}
+                    size="small"
+                    variant="outlined"
+                    sx={{ alignSelf: "flex-start" }}
+                  />
+                </Box>
+              )}
+            </DialogContent>
+
+            <DialogActions sx={{ px: 3, py: 2 }}>
+              <Button
+                onClick={closeDeleteDialog}
+                disabled={deletingUserId !== null}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                variant="contained"
+                color="error"
+                onClick={confirmDelete}
+                disabled={deletingUserId !== null}
+                startIcon={
+                  deletingUserId !== null ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : undefined
+                }
+              >
+                {deletingUserId !== null ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </CardContent>
+      </Card>
     </Box>
   );
 }

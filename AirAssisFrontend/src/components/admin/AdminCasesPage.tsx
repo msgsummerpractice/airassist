@@ -4,6 +4,7 @@ import {
   FolderOutlined as FolderIcon,
   GroupOutlined as GroupIcon,
   LogoutOutlined as LogoutOutlinedIcon,
+  SettingsOutlined as SettingsIcon,
 } from "@mui/icons-material";
 import { Box } from "@mui/material";
 
@@ -79,6 +80,11 @@ function AdminCasesPage() {
             active: true,
             icon: <FolderIcon fontSize="small" />,
             onClick: () => navigate("/admin/cases"),
+          },
+          {
+            label: "System View",
+            icon: <SettingsIcon fontSize="small" />,
+            onClick: () => undefined,
           },
         ]}
       />
