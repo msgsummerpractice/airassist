@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../constants";
+import { fetchWithAuth } from "../../../utils/auth";
 import type {
   CaseCommentCreateResponse,
   CaseDetails,
@@ -12,10 +13,15 @@ export type CaseApiError = Error & {
 type ErrorPayload = {
   text?: string[];
   detail?: string;
+  message?: string;
 };
 
 const getCasePath = (scope: CaseScope) =>
-  scope === "passenger" ? "/api/cases/me" : "/api/cases/colleague";
+  scope === "passenger"
+    ? "/api/cases/me"
+    : scope === "colleague"
+      ? "/api/cases/colleague"
+      : "/api/cases/admin";
 
 const toApiError = (status: number, message: string): CaseApiError => {
   const error = new Error(message) as CaseApiError;
@@ -118,4 +124,56 @@ export const createCaseComment = async ({
   }
 
   return payload;
+};
+
+export type AdminCaseListItem = {
+  id: number;
+  case_date: string;
+  flight_number: string | null;
+  flight_date: string | null;
+  status: string;
+};
+
+type AdminCaseListResponse = {
+  success: boolean;
+  data: AdminCaseListItem[];
+};
+
+export const fetchAdminCases = async (): Promise<AdminCaseListItem[]> => {
+  const response = await fetchWithAuth(`${API_BASE_URL}/api/cases/admin/`);
+
+  throwForUnauthorized(response);
+
+  if (!response.ok) {
+    const payload = await readJsonSafely<ErrorPayload>(response);
+    throw toApiError(
+      response.status,
+      payload?.message || "Could not load cases.",
+    );
+  }
+
+  const payload = await readJsonSafely<AdminCaseListResponse>(response);
+
+  if (!payload?.success || !Array.isArray(payload.data)) {
+    throw toApiError(response.status, "Could not read case list response.");
+  }
+
+  return payload.data;
+};
+
+export const deleteAdminCase = async (caseId: number): Promise<void> => {
+  const response = await fetchWithAuth(
+    `${API_BASE_URL}/api/cases/admin/${caseId}/`,
+    { method: "DELETE" },
+  );
+
+  throwForUnauthorized(response);
+
+  if (!response.ok) {
+    const payload = await readJsonSafely<ErrorPayload>(response);
+    throw toApiError(
+      response.status,
+      payload?.message || payload?.detail || "Could not delete case.",
+    );
+  }
 };

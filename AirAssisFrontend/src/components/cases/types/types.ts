@@ -1,4 +1,4 @@
-export type CaseScope = "passenger" | "colleague";
+export type CaseScope = "passenger" | "colleague" | "admin";
 
 export type FlightDetails = {
   flight_date: string;

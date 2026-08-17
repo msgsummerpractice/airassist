@@ -101,11 +101,15 @@ function CaseDetailsPage({
             icon: <AssignmentTurnedInOutlined fontSize="small" />,
             onClick: () => navigate(config.listPath),
           },
-          {
-            label: config.createCaseLabel,
-            icon: <AddTaskOutlined fontSize="small" />,
-            onClick: () => navigate("/case-entry"),
-          },
+          ...(config.createCaseLabel
+            ? [
+                {
+                  label: config.createCaseLabel,
+                  icon: <AddTaskOutlined fontSize="small" />,
+                  onClick: () => navigate("/case-entry"),
+                },
+              ]
+            : []),
         ]}
       />
       <Card
@@ -189,7 +193,9 @@ function CaseDetailsPage({
                 documents={details.documents}
                 formatDateTime={formatDateTime}
               />
-              <AddCommentCard {...comment} />
+              {config.canAddComments !== false && (
+                <AddCommentCard {...comment} />
+              )}
               <CommentListCard
                 comments={details.comments ?? []}
                 formatDateTime={formatDateTime}
