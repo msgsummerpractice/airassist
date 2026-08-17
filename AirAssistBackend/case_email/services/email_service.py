@@ -68,12 +68,13 @@ def send_password_reset_email(user, reset_url):
     return send_template_email(
         to_email=user.email,
         subject="Password Reset",
-        template_name="emails/password_reset.html",
+        template_name="password_reset.html",
         context={
             "first_name": user.firstname,
             "reset_url": reset_url,
         },
     )
+
 
 def send_case_status_update_email(passenger, case_id, case_status, note=""):
     status_labels = {
@@ -81,7 +82,8 @@ def send_case_status_update_email(passenger, case_id, case_status, note=""):
         "NON_ELIGIBLE": "Non-Eligible",
         "AWAITING_DOCUMENTS": "Awaiting Documents",
     }
-    status_label = status_labels.get(case_status, case_status.replace("_", " ").title())
+    status_label = status_labels.get(
+        case_status, case_status.replace("_", " ").title())
 
     return send_template_email(
         to_email=passenger.email,

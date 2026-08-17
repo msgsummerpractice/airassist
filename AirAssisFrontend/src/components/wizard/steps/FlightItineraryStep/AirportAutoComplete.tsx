@@ -29,10 +29,10 @@ function AirportAutocomplete({
   const [options, setOptions] = useState<AirportOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const visibleOptions = inputValue.length < 2 ? [] : options;
 
   useEffect(() => {
     if (inputValue.length < 2) {
-      setOptions([]);
       return;
     }
     const timer = setTimeout(async () => {
@@ -47,7 +47,7 @@ function AirportAutocomplete({
   return (
     <Autocomplete
       fullWidth
-      options={options}
+      options={visibleOptions}
       getOptionLabel={(opt) => `${opt.iata} – ${opt.name}`}
       filterOptions={(x) => x}
       isOptionEqualToValue={(option, val) => option.iata === val.iata}

@@ -5,6 +5,11 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -25,7 +30,6 @@ import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity, setStoredUserIdentity } from "../../utils/auth";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import CaseListFilters from "../cases/shared/list/CaseListFilters";
-import CaseStatusChip from "../cases/shared/list/CaseStatusChip";
 import {
   CaseListEmptyState,
   CaseListLoadingState,
