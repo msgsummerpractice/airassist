@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from ..models.case import Case
 from ..models.document import CaseDocument
@@ -38,10 +39,22 @@ class PassengerCasePassengerSerializer(serializers.ModelSerializer):
 
 class PassengerCaseDocumentSerializer(serializers.ModelSerializer):
 	filename = serializers.CharField(source="original_filename", read_only=True)
+	download_url = serializers.SerializerMethodField()
 
 	class Meta:
 		model = CaseDocument
-		fields = ["id", "document_type", "filename", "uploaded_at"]
+		fields = ["id", "document_type", "filename", "uploaded_at", "download_url"]
+
+	def get_download_url(self, obj):
+		request = self.context.get("request")
+		if request is None:
+			return None
+
+		return reverse(
+			"passenger-case-document-download",
+			kwargs={"pk": obj.case_id, "document_id": obj.id},
+			request=request,
+		)
 
 
 class PassengerCaseDetailsSerializer(serializers.ModelSerializer):
