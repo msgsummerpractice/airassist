@@ -39,7 +39,7 @@ class PassengerCaseListApiTests(APITestCase):
         )
 
         self.owned_case = Case.objects.create(
-            status=CaseState.ASSIGNED.value,
+            status=CaseState.IN_REVIEW.value,
             gdpr_consent=True,
             assigned_colleague=self.colleague_user,
         )
@@ -73,7 +73,7 @@ class PassengerCaseListApiTests(APITestCase):
         )
 
         self.other_case = Case.objects.create(
-            status=CaseState.NEW.value,
+            status=CaseState.PENDING.value,
             gdpr_consent=True,
         )
         Passenger.objects.create(
@@ -121,7 +121,7 @@ class PassengerCaseListApiTests(APITestCase):
         self.assertEqual(response.data[0]["id"], self.owned_case.id)
         self.assertEqual(response.data[0]["flight_number"], "RO123")
         self.assertEqual(response.data[0]["passenger_name"], "Alice Passenger")
-        self.assertEqual(response.data[0]["status"], CaseState.ASSIGNED.value)
+        self.assertEqual(response.data[0]["status"], CaseState.IN_REVIEW.value)
         self.assertEqual(response.data[0]["assignee"], "Case Agent")
         self.assertIn(f"/api/cases/{self.owned_case.id}/contract/", response.data[0]["contract_download_url"])
 
@@ -137,14 +137,14 @@ class PassengerCaseListApiTests(APITestCase):
     def test_filters_by_status(self):
         self.client.force_authenticate(user=self.passenger_user)
 
-        response = self.client.get(f"{self.url}?status=assigned")
+        response = self.client.get(f"{self.url}?status=in_review")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
     def test_sorts_by_id(self):
         second_case = Case.objects.create(
-            status=CaseState.NEW.value,
+            status=CaseState.PENDING.value,
             gdpr_consent=True,
         )
         Passenger.objects.create(

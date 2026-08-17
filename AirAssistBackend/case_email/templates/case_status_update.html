@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AirAssist - Case Status Update</title>
+  </head>
+
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f4f7fb;
+      font-family: Arial, sans-serif;
+    "
+  >
+    <div
+      style="
+        max-width: 600px;
+        margin: 40px auto;
+        background: #ffffff;
+        border-radius: 10px;
+        overflow: hidden;
+      "
+    >
+      <div style="padding: 25px; text-align: center; background-color: #ffffff">
+        <img
+          src="cid:logo_placeholder"
+          alt="AirAssist"
+          style="max-width: 180px; height: auto"
+        />
+      </div>
+
+      <div style="padding: 30px; color: #1f2937">
+        <h2 style="margin-top: 0">Case Status Update</h2>
+
+        <p>Hello {{ first_name }},</p>
+
+        <p>The status of your AirAssist case has been updated.</p>
+
+        <p><strong>Case ID:</strong> {{ case_id }}</p>
+        <p><strong>New status:</strong> {{ case_status }}</p>
+
+        {% if case_status == "Eligible" %}
+        <p>
+          Your case is eligible for compensation. Our team will continue
+          processing it and will keep you informed.
+        </p>
+        {% elif case_status == "Non-Eligible" %}
+        <p>
+          Unfortunately, your case is not eligible for compensation based on the
+          information currently available.
+        </p>
+        {% elif case_status == "Awaiting Documents" %}
+        <p>
+          We need additional documents or information before we can continue
+          processing your case. Please sign in to AirAssist to review the
+          request.
+        </p>
+        {% endif %} {% if note %}
+        <p><strong>Additional details:</strong></p>
+        <p style="white-space: pre-wrap">{{ note }}</p>
+        {% endif %}
+
+        <p>
+          Kind regards,<br />
+          <strong>AirAssist Team</strong>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
