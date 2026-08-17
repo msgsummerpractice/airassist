@@ -3,6 +3,7 @@ import { fetchWithAuth } from "../../../utils/auth";
 import type {
   CaseCommentCreateResponse,
   CaseDetails,
+  CaseDocument,
   CaseScope,
 } from "../types";
 
@@ -11,8 +12,14 @@ export type CaseApiError = Error & {
 };
 
 type ErrorPayload = {
+  file?: string[];
+  document_type?: string[];
   text?: string[];
   detail?: string;
+  message?: string;
+};
+
+export type CaseDocumentUploadResponse = CaseDocument & {
   message?: string;
 };
 
@@ -124,6 +131,89 @@ export const createCaseComment = async ({
   }
 
   return payload;
+};
+
+export const uploadCaseDocument = async ({
+  caseId,
+  file,
+  documentType,
+  accessToken,
+}: {
+  caseId: number;
+  file: File;
+  documentType: string;
+  accessToken: string;
+}): Promise<CaseDocumentUploadResponse> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("document_type", documentType);
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/cases/colleague/${caseId}/documents/`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: formData,
+    },
+  );
+
+  throwForUnauthorized(response);
+
+  if (!response.ok) {
+    const payload = await readJsonSafely<ErrorPayload>(response);
+    throw toApiError(
+      response.status,
+      payload?.file?.[0] ||
+        payload?.document_type?.[0] ||
+        payload?.detail ||
+        "Could not upload document.",
+    );
+  }
+
+  const payload = await readJsonSafely<CaseDocumentUploadResponse>(response);
+
+  if (!payload) {
+    throw toApiError(
+      response.status,
+      "Could not read uploaded document response.",
+    );
+  }
+
+  return payload;
+};
+
+export const downloadCaseDocument = async ({
+  caseId,
+  documentId,
+  accessToken,
+}: {
+  caseId: number;
+  documentId: number;
+  accessToken: string;
+}): Promise<Response> => {
+  const response = await fetch(
+    `${API_BASE_URL}/api/cases/colleague/${caseId}/documents/${documentId}/download/`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+  throwForUnauthorized(response);
+
+  if (!response.ok) {
+    const payload = await readJsonSafely<ErrorPayload>(response);
+    throw toApiError(
+      response.status,
+      payload?.detail || "Could not download document.",
+    );
+  }
+
+  return response;
 };
 
 export type AdminCaseListItem = {
