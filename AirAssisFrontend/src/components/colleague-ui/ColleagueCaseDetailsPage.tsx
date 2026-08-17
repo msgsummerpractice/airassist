@@ -22,6 +22,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
@@ -29,18 +30,28 @@ import {
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
   DescriptionOutlined,
+  DownloadOutlined,
   FlightTakeoffOutlined,
   HubOutlined,
   LogoutOutlined,
   PersonOutlineOutlined,
   SummarizeOutlined,
+  UploadFileOutlined,
 } from "@mui/icons-material";
+import {
+  downloadCaseDocument,
+  uploadCaseDocument,
+  type CaseApiError,
+} from "../cases/api";
 import {
   createColleagueCaseComment,
   type ColleagueCaseCommentApiError,
 } from "./ColleagueCaseCommentApi";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity } from "../../utils/auth";
+import { AppSnackbar } from "../utils/app_snackbar";
+import { useAppSnackbar } from "../utils/use_app_snackbar";
+import { validateDocumentFile } from "../wizard/utils/documentUploadStepValidation";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import axios from "axios";
 
@@ -49,6 +60,8 @@ const API_BASE_URL =
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
 const COMMENT_MAX_LENGTH = 1000;
 const SECTION_ICON_COLOR = "#003178";
+const DOCUMENT_TYPE_OPTIONS = ["BOARDING_PASS", "PASSPORT", "CONTRACT"];
+const MAX_VISIBLE_FILENAME_LENGTH = 28;
 
 type FlightDetails = {
   flight_date: string;
@@ -133,6 +146,56 @@ const formatDateTime = (value: string | null | undefined) => {
   return parsedDate.toLocaleString();
 };
 
+const formatFilename = (filename: string) => {
+  if (filename.length <= MAX_VISIBLE_FILENAME_LENGTH) {
+    return filename;
+  }
+
+  return `${filename.slice(0, MAX_VISIBLE_FILENAME_LENGTH)}...`;
+};
+
+function mapStatusToChipColor(
+  status: string,
+):
+  | "default"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "error"
+  | "info" {
+  switch (status) {
+    case "NEW":
+      return "info";
+    case "VALID":
+      return "success";
+    case "ASSIGNED":
+      return "primary";
+    default:
+      return "default";
+  }
+}
+
+function getStatusChipSx(status: string) {
+  if (status === "NEW") {
+    return {
+      color: "#2563eb",
+      borderColor: "#93c5fd",
+      backgroundColor: "#eff6ff",
+    };
+  }
+
+  if (status === "VALID") {
+    return {
+      color: "#2e7d32",
+      borderColor: "#a5d6a7",
+      backgroundColor: "#f1f8e9",
+    };
+  }
+
+  return undefined;
+}
+
 function ColleagueCaseDetailsPage({
   onLogout,
   onUnauthorized,
@@ -142,10 +205,16 @@ function ColleagueCaseDetailsPage({
   const navigate = useNavigate();
   const { caseId: routeCaseId } = useParams();
   const currentUser = getStoredUserIdentity();
+  const { snackbar, closeSnackbar, showSuccessSnackbar } = useAppSnackbar();
 
   const [details, setDetails] = useState<ColleagueCaseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [documentType, setDocumentType] = useState("CONTRACT");
+  const [documentError, setDocumentError] = useState("");
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentSubmitError, setCommentSubmitError] = useState("");
@@ -195,6 +264,48 @@ function ColleagueCaseDetailsPage({
       (normalizedDecisionNote.length > 0 &&
         normalizedDecisionNote.length <= COMMENT_MAX_LENGTH)) &&
     !isUpdatingStatus;
+
+  const getAccessToken = useCallback(() => {
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+
+    if (!accessToken) {
+      onUnauthorized?.();
+      throw new Error("Unauthorized.");
+    }
+
+    return accessToken;
+  }, [onUnauthorized]);
+
+  const parseDownloadFilename = (
+    contentDisposition: string | null,
+    fallbackFilename: string,
+  ) => {
+    if (!contentDisposition) {
+      return fallbackFilename;
+    }
+
+    const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) {
+      return decodeURIComponent(utf8Match[1]);
+    }
+
+    const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
+    if (quotedMatch?.[1]) {
+      return quotedMatch[1];
+    }
+
+    const bareMatch = contentDisposition.match(/filename=([^;]+)/i);
+    if (bareMatch?.[1]) {
+      return bareMatch[1].trim();
+    }
+
+    return fallbackFilename;
+  };
+
+  const handleDocumentFileChange = (file: File | null) => {
+    setSelectedFile(file);
+    setDocumentError(file ? validateDocumentFile(file) : "");
+  };
 
   const fetchDetails = useCallback(async () => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -263,6 +374,103 @@ function ColleagueCaseDetailsPage({
       window.clearTimeout(timeoutId);
     };
   }, [fetchDetails]);
+
+  const uploadDocument = useCallback(async () => {
+    const validationError = validateDocumentFile(selectedFile);
+
+    if (validationError || !selectedFile) {
+      setDocumentError(validationError);
+      return;
+    }
+
+    if (resolvedCaseId === null) {
+      setDocumentError("Invalid case id.");
+      return;
+    }
+
+    setDocumentError("");
+    setIsUploadingDocument(true);
+
+    try {
+      const payload = await uploadCaseDocument({
+        caseId: resolvedCaseId,
+        file: selectedFile,
+        documentType,
+        accessToken: getAccessToken(),
+      });
+
+      setSelectedFile(null);
+      showSuccessSnackbar(payload.message || "Document uploaded successfully.");
+      await fetchDetails();
+    } catch (error) {
+      const apiError = error as Partial<CaseApiError>;
+      if (apiError.status === 401 || apiError.status === 403) {
+        onUnauthorized?.();
+        return;
+      }
+
+      setDocumentError(
+        error instanceof Error ? error.message : "Could not upload document.",
+      );
+    } finally {
+      setIsUploadingDocument(false);
+    }
+  }, [
+    documentType,
+    fetchDetails,
+    getAccessToken,
+    onUnauthorized,
+    resolvedCaseId,
+    selectedFile,
+    showSuccessSnackbar,
+  ]);
+
+  const downloadDocument = useCallback(
+    async (document: CaseDocument) => {
+      if (resolvedCaseId === null) {
+        setDocumentError("Invalid case id.");
+        return;
+      }
+
+      setDocumentError("");
+      setDownloadingDocumentId(document.id);
+
+      try {
+        const response = await downloadCaseDocument({
+          caseId: resolvedCaseId,
+          documentId: document.id,
+          accessToken: getAccessToken(),
+        });
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = window.document.createElement("a");
+        link.href = downloadUrl;
+        link.download = parseDownloadFilename(
+          response.headers.get("Content-Disposition"),
+          document.filename,
+        );
+        window.document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+        showSuccessSnackbar("Document downloaded successfully.");
+      } catch (error) {
+        const apiError = error as Partial<CaseApiError>;
+        if (apiError.status === 401 || apiError.status === 403) {
+          onUnauthorized?.();
+          return;
+        }
+
+        setDocumentError(
+          error instanceof Error ? error.message : "Could not download document.",
+        );
+      } finally {
+        setDownloadingDocumentId(null);
+      }
+    },
+    [getAccessToken, onUnauthorized, resolvedCaseId, showSuccessSnackbar],
+  );
 
   const submitComment = useCallback(async () => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -751,6 +959,60 @@ function ColleagueCaseDetailsPage({
                       Attached Documents List
                     </Typography>
                   </Box>
+                  <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={1.5}
+                    sx={{ mb: 2, alignItems: { md: "center" } }}
+                  >
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      startIcon={<UploadFileOutlined />}
+                      disabled={isUploadingDocument}
+                    >
+                      {selectedFile ? selectedFile.name : "Choose Document"}
+                      <input
+                        hidden
+                        type="file"
+                        accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"
+                        onChange={(event) => {
+                          handleDocumentFileChange(event.target.files?.[0] ?? null);
+                          event.target.value = "";
+                        }}
+                      />
+                    </Button>
+                    <FormControl size="small" sx={{ minWidth: 180 }}>
+                      <InputLabel id="colleague-document-type-label">
+                        Document Type
+                      </InputLabel>
+                      <Select
+                        labelId="colleague-document-type-label"
+                        label="Document Type"
+                        value={documentType}
+                        onChange={(event) => setDocumentType(event.target.value)}
+                      >
+                        {DOCUMENT_TYPE_OPTIONS.map((option) => (
+                          <MenuItem key={option} value={option}>
+                            {option.replaceAll("_", " ")}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <Button
+                      variant="contained"
+                      onClick={() => void uploadDocument()}
+                      disabled={
+                        !selectedFile || Boolean(documentError) || isUploadingDocument
+                      }
+                    >
+                      {isUploadingDocument ? "Uploading..." : "Upload"}
+                    </Button>
+                  </Stack>
+                  {documentError && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      {documentError}
+                    </Alert>
+                  )}
                   {details.documents.length === 0 ? (
                     <Typography variant="body1" color="text.secondary">
                       No documents attached.
@@ -763,15 +1025,46 @@ function ColleagueCaseDetailsPage({
                             <TableCell>Filename</TableCell>
                             <TableCell>Type</TableCell>
                             <TableCell>Upload Timestamp</TableCell>
+                            
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {details.documents.map((item) => (
                             <TableRow key={item.id}>
-                              <TableCell>{item.filename}</TableCell>
+                              <TableCell>
+                                <Tooltip title={item.filename} arrow>
+                                  <Typography
+                                    component="span"
+                                    variant="body1"
+                                    sx={{
+                                      maxWidth: { xs: 180, sm: 260 },
+                                      display: "inline-block",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      verticalAlign: "bottom",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {formatFilename(item.filename)}
+                                  </Typography>
+                                </Tooltip>
+                              </TableCell>
                               <TableCell>{item.document_type}</TableCell>
                               <TableCell>
                                 {formatDateTime(item.uploaded_at)}
+                              </TableCell>
+                              <TableCell align="right">
+                                <Button
+                                  size="small"
+                                  variant="text"
+                                  startIcon={<DownloadOutlined />}
+                                  onClick={() => void downloadDocument(item)}
+                                  disabled={downloadingDocumentId === item.id}
+                                >
+                                  {downloadingDocumentId === item.id
+                                    ? "Downloading..."
+                                    : "Download"}
+                                </Button>
                               </TableCell>
                             </TableRow>
                           ))}
@@ -997,6 +1290,12 @@ function ColleagueCaseDetailsPage({
           )}
         </CardContent>
       </Card>
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
       <Snackbar
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         autoHideDuration={4000}

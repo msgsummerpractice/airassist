@@ -19,6 +19,8 @@ import {
 
 import PortalUserHeader from "../../portal/PortalUserHeader";
 import { getStoredUserIdentity } from "../../../utils/auth";
+import { AppSnackbar } from "../../utils/app_snackbar";
+import { useAppSnackbar } from "../../utils/use_app_snackbar";
 import { useCaseComment, useCaseDetails } from "../hooks";
 import type { CaseDetailsConfig } from "../caseConfig";
 import AddCommentCard from "./cards/AddCommentCard";
@@ -58,6 +60,7 @@ function CaseDetailsPage({
   const navigate = useNavigate();
   const { caseId: routeCaseId } = useParams();
   const currentUser = getStoredUserIdentity();
+  const { snackbar, closeSnackbar, showSuccessSnackbar } = useAppSnackbar();
   const resolvedCaseId = useMemo(() => {
     if (typeof caseId === "number" && Number.isInteger(caseId)) return caseId;
     if (!routeCaseId || !/^\d+$/.test(routeCaseId)) return null;
@@ -198,8 +201,14 @@ function CaseDetailsPage({
                 formatDate={formatDate}
               />
               <DocumentsCard
+                caseId={details.id}
                 documents={details.documents}
                 formatDateTime={formatDateTime}
+                canManageDocuments={config.scope === "colleague"}
+                onDocumentUploaded={reload}
+                onUploadSuccess={showSuccessSnackbar}
+                onDownloadSuccess={showSuccessSnackbar}
+                onUnauthorized={onUnauthorized}
               />
               {config.canAddComments !== false && (
                 <AddCommentCard {...comment} />
@@ -212,6 +221,12 @@ function CaseDetailsPage({
           )}
         </CardContent>
       </Card>
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
     </Box>
   );
 }
