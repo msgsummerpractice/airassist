@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
+from ..enums.case_state_enum import CaseState
 from ..models.case import Case
 from ..models.document import CaseDocument
 from ..models.flights import Flight
@@ -63,6 +64,7 @@ class PassengerCaseDetailsSerializer(serializers.ModelSerializer):
 	passenger = serializers.SerializerMethodField()
 	documents = PassengerCaseDocumentSerializer(many=True, read_only=True)
 	comments = PassengerCaseCommentSerializer(many=True, read_only=True)
+	can_upload_documents = serializers.SerializerMethodField()
 
 	class Meta:
 		model = Case
@@ -73,10 +75,14 @@ class PassengerCaseDetailsSerializer(serializers.ModelSerializer):
 			"connecting_flights",
 			"passenger",
 			"documents",
+			"can_upload_documents",
 			"comments",
 			"created_at",
 			"updated_at",
 		]
+
+	def get_can_upload_documents(self, obj):
+		return obj.status == CaseState.AWAITING_DOCUMENTS.value
 
 	def get_flight(self, obj):
 		main_flight = next(

@@ -99,6 +99,7 @@ type PassengerCaseDetails = {
   connecting_flights: FlightDetails[];
   passenger: PassengerDetails | null;
   documents: CaseDocument[];
+  can_upload_documents: boolean;
   comments?: CaseComment[];
   created_at: string;
   updated_at: string;
@@ -887,102 +888,109 @@ function PassengerCaseDetailsPage({
                           Attached Documents List
                         </Typography>
                       </Box>
-                      <Box
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          setIsDraggingOverDropzone(true);
-                        }}
-                        onDragLeave={() => setIsDraggingOverDropzone(false)}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          setIsDraggingOverDropzone(false);
-                          handleDocumentFileChange(
-                            event.dataTransfer.files?.[0] ?? null,
-                          );
-                        }}
-                        sx={{
-                          border: "1px dashed",
-                          borderColor: isDraggingOverDropzone
-                            ? "primary.main"
-                            : "divider",
-                          borderRadius: 2,
-                          p: 2,
-                          mb: 2,
-                          backgroundColor: isDraggingOverDropzone
-                            ? "rgba(0, 49, 120, 0.04)"
-                            : "transparent",
-                          textAlign: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 1.5 }}
-                        >
-                          Drag and drop a file here, or browse from your
-                          computer.
-                        </Typography>
-                        <Stack
-                          direction={{ xs: "column", md: "row" }}
-                          spacing={1.5}
+                      {details.can_upload_documents ? (
+                        <Box
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setIsDraggingOverDropzone(true);
+                          }}
+                          onDragLeave={() => setIsDraggingOverDropzone(false)}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            setIsDraggingOverDropzone(false);
+                            handleDocumentFileChange(
+                              event.dataTransfer.files?.[0] ?? null,
+                            );
+                          }}
                           sx={{
-                            alignItems: { md: "center" },
-                            justifyContent: "center",
+                            border: "1px dashed",
+                            borderColor: isDraggingOverDropzone
+                              ? "primary.main"
+                              : "divider",
+                            borderRadius: 2,
+                            p: 2,
+                            mb: 2,
+                            backgroundColor: isDraggingOverDropzone
+                              ? "rgba(0, 49, 120, 0.04)"
+                              : "transparent",
+                            textAlign: "center",
                           }}
                         >
-                          <Button
-                            variant="outlined"
-                            component="label"
-                            startIcon={<UploadFileOutlined />}
-                            disabled={isUploadingDocument}
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mb: 1.5 }}
                           >
-                            {selectedFile
-                              ? selectedFile.name
-                              : "Choose Document"}
-                            <input
-                              hidden
-                              type="file"
-                              accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"
-                              onChange={(event) => {
-                                handleDocumentFileChange(
-                                  event.target.files?.[0] ?? null,
-                                );
-                                event.target.value = "";
-                              }}
-                            />
-                          </Button>
-                          <FormControl size="small" sx={{ minWidth: 180 }}>
-                            <InputLabel id="passenger-document-type-label">
-                              Document Type
-                            </InputLabel>
-                            <Select
-                              labelId="passenger-document-type-label"
-                              label="Document Type"
-                              value={documentType}
-                              onChange={(event) =>
-                                setDocumentType(event.target.value)
+                            Drag and drop a file here, or browse from your
+                            computer.
+                          </Typography>
+                          <Stack
+                            direction={{ xs: "column", md: "row" }}
+                            spacing={1.5}
+                            sx={{
+                              alignItems: { md: "center" },
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Button
+                              variant="outlined"
+                              component="label"
+                              startIcon={<UploadFileOutlined />}
+                              disabled={isUploadingDocument}
+                            >
+                              {selectedFile
+                                ? selectedFile.name
+                                : "Choose Document"}
+                              <input
+                                hidden
+                                type="file"
+                                accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"
+                                onChange={(event) => {
+                                  handleDocumentFileChange(
+                                    event.target.files?.[0] ?? null,
+                                  );
+                                  event.target.value = "";
+                                }}
+                              />
+                            </Button>
+                            <FormControl size="small" sx={{ minWidth: 180 }}>
+                              <InputLabel id="passenger-document-type-label">
+                                Document Type
+                              </InputLabel>
+                              <Select
+                                labelId="passenger-document-type-label"
+                                label="Document Type"
+                                value={documentType}
+                                onChange={(event) =>
+                                  setDocumentType(event.target.value)
+                                }
+                              >
+                                {DOCUMENT_TYPE_OPTIONS.map((option) => (
+                                  <MenuItem key={option} value={option}>
+                                    {option.replaceAll("_", " ")}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                            <Button
+                              variant="contained"
+                              onClick={() => void uploadDocument()}
+                              disabled={
+                                !selectedFile ||
+                                Boolean(documentError) ||
+                                isUploadingDocument
                               }
                             >
-                              {DOCUMENT_TYPE_OPTIONS.map((option) => (
-                                <MenuItem key={option} value={option}>
-                                  {option.replaceAll("_", " ")}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                          <Button
-                            variant="contained"
-                            onClick={() => void uploadDocument()}
-                            disabled={
-                              !selectedFile ||
-                              Boolean(documentError) ||
-                              isUploadingDocument
-                            }
-                          >
-                            {isUploadingDocument ? "Uploading..." : "Upload"}
-                          </Button>
-                        </Stack>
-                      </Box>
+                              {isUploadingDocument ? "Uploading..." : "Upload"}
+                            </Button>
+                          </Stack>
+                        </Box>
+                      ) : (
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                          Document uploads are available after the colleague
+                          requests additional documents.
+                        </Alert>
+                      )}
                       {documentError && (
                         <Alert severity="error" sx={{ mb: 2 }}>
                           {documentError}
