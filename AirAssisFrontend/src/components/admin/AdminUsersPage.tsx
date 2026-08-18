@@ -27,6 +27,7 @@ import {
   Toolbar,
 } from "@mui/material";
 import {
+  ArrowBackOutlined as ArrowBackIcon,
   InfoOutlined as InfoIcon,
   DeleteOutlined as DeleteOutlineIcon,
   PersonSearch as PersonSearchIcon,
@@ -207,8 +208,6 @@ function AdminUsersPage() {
     <Box
       sx={{
         minHeight: "100vh",
-        px: { xs: 2, md: 4 },
-        py: { xs: 3, md: 5 },
         backgroundColor: "#ffffff",
       }}
     >
@@ -234,24 +233,49 @@ function AdminUsersPage() {
             onClick: () => navigate("/admin/cases"),
           },
           {
-            label: "System View",
+            label: "System Options",
             icon: <SettingsIcon fontSize="small" />,
             onClick: () => navigate("/admin/system-options"),
           },
         ]}
       />
 
-      <Card
-        elevation={1}
+      <Box
         sx={{
           maxWidth: 1220,
           mx: "auto",
-          mt: 3,
-          border: "none",
-          overflow: "hidden",
+          px: { xs: 2, md: 4 },
+          py: { xs: 3, md: 5 },
         }}
       >
-        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
+            mb: 3,
+            justifyContent: "flex-end",
+            alignItems: { xs: "stretch", sm: "center" },
+          }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate(-1)}
+          >
+            Back
+          </Button>
+        </Stack>
+
+        <Card
+          elevation={1}
+          sx={{
+            maxWidth: 1220,
+            mx: "auto",
+            border: "none",
+            overflow: "hidden",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, md: 4 } }}>
           <AppSnackbar
             open={snackbar.open}
             message={snackbar.message}
@@ -622,8 +646,9 @@ function AdminUsersPage() {
               </Button>
             </DialogActions>
           </Dialog>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 }

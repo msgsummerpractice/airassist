@@ -1,8 +1,11 @@
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  ArrowBackOutlined,
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
+  FolderOutlined,
+  GroupOutlined,
   LogoutOutlined,
   SettingsOutlined,
 } from "@mui/icons-material";
@@ -83,6 +86,17 @@ function CaseDetailsPage({
     config.scope === "admin"
       ? [
           {
+            label: "User View",
+            icon: <GroupOutlined fontSize="small" />,
+            onClick: () => navigate("/admin/users"),
+          },
+          {
+            label: "Case View",
+            active: true,
+            icon: <FolderOutlined fontSize="small" />,
+            onClick: () => navigate("/admin/cases"),
+          },
+          {
             label: "System Options",
             icon: <SettingsOutlined fontSize="small" />,
             onClick: () => navigate("/admin/system-options"),
@@ -110,8 +124,6 @@ function CaseDetailsPage({
     <Box
       sx={{
         minHeight: "100vh",
-        px: { xs: 2, md: 4 },
-        py: { xs: 3, md: 5 },
         backgroundColor: "#ffffff",
       }}
     >
@@ -126,18 +138,26 @@ function CaseDetailsPage({
         }}
         actions={headerActions}
       />
-      <Card
-        elevation={1}
+
+      <Box
         sx={{
           maxWidth: 1080,
           mx: "auto",
-          mt: 3,
-          border: "1px solid",
-          borderColor: "divider",
-          overflow: "hidden",
+          px: { xs: 2, md: 4 },
+          py: { xs: 3, md: 5 },
         }}
       >
-        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+        <Card
+          elevation={1}
+          sx={{
+            maxWidth: 1080,
+            mx: "auto",
+            border: "1px solid",
+            borderColor: "divider",
+            overflow: "hidden",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, md: 4 } }}>
           <Box sx={{ textAlign: "center", mb: 3 }}>
             <Typography variant="h2" sx={{ mt: 0.5 }}>
               Case Details
@@ -151,7 +171,13 @@ function CaseDetailsPage({
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
-            <Button variant="outlined" onClick={handleBack}>
+            <Button
+              variant="outlined"
+              startIcon={
+                config.scope === "admin" ? <ArrowBackOutlined fontSize="small" /> : undefined
+              }
+              onClick={handleBack}
+            >
               Back
             </Button>
           </Stack>
@@ -219,8 +245,9 @@ function CaseDetailsPage({
               />
             </Stack>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
       <AppSnackbar
         open={snackbar.open}
         message={snackbar.message}

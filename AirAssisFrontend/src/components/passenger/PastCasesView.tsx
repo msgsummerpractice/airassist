@@ -6,10 +6,6 @@ import {
   Card,
   CardContent,
   Chip,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -38,6 +34,14 @@ import {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "PENDING", label: "Pending" },
+  { value: "IN_REVIEW", label: "In review" },
+  { value: "ELIGIBLE", label: "Eligible" },
+  { value: "NON_ELIGIBLE", label: "Non-eligible" },
+  { value: "AWAITING_DOCUMENTS", label: "Awaiting documents" },
+];
 
 type PassengerCase = {
   id: number;
@@ -175,8 +179,6 @@ function PastCasesView({
     <Box
       sx={{
         minHeight: "100vh",
-        px: { xs: 2, md: 4 },
-        py: { xs: 3, md: 5 },
         backgroundColor: "#ffffff",
       }}
     >
@@ -204,17 +206,24 @@ function PastCasesView({
         ]}
       />
 
-      <Card
-        elevation={1}
+      <Box
         sx={{
           maxWidth: 1220,
           mx: "auto",
-          mt: 3,
-          border: "none",
-          overflow: "hidden",
+          px: { xs: 2, md: 4 },
+          py: { xs: 3, md: 5 },
         }}
       >
-        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+        <Card
+          elevation={1}
+          sx={{
+            maxWidth: 1220,
+            mx: "auto",
+            border: "none",
+            overflow: "hidden",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, md: 4 } }}>
           <Box
             sx={{
               position: "relative",
@@ -240,56 +249,9 @@ function PastCasesView({
             </Box>
           </Box>
 
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{
-              mb: 3,
-              width: "100%",
-              justifyContent: "center",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
-              <InputLabel id="past-cases-status-label">Status</InputLabel>
-              <Select
-                labelId="past-cases-status-label"
-                label="Status"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <MenuItem value="ALL">All</MenuItem>
-                <MenuItem value="PENDING">Pending</MenuItem>
-                <MenuItem value="IN_REVIEW">In review</MenuItem>
-                <MenuItem value="ELIGIBLE">Eligible</MenuItem>
-                <MenuItem value="NON_ELIGIBLE">Non-eligible</MenuItem>
-                <MenuItem value="AWAITING_DOCUMENTS">
-                  Awaiting documents
-                </MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
-              <InputLabel id="past-cases-assignee-label">Assignee</InputLabel>
-              <Select
-                labelId="past-cases-assignee-label"
-                label="Assignee"
-                value={assigneeFilter}
-                onChange={(event) => setAssigneeFilter(event.target.value)}
-              >
-                <MenuItem value="ALL">All</MenuItem>
-                <MenuItem value="UNASSIGNED">Unassigned</MenuItem>
-                {assigneeOptions.map((assigneeName) => (
-                  <MenuItem key={assigneeName} value={assigneeName}>
-                    {assigneeName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
           <CaseListFilters
             statusFilter={statusFilter}
+            statusOptions={STATUS_FILTER_OPTIONS}
             assigneeFilter={assigneeFilter}
             assigneeOptions={assigneeOptions}
             statusLabelId="past-cases-status-label"
@@ -463,8 +425,9 @@ function PastCasesView({
               </Stack>
             </Box>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 }
