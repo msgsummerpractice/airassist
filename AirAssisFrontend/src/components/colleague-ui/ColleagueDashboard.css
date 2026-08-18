@@ -1,8 +1,5 @@
 .colleague-dashboard {
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: 32px 16px;
   background: #ffffff;
 }
 

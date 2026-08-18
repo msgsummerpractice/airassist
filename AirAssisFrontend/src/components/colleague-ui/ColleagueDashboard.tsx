@@ -217,10 +217,7 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
         severity={snackbar.severity}
         onClose={closeSnackbar}
       />
-
-      <Box className="colleague-dashboard__shell">
-        <Stack spacing={3}>
-          <PortalUserHeader
+      <PortalUserHeader
             name={isLoading ? "Colleague" : displayName}
             email={colleague?.email || "Email unavailable"}
             roleLabel="Colleague"
@@ -242,6 +239,10 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
               },
             ]}
           />
+
+      <Box className="colleague-dashboard__shell">
+        <Stack spacing={3}>
+          
 
           {/* Active Claims */}
           <Card elevation={0} className="colleague-dashboard__claims-card">
