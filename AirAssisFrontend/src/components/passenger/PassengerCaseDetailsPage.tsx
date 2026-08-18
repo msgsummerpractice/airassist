@@ -1123,8 +1123,9 @@ function PassengerCaseDetailsPage({
               </Card>
             </Stack>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
       <AppSnackbar
         open={snackbar.open}
         message={snackbar.message}
