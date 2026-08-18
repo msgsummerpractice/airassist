@@ -1,10 +1,30 @@
 import CheckIcon from "@mui/icons-material/Check";
+import FlightIcon from "@mui/icons-material/Flight";
 import { Box } from "@mui/material";
+import { keyframes } from "@emotion/react";
+import { useState } from "react";
 
 interface WizardProgressBarProps {
   steps: string[];
   activeStep: number;
 }
+
+const flyAcross = keyframes`
+  from {
+    left: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  to {
+    left: calc(100% - 22px);
+    opacity: 0;
+  }
+`;
 
 interface WizardStepCircleProps {
   active: boolean;
@@ -43,6 +63,13 @@ function WizardStepCircle({ active, completed, value }: WizardStepCircleProps) {
 function WizardProgressBar({ steps, activeStep }: WizardProgressBarProps) {
   const clampedStep = Math.min(Math.max(activeStep, 0), steps.length - 1);
 
+  const [prevStep, setPrevStep] = useState(clampedStep);
+  const [isForward, setIsForward] = useState(false);
+  if (clampedStep !== prevStep) {
+    setIsForward(clampedStep > prevStep);
+    setPrevStep(clampedStep);
+  }
+
   return (
     <Box sx={{ maxWidth: 1220, mx: "auto", px: { xs: 2, md: 4 }, pt: 3 }}>
       <Box
@@ -69,19 +96,43 @@ function WizardProgressBar({ steps, activeStep }: WizardProgressBarProps) {
               />
               {index < steps.length - 1 && (
                 <Box
-                  sx={(theme) => ({
-                    height: 3,
+                  sx={{
+                    position: "relative",
                     flex: 1,
                     minWidth: 16,
                     mx: 1.25,
-                    borderRadius: 999,
-                    opacity: 1,
-                    backgroundColor:
-                      index < clampedStep
-                        ? theme.palette.secondary.main
-                        : theme.palette.grey[400],
-                  })}
-                />
+                    height: 22,
+                  }}
+                >
+                  <Box
+                    sx={(theme) => ({
+                      position: "absolute",
+                      top: "50%",
+                      left: 0,
+                      right: 0,
+                      borderTop: `3px dashed ${
+                        index < clampedStep
+                          ? theme.palette.secondary.main
+                          : theme.palette.grey[400]
+                      }`,
+                      transform: "translateY(-50%)",
+                    })}
+                  />
+                  {index === clampedStep - 1 && isForward && (
+                    <FlightIcon
+                      key={clampedStep}
+                      sx={(theme) => ({
+                        position: "absolute",
+                        top: "50%",
+                        left: 0,
+                        fontSize: 20,
+                        color: theme.palette.secondary.main,
+                        transform: "translateY(-50%) rotate(90deg)",
+                        animation: `${flyAcross} 900ms ease-in-out forwards`,
+                      })}
+                    />
+                  )}
+                </Box>
               )}
             </Box>
           );

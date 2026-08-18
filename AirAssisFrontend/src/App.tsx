@@ -17,6 +17,7 @@ import CaseEntryForm from "./components/wizard/CaseEntryForm";
 import AdminUsersPage from "./components/admin/AdminUsersPage";
 import AdminCasesPage from "./components/admin/AdminCasesPage";
 import AdminSystemOptionsPage from "./components/admin/AdminSystemOptionsPage";
+import BackgroundMusic from "./components/utils/BackgroundMusic";
 
 function App() {
   const { view, role, resolveView, showCaseEntry, showColleagueDashboard } =
@@ -52,98 +53,92 @@ function App() {
 
   if (view === "resolving") return null;
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <Login
-            onLoginSuccess={resolveView}
-            onPasswordResetSuccess={resolveView}
-          />
-        }
-      />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/passenger-cases" element={<PassengerCasesPage />} />
-      <Route path="/passenger-cases/:caseId" element={<PassengerCasesPage />} />
-      <Route
-        path="/colleague-cases"
-        element={
-          <ColleagueCasesPage
-            isAllowed={isColleague}
-            onCreateCase={showCaseEntry}
-          />
-        }
-      />
-      <Route
-        path="/colleague-cases/:caseId"
-        element={
-          <ColleagueCasesPage
-            isAllowed={isColleague}
-            onCreateCase={showCaseEntry}
-          />
-        }
-      />
-      <Route
-        path="/case-entry"
-        element={
-          <CaseEntryForm
-            isColleagueCaseEntry={role === "COLLEAGUE"}
-            onShowColleagueDashboard={showColleagueDashboard}
-          />
-        }
-      />
-      <Route
-        path="/colleague-dashboard"
-        element={
-          role === "COLLEAGUE" ? (
-            <ColleagueDashboard onCreateCase={showCaseEntry} />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
-      <Route
-        path="/admin/users"
-        element={
-          isAdmin ? (
-            <AdminUsersPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
-      <Route
-        path="/admin/cases"
-        element={
-          isAdmin ? (
-            <AdminCasesPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
-      <Route
-        path="/admin/cases/:caseId"
-        element={
-          isAdmin ? (
-            <AdminCasesPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
-      <Route
-        path="/admin/system-options"
-        element={
-          isAdmin ? (
-            <AdminSystemOptionsPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
-      <Route path="*" element={<Navigate to="/case-entry" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <Login
+              onLoginSuccess={resolveView}
+              onPasswordResetSuccess={resolveView}
+            />
+          }
+        />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/passenger-cases" element={<PassengerCasesPage />} />
+        <Route
+          path="/passenger-cases/:caseId"
+          element={<PassengerCasesPage />}
+        />
+        <Route
+          path="/colleague-cases"
+          element={
+            <ColleagueCasesPage
+              isAllowed={isColleague}
+              onCreateCase={showCaseEntry}
+            />
+          }
+        />
+        <Route
+          path="/colleague-cases/:caseId"
+          element={
+            <ColleagueCasesPage
+              isAllowed={isColleague}
+              onCreateCase={showCaseEntry}
+            />
+          }
+        />
+        <Route
+          path="/case-entry"
+          element={
+            <CaseEntryForm
+              isColleagueCaseEntry={role === "COLLEAGUE"}
+              onShowColleagueDashboard={showColleagueDashboard}
+            />
+          }
+        />
+        <Route
+          path="/colleague-dashboard"
+          element={
+            role === "COLLEAGUE" ? (
+              <ColleagueDashboard onCreateCase={showCaseEntry} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            isAdmin ? <AdminUsersPage /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/admin/cases"
+          element={
+            isAdmin ? <AdminCasesPage /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/admin/cases/:caseId"
+          element={
+            isAdmin ? <AdminCasesPage /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/admin/system-options"
+          element={
+            isAdmin ? (
+              <AdminSystemOptionsPage />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route path="*" element={<Navigate to="/case-entry" replace />} />
+      </Routes>
+      <BackgroundMusic />
+    </>
   );
 }
 
