@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from rest_framework import status
-from rest_framework.test import APIRequestFactory
+from rest_framework.test import APIRequestFactory, force_authenticate
 
 from airports.models.airport import Airport
 from airports.views.airport_views import (
@@ -11,6 +11,7 @@ from airports.views.airport_views import (
     CalculateDistanceView,
     PopulateAirportsView,
 )
+from user.models.users import Role, User
 
 
 class PopulateAirportsViewTests(TestCase):
@@ -18,6 +19,20 @@ class PopulateAirportsViewTests(TestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
         self.view = PopulateAirportsView.as_view()
+        system_admin_role = Role.objects.create(role="SYSTEM_ADMIN")
+        self.system_admin = User.objects.create_user(
+            role=system_admin_role,
+            email="admin@example.com",
+            password="testpass123",
+            firstname="System",
+            lastname="Admin",
+            is_staff=True,
+        )
+
+    def post_populate(self):
+        request = self.factory.post("/api/airports/populate/")
+        force_authenticate(request, user=self.system_admin)
+        return self.view(request)
 
     @patch("airports.views.airport_views.AirportGapClient")
     def test_populate_airports_success(self, mock_client_class):
@@ -54,11 +69,7 @@ class PopulateAirportsViewTests(TestCase):
             },
         ]
 
-        request = self.factory.post(
-            "/api/airports/populate/"
-        )
-
-        response = self.view(request)
+        response = self.post_populate()
 
         self.assertEqual(
             response.status_code,
@@ -119,11 +130,7 @@ class PopulateAirportsViewTests(TestCase):
             },
         ]
 
-        request = self.factory.post(
-            "/api/airports/populate/"
-        )
-
-        response = self.view(request)
+        response = self.post_populate()
 
         self.assertEqual(
             response.status_code,
@@ -172,11 +179,7 @@ class PopulateAirportsViewTests(TestCase):
             },
         ]
 
-        request = self.factory.post(
-            "/api/airports/populate/"
-        )
-
-        response = self.view(request)
+        response = self.post_populate()
 
         self.assertEqual(
             response.status_code,
@@ -213,11 +216,7 @@ class PopulateAirportsViewTests(TestCase):
             "AirportGap API unavailable"
         )
 
-        request = self.factory.post(
-            "/api/airports/populate/"
-        )
-
-        response = self.view(request)
+        response = self.post_populate()
 
         self.assertEqual(
             response.status_code,
