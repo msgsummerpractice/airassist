@@ -1,6 +1,7 @@
 from django.db import models
 
 from ..enums.case_state_enum import CaseState
+from ..enums.conversation_status_enum import ConversationStatus
 
 # Create your models here.
 
@@ -9,6 +10,20 @@ class Case(models.Model):
         max_length=20,
         choices=CaseState.choices(),
         default=CaseState.PENDING.value,
+    )
+
+    conversation_status = models.CharField(
+        max_length=10,
+        choices=ConversationStatus.choices(),
+        default=ConversationStatus.OPEN.value,
+    )
+    conversation_closed_at = models.DateTimeField(null=True, blank=True)
+    conversation_closed_by = models.ForeignKey(
+        "user.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="closed_case_conversations",
     )
 
     assigned_colleague = models.ForeignKey(

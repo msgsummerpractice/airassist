@@ -8,6 +8,7 @@ from case.serializers.passenger_case_comment_serializer import (
     PassengerCaseCommentCreateSerializer,
     PassengerCaseCommentSerializer,
 )
+from case.services.case_conversation_service import CaseConversationService
 
 from ..permissions import IsColleague
 
@@ -21,6 +22,7 @@ class ColleagueCaseCommentCreateView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
 
         case = get_object_or_404(Case.objects.all(), pk=self.kwargs["pk"])
+        CaseConversationService.ensure_open(case)
         comment = serializer.save(case=case, author=request.user)
 
         response_serializer = PassengerCaseCommentSerializer(comment)

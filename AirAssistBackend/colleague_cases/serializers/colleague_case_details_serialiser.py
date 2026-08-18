@@ -21,6 +21,8 @@ class ColleagueCaseDetailsSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "status",
+            "conversation_status",
+            "conversation_closed_at",
             "flight",
             "connecting_flights",
             "passenger",

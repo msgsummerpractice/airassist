@@ -31,6 +31,10 @@ from .views.passenger_case_document_download_view import PassengerCaseDocumentDo
 from .views.passenger_case_document_upload_view import PassengerCaseDocumentUploadView
 from .views.passenger_case_list_view import PassengerCaseListView
 from .views.passenger_case_details_view import PassengerCaseDetailsView
+from .views.colleague_case_conversation_view import (
+     ColleagueCaseConversationCloseView,
+     ColleagueCaseConversationReopenView,
+)
 from .views.pdf_history_list_view import PdfHistoryListView
 from .views.pdf_history_download_view import PdfHistoryDownloadView
 
@@ -78,5 +82,15 @@ urlpatterns = [
         "cases/<int:case_id>/status/",
         CaseStatusUpdateView.as_view(),
         name="case-status-update",
-    )
+     ),
+     path(
+          "cases/colleague/<int:case_id>/conversation/close/",
+          ColleagueCaseConversationCloseView.as_view(),
+          name="colleague-case-conversation-close",
+     ),
+     path(
+          "cases/colleague/<int:case_id>/conversation/reopen/",
+          ColleagueCaseConversationReopenView.as_view(),
+          name="colleague-case-conversation-reopen",
+     ),
 ]

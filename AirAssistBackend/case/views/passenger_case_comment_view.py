@@ -10,6 +10,7 @@ from ..serializers.passenger_case_comment_serializer import (
 	PassengerCaseCommentCreateSerializer,
 	PassengerCaseCommentSerializer,
 )
+from ..services.case_conversation_service import CaseConversationService
 
 
 class PassengerCaseCommentCreateView(generics.CreateAPIView):
@@ -26,6 +27,7 @@ class PassengerCaseCommentCreateView(generics.CreateAPIView):
 		serializer.is_valid(raise_exception=True)
 
 		case = self._get_owned_case()
+		CaseConversationService.ensure_open(case)
 		comment = serializer.save(case=case, author=request.user)
 
 		response_serializer = PassengerCaseCommentSerializer(comment)
