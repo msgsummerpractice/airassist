@@ -2,13 +2,14 @@ import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import LoginOutlinedIcon from "@mui/icons-material/LoginOutlined";
-import { Box, Link } from "@mui/material";
+import { Box, Link, Stack, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FlightItineraryStep from "./steps/FlightItineraryStep";
 import FlightDetailsStep from "./steps/FlightDetailsStep";
 import DisruptionStep from "./steps/DisruptionStep";
 import {
+  type CaseSubmissionResult,
   type Itinerary,
   type Leg,
   type DisruptionFormData,
@@ -130,25 +131,36 @@ function CaseEntryForm({
     setGdpr(EMPTY_GDPR);
   };
 
-  const handleSubmitted = (contractDownloadUrl: string | null) => {
+  const handleSubmitted = ({
+    caseId,
+    passengerEmail,
+    contractDownloadUrl,
+  }: CaseSubmissionResult) => {
     showSuccessSnackbar(
-      contractDownloadUrl ? (
-        <>
-          Case submitted successfully.{" "}
+      <Stack spacing={0.5}>
+        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          Case submitted successfully.
+          {caseId !== null ? ` Case ID: ${caseId}.` : ""}
+        </Typography>
+        {passengerEmail ? (
+          <Typography variant="body2">
+            A confirmation email has been sent to {passengerEmail}.
+          </Typography>
+        ) : null}
+        {contractDownloadUrl ? (
           <Link
             href={contractDownloadUrl}
             target="_blank"
             rel="noreferrer"
             underline="always"
             color="inherit"
+            variant="body2"
             sx={{ fontWeight: 700 }}
           >
             Download contract PDF
           </Link>
-        </>
-      ) : (
-        "Case submitted successfully."
-      ),
+        ) : null}
+      </Stack>,
     );
     resetForm();
   };

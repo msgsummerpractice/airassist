@@ -8,14 +8,13 @@ from rest_framework.permissions import AllowAny
 from django.urls import reverse
 
 from case.models.disruption import Disruption
-from case_email.services.email_service import send_basic_email
+from case_email.services.email_service import send_case_registered_email
 
 from ..serializers.case_creation_serializer import CaseCreationSerializer
 from ..services.case_contract_service import CaseContractGenerationError, CaseContractService
 from ..services.case_service import CaseService
 from ..services.case_eligibility_service import CaseEligibilityService
 from ..services.case_state_service import CaseStateService
-from case_email.services.email_service import send_case_registered_email
 
 
 class CaseCreationView(APIView):
@@ -58,32 +57,20 @@ class CaseCreationView(APIView):
                 CaseService.create_passenger_account(passenger)
 
                 contract_document = CaseContractService.generate_for_case(case)
-                if passenger and passenger.email:
-                    transaction.on_commit(
-                        lambda: send_case_registered_email(
-                            passenger, case, contract_document
-                        )
-                    )
 
                 if passenger and passenger.email:
-                    to_email = passenger.email
-                    submitted_case_id = case.id
-                    submitted_case_status = case.status
-                    submitted_case_created_at = case.created_at
+                    registered_passenger = passenger
+                    registered_case = case
+                    registered_contract_document = contract_document
 
-                    def _send_submission_email():
-                        send_basic_email(
-                            to_email=to_email,
-                            subject="Case Submission Confirmation",
-                            body=(
-                                "Your case was submitted successfully.\n\n"
-                                f"Case ID: {submitted_case_id}\n"
-                                f"Status: {submitted_case_status}\n"
-                                f"Created At: {submitted_case_created_at}\n"
-                            ),
+                    def _send_case_registered_email():
+                        send_case_registered_email(
+                            registered_passenger,
+                            registered_case,
+                            registered_contract_document,
                         )
 
-                    transaction.on_commit(_send_submission_email)
+                    transaction.on_commit(_send_case_registered_email)
 
         except (DatabaseError, CaseContractGenerationError):
             return Response(

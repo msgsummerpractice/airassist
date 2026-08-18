@@ -20,6 +20,7 @@ import {
   Typography,
 } from "@mui/material";
 import type {
+  CaseSubmissionResult,
   DisruptionFormData,
   DocumentUploadData,
   GDPRData,
@@ -40,7 +41,7 @@ interface OverviewStepProps {
   documents: DocumentUploadData;
   gdpr: GDPRData;
   onBack?: () => void;
-  onSubmitted?: (contractDownloadUrl: string | null) => void;
+  onSubmitted?: (result: CaseSubmissionResult) => void;
 }
 
 const API_BASE_URL =
@@ -341,12 +342,20 @@ function OverviewStep({
         return;
       }
 
-      const contractDownloadUrl =
-        typeof submitData?.data?.contract_download_url === "string"
-          ? submitData.data.contract_download_url
-          : null;
-
-      onSubmitted?.(contractDownloadUrl);
+      onSubmitted?.({
+        caseId:
+          typeof submitData?.data?.case_id === "number"
+            ? submitData.data.case_id
+            : null,
+        passengerEmail:
+          typeof submitData?.data?.passenger_email === "string"
+            ? submitData.data.passenger_email
+            : null,
+        contractDownloadUrl:
+          typeof submitData?.data?.contract_download_url === "string"
+            ? submitData.data.contract_download_url
+            : null,
+      });
     } catch (error) {
       showErrorSnackbar(
         error instanceof Error

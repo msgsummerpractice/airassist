@@ -58,6 +58,12 @@ export interface Leg {
   nextDayArrival: boolean;
 }
 
+export type CaseSubmissionResult = {
+  caseId: number | null;
+  passengerEmail: string | null;
+  contractDownloadUrl: string | null;
+};
+
 export interface DisruptionFormData {
   motive: DisruptionMotive;
   cancellation_type: string;
