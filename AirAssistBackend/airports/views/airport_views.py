@@ -126,6 +126,7 @@ class AirportSearchView(APIView):
             return Response([])
 
         airports = Airport.objects.filter(
-            Q(iata__icontains=query) | Q(name__icontains=query) | Q(city__icontains=query)
-        ).values("iata", "name", "city")[:10]
+            Q(iata__icontains=query) | Q(name__icontains=query) | Q(city__icontains=query),
+            timezone__isnull=False,
+        ).exclude(timezone="").values("iata", "name", "city", "timezone")[:10]
         return Response(list(airports)) 

@@ -1,5 +1,4 @@
 import {
-  Alert,
   Box,
   Card,
   CardContent,
@@ -23,11 +22,20 @@ import type { Leg } from "../../types/wizardTypes";
 interface LegDetailsProps {
   leg: Leg;
   index: number;
+  showNextDayOption: boolean;
+  timeError?: string;
   onChange: (updated: Leg) => void;
   showErrors: boolean;
 }
 
-function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
+function LegDetails({
+  leg,
+  index,
+  showNextDayOption,
+  timeError,
+  onChange,
+  showErrors,
+}: LegDetailsProps) {
   const set = (field: keyof Leg) => (value: string | Dayjs | null) =>
     onChange({ ...leg, [field]: value });
 
@@ -40,14 +48,11 @@ function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
         plannedDepartureTime: !leg.plannedDepartureTime
           ? "Required"
           : undefined,
-        plannedArrivalTime: !leg.plannedArrivalTime ? "Required" : undefined,
+        plannedArrivalTime: !leg.plannedArrivalTime
+          ? "Required"
+          : timeError,
       }
     : {};
-  const timeWarning =
-    !leg.nextDayArrival &&
-    leg.plannedDepartureTime &&
-    leg.plannedArrivalTime &&
-    leg.plannedArrivalTime.isBefore(leg.plannedDepartureTime);
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Card
@@ -187,34 +192,20 @@ function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
                 }}
               />
             </Grid>
-            {timeWarning && (
+            {showNextDayOption && (
               <Grid size={{ xs: 12 }}>
-                <Alert
-                  severity="warning"
-                  sx={{
-                    textAlign: "center",
-                    "& .MuiAlert-message": { flex: 1 },
-                  }}
-                >
-                  Arrival time is before departure time.
-                  <FormControlLabel
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      mt: 0.5,
-                    }}
-                    control={
-                      <Checkbox
-                        checked={leg.nextDayArrival}
-                        onChange={(e) =>
-                          set("nextDayArrival")(e.target.checked as never)
-                        }
-                        size="small"
-                      />
-                    }
-                    label="The flight lands the next day"
-                  />
-                </Alert>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={leg.nextDayArrival}
+                      onChange={(e) =>
+                        set("nextDayArrival")(e.target.checked as never)
+                      }
+                      size="small"
+                    />
+                  }
+                  label="The flight lands the next day"
+                />
               </Grid>
             )}
           </Grid>

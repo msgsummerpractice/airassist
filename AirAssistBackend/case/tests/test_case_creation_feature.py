@@ -5,6 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
+from airports.models.airport import Airport
 from case.enums.cancellation_type_enum import CancellationType
 from case.enums.case_state_enum import CaseState
 from case.enums.delay_type_enum import DelayType
@@ -53,6 +54,23 @@ def _pdf():
 
 def _jpg():
     return SimpleUploadedFile("doc.jpg", b"JPG content", content_type="image/jpeg")
+
+
+def _create_airport(iata, timezone="Europe/Berlin"):
+    Airport.objects.update_or_create(
+        iata=iata,
+        defaults={
+            "name": f"{iata} Airport",
+            "city": iata,
+            "country": "Test Country",
+            "timezone": timezone,
+        },
+    )
+
+
+def _create_default_airports():
+    _create_airport("OTP", "Europe/Bucharest")
+    _create_airport("FRA", "Europe/Berlin")
 
 
 def _build_serializer_payload(**overrides):
@@ -108,9 +126,51 @@ class PassengerAccountCreationTests(TestCase):
 
 class CaseCreationSerializerValidationTests(TestCase):
 
+    def setUp(self):
+        _create_default_airports()
+
     def test_valid_payload_is_accepted(self):
         s = CaseCreationSerializer(data=_build_serializer_payload())
         self.assertTrue(s.is_valid(), s.errors)
+
+    def test_accepts_arrival_local_time_before_departure_when_utc_after(self):
+        _create_airport("CDG", "Europe/Paris")
+        _create_airport("JFK", "America/New_York")
+
+        s = CaseCreationSerializer(
+            data=_build_serializer_payload(
+                departing_airport="CDG",
+                destination_airport="JFK",
+                planned_departure_time="2026-08-03T18:00:00",
+                planned_arrival_time="2026-08-03T17:30:00",
+            )
+        )
+
+        self.assertTrue(s.is_valid(), s.errors)
+
+    def test_rejects_arrival_utc_not_after_departure_utc(self):
+        _create_airport("CDG", "Europe/Paris")
+        _create_airport("JFK", "America/New_York")
+
+        s = CaseCreationSerializer(
+            data=_build_serializer_payload(
+                departing_airport="CDG",
+                destination_airport="JFK",
+                planned_departure_time="2026-08-03T18:00:00",
+                planned_arrival_time="2026-08-03T11:00:00",
+            )
+        )
+
+        self.assertFalse(s.is_valid())
+        self.assertIn("planned_arrival_time", s.errors)
+
+    def test_rejects_airport_without_timezone(self):
+        Airport.objects.filter(iata="OTP").update(timezone=None)
+
+        s = CaseCreationSerializer(data=_build_serializer_payload())
+
+        self.assertFalse(s.is_valid())
+        self.assertIn("departing_airport", s.errors)
 
     # --- required fields ---
 
@@ -289,6 +349,7 @@ class CaseCreationViewTests(TestCase):
         from user.models.users import Role
 
         Role.objects.create(role=Roles.PASSENGER.value)
+        _create_default_airports()
 
     @patch("case.views.case_creation_view.send_basic_email")
     @patch("case.services.case_service.DistanceService.calculate_orthodromic_distance", return_value=1200.0)
@@ -460,6 +521,9 @@ class CaseCreationViewTests(TestCase):
 class CaseEligibilityViewTests(TestCase):
 
     ELIGIBILITY_URL = reverse("case-eligibility-check")
+
+    def setUp(self):
+        _create_default_airports()
 
     def test_eligible_delay_returns_is_eligible_true(self):
         payload = _api_payload(disruption=json.dumps(ELIGIBLE_DELAY_DISRUPTION))
