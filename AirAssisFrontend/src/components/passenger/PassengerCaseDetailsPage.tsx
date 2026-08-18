@@ -23,6 +23,7 @@ import {
   AddCommentOutlined,
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
+  DownloadOutlined,
   DescriptionOutlined,
   FlightTakeoffOutlined,
   HubOutlined,
@@ -70,6 +71,7 @@ type CaseDocument = {
   document_type: string;
   filename: string;
   uploaded_at: string;
+  download_url?: string;
 };
 
 type CaseComment = {
@@ -138,6 +140,8 @@ function PassengerCaseDetailsPage({
   const [details, setDetails] = useState<PassengerCaseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [documentError, setDocumentError] = useState("");
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentSubmitError, setCommentSubmitError] = useState("");
@@ -169,6 +173,43 @@ function PassengerCaseDetailsPage({
     normalizedCommentText.length > 0 &&
     normalizedCommentText.length <= COMMENT_MAX_LENGTH &&
     !isSubmittingComment;
+
+  const getAccessToken = useCallback(() => {
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+
+    if (!accessToken) {
+      onUnauthorized?.();
+      throw new Error("Unauthorized.");
+    }
+
+    return accessToken;
+  }, [onUnauthorized]);
+
+  const parseDownloadFilename = (
+    contentDisposition: string | null,
+    fallbackFilename: string,
+  ) => {
+    if (!contentDisposition) {
+      return fallbackFilename;
+    }
+
+    const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) {
+      return decodeURIComponent(utf8Match[1]);
+    }
+
+    const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
+    if (quotedMatch?.[1]) {
+      return quotedMatch[1];
+    }
+
+    const bareMatch = contentDisposition.match(/filename=([^;]+)/i);
+    if (bareMatch?.[1]) {
+      return bareMatch[1].trim();
+    }
+
+    return fallbackFilename;
+  };
 
   const fetchDetails = useCallback(async () => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -291,6 +332,62 @@ function PassengerCaseDetailsPage({
       setIsSubmittingComment(false);
     }
   }, [fetchDetails, normalizedCommentText, onUnauthorized, resolvedCaseId]);
+
+  const downloadDocument = useCallback(
+    async (document: CaseDocument) => {
+      if (resolvedCaseId === null) {
+        setDocumentError("Invalid case id.");
+        return;
+      }
+
+      setDocumentError("");
+      setDownloadingDocumentId(document.id);
+
+      try {
+        const downloadUrl = document.download_url
+          ? document.download_url.startsWith("http")
+            ? document.download_url
+            : `${API_BASE_URL}${document.download_url}`
+          : `${API_BASE_URL}/api/cases/me/${resolvedCaseId}/documents/${document.id}/download/`;
+
+        const response = await fetch(downloadUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${getAccessToken()}`,
+          },
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          onUnauthorized?.();
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error("Could not download document.");
+        }
+
+        const blob = await response.blob();
+        const objectUrl = window.URL.createObjectURL(blob);
+        const link = window.document.createElement("a");
+        link.href = objectUrl;
+        link.download = parseDownloadFilename(
+          response.headers.get("Content-Disposition"),
+          document.filename,
+        );
+        window.document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+      } catch (error) {
+        setDocumentError(
+          error instanceof Error ? error.message : "Could not download document.",
+        );
+      } finally {
+        setDownloadingDocumentId(null);
+      }
+    },
+    [getAccessToken, onUnauthorized, resolvedCaseId],
+  );
 
   return (
     <Box
@@ -677,6 +774,11 @@ function PassengerCaseDetailsPage({
                       Attached Documents List
                     </Typography>
                   </Box>
+                  {documentError && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      {documentError}
+                    </Alert>
+                  )}
                   {details.documents.length === 0 ? (
                     <Typography variant="body1" color="text.secondary">
                       No documents attached.
@@ -689,6 +791,7 @@ function PassengerCaseDetailsPage({
                             <TableCell>Filename</TableCell>
                             <TableCell>Type</TableCell>
                             <TableCell>Upload Timestamp</TableCell>
+                            <TableCell align="right">Action</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -698,6 +801,19 @@ function PassengerCaseDetailsPage({
                               <TableCell>{item.document_type}</TableCell>
                               <TableCell>
                                 {formatDateTime(item.uploaded_at)}
+                              </TableCell>
+                              <TableCell align="right">
+                                <Button
+                                  size="small"
+                                  variant="text"
+                                  startIcon={<DownloadOutlined />}
+                                  onClick={() => void downloadDocument(item)}
+                                  disabled={downloadingDocumentId === item.id}
+                                >
+                                  {downloadingDocumentId === item.id
+                                    ? "Downloading..."
+                                    : "Download"}
+                                </Button>
                               </TableCell>
                             </TableRow>
                           ))}
