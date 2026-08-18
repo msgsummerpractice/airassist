@@ -39,11 +39,23 @@ class PassengerCaseDocumentUploadApiTests(APITestCase):
         )
 
         self.owned_case = Case.objects.create(
-            status=CaseState.IN_REVIEW.value,
+            status=CaseState.AWAITING_DOCUMENTS.value,
             gdpr_consent=True,
         )
         Passenger.objects.create(
             case=self.owned_case,
+            first_name="Alice",
+            last_name="Passenger",
+            date_of_birth="1990-01-01",
+            email="alice@example.com",
+        )
+
+        self.not_awaiting_documents_case = Case.objects.create(
+            status=CaseState.IN_REVIEW.value,
+            gdpr_consent=True,
+        )
+        Passenger.objects.create(
+            case=self.not_awaiting_documents_case,
             first_name="Alice",
             last_name="Passenger",
             date_of_birth="1990-01-01",
@@ -144,6 +156,25 @@ class PassengerCaseDocumentUploadApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(CaseDocument.objects.count(), 0)
+
+    def test_upload_rejects_when_case_not_awaiting_documents(self):
+        self.client.force_authenticate(user=self.passenger_user)
+        url = reverse(
+            "passenger-case-document-upload",
+            kwargs={"pk": self.not_awaiting_documents_case.pk},
+        )
+
+        response = self.client.post(
+            url,
+            {
+                "file": self._pdf_file(),
+                "document_type": DocumentType.BOARDING_PASS.value,
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(CaseDocument.objects.count(), 0)
 
     def test_upload_rejects_invalid_file_type(self):

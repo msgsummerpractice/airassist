@@ -99,6 +99,9 @@ type PassengerCaseDetails = {
   connecting_flights: FlightDetails[];
   passenger: PassengerDetails | null;
   documents: CaseDocument[];
+  can_upload_documents: boolean;
+  conversation_status: "OPEN" | "CLOSED";
+  conversation_closed_at: string | null;
   comments?: CaseComment[];
   created_at: string;
   updated_at: string;
@@ -189,7 +192,8 @@ function PassengerCaseDetailsPage({
   const canSubmitComment =
     normalizedCommentText.length > 0 &&
     normalizedCommentText.length <= COMMENT_MAX_LENGTH &&
-    !isSubmittingComment;
+    !isSubmittingComment &&
+    details?.conversation_status === "OPEN";
 
   const getAccessToken = useCallback(() => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -887,102 +891,109 @@ function PassengerCaseDetailsPage({
                           Attached Documents List
                         </Typography>
                       </Box>
-                      <Box
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          setIsDraggingOverDropzone(true);
-                        }}
-                        onDragLeave={() => setIsDraggingOverDropzone(false)}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          setIsDraggingOverDropzone(false);
-                          handleDocumentFileChange(
-                            event.dataTransfer.files?.[0] ?? null,
-                          );
-                        }}
-                        sx={{
-                          border: "1px dashed",
-                          borderColor: isDraggingOverDropzone
-                            ? "primary.main"
-                            : "divider",
-                          borderRadius: 2,
-                          p: 2,
-                          mb: 2,
-                          backgroundColor: isDraggingOverDropzone
-                            ? "rgba(0, 49, 120, 0.04)"
-                            : "transparent",
-                          textAlign: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 1.5 }}
-                        >
-                          Drag and drop a file here, or browse from your
-                          computer.
-                        </Typography>
-                        <Stack
-                          direction={{ xs: "column", md: "row" }}
-                          spacing={1.5}
+                      {details.can_upload_documents ? (
+                        <Box
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setIsDraggingOverDropzone(true);
+                          }}
+                          onDragLeave={() => setIsDraggingOverDropzone(false)}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            setIsDraggingOverDropzone(false);
+                            handleDocumentFileChange(
+                              event.dataTransfer.files?.[0] ?? null,
+                            );
+                          }}
                           sx={{
-                            alignItems: { md: "center" },
-                            justifyContent: "center",
+                            border: "1px dashed",
+                            borderColor: isDraggingOverDropzone
+                              ? "primary.main"
+                              : "divider",
+                            borderRadius: 2,
+                            p: 2,
+                            mb: 2,
+                            backgroundColor: isDraggingOverDropzone
+                              ? "rgba(0, 49, 120, 0.04)"
+                              : "transparent",
+                            textAlign: "center",
                           }}
                         >
-                          <Button
-                            variant="outlined"
-                            component="label"
-                            startIcon={<UploadFileOutlined />}
-                            disabled={isUploadingDocument}
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mb: 1.5 }}
                           >
-                            {selectedFile
-                              ? selectedFile.name
-                              : "Choose Document"}
-                            <input
-                              hidden
-                              type="file"
-                              accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"
-                              onChange={(event) => {
-                                handleDocumentFileChange(
-                                  event.target.files?.[0] ?? null,
-                                );
-                                event.target.value = "";
-                              }}
-                            />
-                          </Button>
-                          <FormControl size="small" sx={{ minWidth: 180 }}>
-                            <InputLabel id="passenger-document-type-label">
-                              Document Type
-                            </InputLabel>
-                            <Select
-                              labelId="passenger-document-type-label"
-                              label="Document Type"
-                              value={documentType}
-                              onChange={(event) =>
-                                setDocumentType(event.target.value)
+                            Drag and drop a file here, or browse from your
+                            computer.
+                          </Typography>
+                          <Stack
+                            direction={{ xs: "column", md: "row" }}
+                            spacing={1.5}
+                            sx={{
+                              alignItems: { md: "center" },
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Button
+                              variant="outlined"
+                              component="label"
+                              startIcon={<UploadFileOutlined />}
+                              disabled={isUploadingDocument}
+                            >
+                              {selectedFile
+                                ? selectedFile.name
+                                : "Choose Document"}
+                              <input
+                                hidden
+                                type="file"
+                                accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"
+                                onChange={(event) => {
+                                  handleDocumentFileChange(
+                                    event.target.files?.[0] ?? null,
+                                  );
+                                  event.target.value = "";
+                                }}
+                              />
+                            </Button>
+                            <FormControl size="small" sx={{ minWidth: 180 }}>
+                              <InputLabel id="passenger-document-type-label">
+                                Document Type
+                              </InputLabel>
+                              <Select
+                                labelId="passenger-document-type-label"
+                                label="Document Type"
+                                value={documentType}
+                                onChange={(event) =>
+                                  setDocumentType(event.target.value)
+                                }
+                              >
+                                {DOCUMENT_TYPE_OPTIONS.map((option) => (
+                                  <MenuItem key={option} value={option}>
+                                    {option.replaceAll("_", " ")}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                            <Button
+                              variant="contained"
+                              onClick={() => void uploadDocument()}
+                              disabled={
+                                !selectedFile ||
+                                Boolean(documentError) ||
+                                isUploadingDocument
                               }
                             >
-                              {DOCUMENT_TYPE_OPTIONS.map((option) => (
-                                <MenuItem key={option} value={option}>
-                                  {option.replaceAll("_", " ")}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                          <Button
-                            variant="contained"
-                            onClick={() => void uploadDocument()}
-                            disabled={
-                              !selectedFile ||
-                              Boolean(documentError) ||
-                              isUploadingDocument
-                            }
-                          >
-                            {isUploadingDocument ? "Uploading..." : "Upload"}
-                          </Button>
-                        </Stack>
-                      </Box>
+                              {isUploadingDocument ? "Uploading..." : "Upload"}
+                            </Button>
+                          </Stack>
+                        </Box>
+                      ) : (
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                          Document uploads are available after the colleague
+                          requests additional documents.
+                        </Alert>
+                      )}
                       {documentError && (
                         <Alert severity="error" sx={{ mb: 2 }}>
                           {documentError}
@@ -1051,7 +1062,24 @@ function PassengerCaseDetailsPage({
                           sx={{ color: SECTION_ICON_COLOR }}
                         />
                         <Typography variant="h5">Add Comment</Typography>
+                        <Chip
+                          size="small"
+                          label={details.conversation_status}
+                          color={
+                            details.conversation_status === "OPEN"
+                              ? "success"
+                              : "default"
+                          }
+                          variant="outlined"
+                        />
                       </Box>
+
+                      {details.conversation_status === "CLOSED" && (
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                          This conversation is closed by the colleague. You can
+                          view existing messages, but cannot add new comments.
+                        </Alert>
+                      )}
 
                       <TextField
                         fullWidth
@@ -1059,6 +1087,7 @@ function PassengerCaseDetailsPage({
                         minRows={5}
                         maxRows={12}
                         value={commentText}
+                        disabled={details.conversation_status === "CLOSED"}
                         onChange={(event) => {
                           setCommentText(event.target.value);
                           if (commentSubmitError) {

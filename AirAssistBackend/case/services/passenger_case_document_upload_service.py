@@ -1,5 +1,7 @@
 from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import PermissionDenied
 
+from ..enums.case_state_enum import CaseState
 from ..models.case import Case
 from ..models.document import CaseDocument
 
@@ -9,6 +11,12 @@ class PassengerCaseDocumentUploadService:
     def upload_document(case_id, user, validated_data):
         owned_cases = Case.objects.filter(passengers__email__iexact=user.email.lower())
         owned_case = get_object_or_404(owned_cases, pk=case_id)
+
+        if owned_case.status != CaseState.AWAITING_DOCUMENTS.value:
+            raise PermissionDenied(
+                "Uploads are only allowed while the colleague has requested documents."
+            )
+
         uploaded_file = validated_data["file"]
 
         return CaseDocument.objects.create(
