@@ -17,7 +17,12 @@ import {
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import type { Leg } from "../../types/wizardTypes";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface LegDetailsProps {
   leg: Leg;
@@ -38,6 +43,21 @@ function LegDetails({
 }: LegDetailsProps) {
   const set = (field: keyof Leg) => (value: string | Dayjs | null) =>
     onChange({ ...leg, [field]: value });
+  const formatTimezoneText = (airportTimezone: string) => {
+    if (!airportTimezone) {
+      return undefined;
+    }
+
+    if (!leg.flightDate) {
+      return `Timezone: ${airportTimezone}`;
+    }
+
+    return `Timezone: ${airportTimezone} (UTC${dayjs
+      .tz(leg.flightDate.format("YYYY-MM-DD"), airportTimezone)
+      .format("Z")})`;
+  };
+  const departureTimezoneText = formatTimezoneText(leg.departureTimezone);
+  const arrivalTimezoneText = formatTimezoneText(leg.arrivalTimezone);
 
   const e = showErrors
     ? {
@@ -171,7 +191,8 @@ function LegDetails({
                   textField: {
                     fullWidth: true,
                     error: !!e.plannedDepartureTime,
-                    helperText: e.plannedDepartureTime,
+                    helperText:
+                      e.plannedDepartureTime ?? departureTimezoneText,
                   },
                 }}
               />
@@ -187,7 +208,7 @@ function LegDetails({
                   textField: {
                     fullWidth: true,
                     error: !!e.plannedArrivalTime,
-                    helperText: e.plannedArrivalTime,
+                    helperText: e.plannedArrivalTime ?? arrivalTimezoneText,
                   },
                 }}
               />
