@@ -21,6 +21,8 @@ import AdminSystemOptionsPage from "./components/admin/AdminSystemOptionsPage";
 function App() {
   const { view, role, resolveView, showCaseEntry, showColleagueDashboard } =
     useAuthView();
+  const isColleague = role === "COLLEAGUE";
+  const isAdmin = role === "SYSTEM_ADMIN";
   const navigate = useNavigate();
   const { pathname } = useLocation();
   useEffect(() => {
@@ -67,7 +69,7 @@ function App() {
         path="/colleague-cases"
         element={
           <ColleagueCasesPage
-            isAllowed={role === "COLLEAGUE"}
+            isAllowed={isColleague}
             onCreateCase={showCaseEntry}
           />
         }
@@ -76,7 +78,7 @@ function App() {
         path="/colleague-cases/:caseId"
         element={
           <ColleagueCasesPage
-            isAllowed={role === "COLLEAGUE"}
+            isAllowed={isColleague}
             onCreateCase={showCaseEntry}
           />
         }
@@ -103,7 +105,7 @@ function App() {
       <Route
         path="/admin/users"
         element={
-          view === "admin-users" ? (
+          isAdmin ? (
             <AdminUsersPage />
           ) : (
             <Navigate to="/login" replace />
@@ -113,7 +115,7 @@ function App() {
       <Route
         path="/admin/cases"
         element={
-          view === "admin-users" ? (
+          isAdmin ? (
             <AdminCasesPage />
           ) : (
             <Navigate to="/login" replace />
@@ -123,7 +125,7 @@ function App() {
       <Route
         path="/admin/cases/:caseId"
         element={
-          view === "admin-users" ? (
+          isAdmin ? (
             <AdminCasesPage />
           ) : (
             <Navigate to="/login" replace />
@@ -133,7 +135,7 @@ function App() {
       <Route
         path="/admin/system-options"
         element={
-          view === "admin-users" ? (
+          isAdmin ? (
             <AdminSystemOptionsPage />
           ) : (
             <Navigate to="/login" replace />

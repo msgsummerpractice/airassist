@@ -6,10 +6,9 @@ import { Navigate } from "react-router-dom";
 import Login from "../login/login";
 import PassengerCaseDetailsPage from "./PassengerCaseDetailsPage";
 import PastCasesView from "./PastCasesView";
-import { clearStoredUserIdentity, getTokenRole } from "../../utils/auth";
+import { getTokenRole, logoutToGuestCaseEntry } from "../../utils/auth";
 
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
-const REFRESH_TOKEN_STORAGE_KEY = "airassist_refresh_token";
 
 function PassengerCasesPage() {
   const navigate = useNavigate();
@@ -28,10 +27,7 @@ function PassengerCasesPage() {
   }, [caseId]);
 
   const handleLogout = () => {
-    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-    clearStoredUserIdentity();
-    setIsAuthenticated(false);
+    logoutToGuestCaseEntry();
   };
 
   if (!isAuthenticated) {

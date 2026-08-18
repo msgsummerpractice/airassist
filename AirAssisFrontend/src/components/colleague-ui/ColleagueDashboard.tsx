@@ -36,7 +36,7 @@ import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import {
-  clearStoredUserIdentity,
+  logoutToGuestCaseEntry,
   setStoredUserIdentity,
 } from "../../utils/auth";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
@@ -202,11 +202,7 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
   }, [colleague]);
 
   const handleLogout = () => {
-    localStorage.removeItem("airassist_access_token");
-    localStorage.removeItem("airassist_refresh_token");
-    clearStoredUserIdentity();
-    navigate("/case-entry", { replace: true });
-    window.location.reload();
+    logoutToGuestCaseEntry();
   };
 
   return (
