@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import {
+  ArrowBackOutlined as ArrowBackIcon,
+  FolderOutlined as FolderIcon,
+  GroupOutlined as GroupIcon,
   LogoutOutlined as LogoutOutlinedIcon,
   SettingsOutlined as SettingsIcon,
 } from "@mui/icons-material";
-import { Box } from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
 
 import {
   clearStoredUserIdentity,
@@ -53,8 +56,6 @@ function AdminCasesPage() {
     <Box
       sx={{
         minHeight: "100vh",
-        px: { xs: 2, md: 4 },
-        py: { xs: 3, md: 5 },
         backgroundColor: "#ffffff",
       }}
     >
@@ -69,18 +70,50 @@ function AdminCasesPage() {
         }}
         actions={[
           {
+            label: "User View",
+            icon: <GroupIcon fontSize="small" />,
+            onClick: () => navigate("/admin/users"),
+          },
+          {
+            label: "Case View",
+            active: true,
+            icon: <FolderIcon fontSize="small" />,
+            onClick: () => navigate("/admin/cases"),
+          },
+          {
             label: "System Options",
             icon: <SettingsIcon fontSize="small" />,
             onClick: () => navigate("/admin/system-options"),
           },
-          {
-            label: "System View",
-            icon: <SettingsIcon fontSize="small" />,
-            onClick: () => undefined,
-          },
         ]}
       />
-      <Box sx={{ mt: 3 }}>
+
+      <Box
+        sx={{
+          maxWidth: 1220,
+          mx: "auto",
+          px: { xs: 2, md: 4 },
+          py: { xs: 3, md: 5 },
+        }}
+      >
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
+            mb: 3,
+            justifyContent: "flex-end",
+            alignItems: { xs: "stretch", sm: "center" },
+          }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate(-1)}
+          >
+            Back
+          </Button>
+        </Stack>
+
         <AdminCaseList />
       </Box>
     </Box>

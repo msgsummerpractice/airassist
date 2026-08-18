@@ -179,8 +179,6 @@ function PastCasesView({
     <Box
       sx={{
         minHeight: "100vh",
-        px: { xs: 2, md: 4 },
-        py: { xs: 3, md: 5 },
         backgroundColor: "#ffffff",
       }}
     >
@@ -208,17 +206,24 @@ function PastCasesView({
         ]}
       />
 
-      <Card
-        elevation={1}
+      <Box
         sx={{
           maxWidth: 1220,
           mx: "auto",
-          mt: 3,
-          border: "none",
-          overflow: "hidden",
+          px: { xs: 2, md: 4 },
+          py: { xs: 3, md: 5 },
         }}
       >
-        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+        <Card
+          elevation={1}
+          sx={{
+            maxWidth: 1220,
+            mx: "auto",
+            border: "none",
+            overflow: "hidden",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, md: 4 } }}>
           <Box
             sx={{
               position: "relative",
@@ -420,8 +425,9 @@ function PastCasesView({
               </Stack>
             </Box>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 }
