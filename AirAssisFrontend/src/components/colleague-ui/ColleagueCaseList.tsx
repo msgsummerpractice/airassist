@@ -6,10 +6,6 @@ import {
   Card,
   CardContent,
   Chip,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -62,6 +58,14 @@ type SortValue = "-id" | "id" | "status" | "-status";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "PENDING", label: "Pending" },
+  { value: "IN_REVIEW", label: "In review" },
+  { value: "ELIGIBLE", label: "Eligible" },
+  { value: "NON_ELIGIBLE", label: "Non-eligible" },
+  { value: "AWAITING_DOCUMENTS", label: "Awaiting documents" },
+];
 
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   const responseText = await response.text();
@@ -249,56 +253,9 @@ function ColleagueCaseList() {
           </Box>
         </Box>
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          sx={{
-            mb: 3,
-            width: "100%",
-            justifyContent: "center",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
-            <InputLabel id="colleague-cases-status-label">Status</InputLabel>
-            <Select
-              labelId="colleague-cases-status-label"
-              label="Status"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <MenuItem value="ALL">All</MenuItem>
-              <MenuItem value="PENDING">Pending</MenuItem>
-              <MenuItem value="IN_REVIEW">In review</MenuItem>
-              <MenuItem value="ELIGIBLE">Eligible</MenuItem>
-              <MenuItem value="NON_ELIGIBLE">Non-eligible</MenuItem>
-              <MenuItem value="AWAITING_DOCUMENTS">Awaiting documents</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
-            <InputLabel id="colleague-cases-assignee-label">
-              Assignee
-            </InputLabel>
-            <Select
-              labelId="colleague-cases-assignee-label"
-              label="Assignee"
-              value={assigneeFilter}
-              onChange={(event) => setAssigneeFilter(event.target.value)}
-            >
-              <MenuItem value="ALL">All</MenuItem>
-              <MenuItem value="UNASSIGNED">Unassigned</MenuItem>
-              {assigneeOptions.map((assigneeName) => (
-                <MenuItem key={assigneeName} value={assigneeName}>
-                  {assigneeName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Stack>
         <CaseListFilters
           statusFilter={statusFilter}
+          statusOptions={STATUS_FILTER_OPTIONS}
           assigneeFilter={assigneeFilter}
           assigneeOptions={assigneeOptions}
           statusLabelId="colleague-cases-status-label"
