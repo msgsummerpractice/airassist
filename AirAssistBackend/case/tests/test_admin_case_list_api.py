@@ -66,6 +66,6 @@ class AdminCaseListApiTests(APITestCase):
                 "case_date": self.case.created_at.isoformat().replace("+00:00", "Z"),
                 "flight_number": "RO123",
                 "flight_date": "2026-08-17",
-                "status": "NEW",
+                "status": "PENDING",
             },
         )

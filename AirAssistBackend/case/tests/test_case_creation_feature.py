@@ -16,6 +16,8 @@ from case.models.document import CaseDocument
 from case.models.flights import Flight
 from case.models.passengers import Passenger
 from case.serializers.case_creation_serializer import CaseCreationSerializer
+from case.services.case_service import CaseService
+from user.models.users import Role, User
 
 ELIGIBLE_DELAY_DISRUPTION = {
     "motive": DisruptionMotive.DELAY.value,
@@ -80,6 +82,24 @@ def _build_serializer_payload(**overrides):
     }
     payload.update(overrides)
     return payload
+
+
+class PassengerAccountCreationTests(TestCase):
+    @patch("user.service.user_service.send_user_created_email")
+    def test_creates_passenger_role_when_it_has_not_been_seeded(self, _mock_email):
+        case = Case.objects.create(gdpr_consent=True)
+        passenger = Passenger.objects.create(
+            case=case,
+            first_name="Ada",
+            last_name="Lovelace",
+            date_of_birth="1990-01-01",
+            email="ada@example.com",
+        )
+
+        CaseService.create_passenger_account(passenger)
+
+        self.assertTrue(Role.objects.filter(role="PASSENGER").exists())
+        self.assertTrue(User.objects.filter(email="ada@example.com").exists())
 
 
 # ---------------------------------------------------------------------------
