@@ -83,10 +83,10 @@ class EmailServiceTests(SimpleTestCase):
             "footer_text": "Handled by AirAssist.",
         }
         mock_load_logo_attachment.return_value = {
-            "filename": "logo_placeholder.png",
+            "filename": "logo.png",
             "content": b"image-bytes",
             "mimetype": "image/png",
-            "content_id": "logo_placeholder",
+            "content_id": "logo",
             "disposition": "inline",
         }
         mock_render_to_string.return_value = "<p>Hello</p>"
@@ -218,10 +218,10 @@ class EmailServiceTests(SimpleTestCase):
         with patch("case_email.services.email_service.render_to_string", return_value="<p>Hello</p>"), patch(
             "case_email.services.email_service._load_logo_attachment",
             return_value={
-                "filename": "logo_placeholder.png",
+                "filename": "logo.png",
                 "content": b"image-bytes",
                 "mimetype": "image/png",
-                "content_id": "logo_placeholder",
+                "content_id": "logo",
                 "disposition": "inline",
             },
         ):
@@ -263,10 +263,10 @@ class EmailServiceTests(SimpleTestCase):
         }
         mock_render_to_string.return_value = "<p>Hello</p>"
         mock_load_logo_attachment.return_value = {
-            "filename": "logo_placeholder.png",
+            "filename": "logo.png",
             "content": b"image-bytes",
             "mimetype": "image/png",
-            "content_id": "logo_placeholder",
+            "content_id": "logo",
             "disposition": "inline",
         }
         mock_send_via_microsoft_graph.side_effect = ValueError("Microsoft Graph credentials are not configured.")

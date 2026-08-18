@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny
 from django.urls import reverse
 
 from case.models.disruption import Disruption
-from case_email.services.email_service import send_basic_email
+from case_email.services.email_service import send_template_email
 
 from ..serializers.case_creation_serializer import CaseCreationSerializer
 from ..services.case_contract_service import CaseContractGenerationError, CaseContractService
@@ -84,20 +84,17 @@ class CaseCreationView(APIView):
 
                     def _send_submission_email():
                         try:
-                            send_basic_email(
+                            send_template_email(
                                 to_email=to_email,
                                 subject="Case Submission Confirmation",
-                                body=(
-                                    "Your case was submitted successfully.\n\n"
-                                    f"Case ID: {submitted_case_id}\n"
-                                    f"Status: {submitted_case_status}\n"
-                                    f"Created At: {submitted_case_created_at}\n"
-                                    + (
-                                        "\nYour case contract PDF is attached to this email.\n"
-                                        if email_attachments
-                                        else ""
-                                    )
-                                ),
+                                template_name="case_submission.html",
+                                context={
+                                    "first_name": passenger.first_name,
+                                    "case_id": submitted_case_id,
+                                    "case_status": submitted_case_status,
+                                    "created_at": submitted_case_created_at,
+                                    "contract_attached": bool(email_attachments),
+                                },
                                 attachments=email_attachments,
                             )
                         except Exception:
