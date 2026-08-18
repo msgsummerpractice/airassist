@@ -552,8 +552,6 @@ function ColleagueCaseDetailsPage({
     <Box
       sx={{
         minHeight: "100vh",
-        px: { xs: 2, md: 4 },
-        py: { xs: 3, md: 5 },
         backgroundColor: "#ffffff",
       }}
     >
@@ -581,18 +579,25 @@ function ColleagueCaseDetailsPage({
         ]}
       />
 
-      <Card
-        elevation={1}
+      <Box
         sx={{
           maxWidth: 1080,
           mx: "auto",
-          mt: 3,
-          border: "1px solid",
-          borderColor: "divider",
-          overflow: "hidden",
+          px: { xs: 2, md: 4 },
+          py: { xs: 3, md: 5 },
         }}
       >
-        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+        <Card
+          elevation={1}
+          sx={{
+            maxWidth: 1080,
+            mx: "auto",
+            border: "1px solid",
+            borderColor: "divider",
+            overflow: "hidden",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, md: 4 } }}>
           <Box
             sx={{
               position: "relative",
@@ -1255,8 +1260,9 @@ function ColleagueCaseDetailsPage({
               </Card>
             </Stack>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
       <AppSnackbar
         open={snackbar.open}
         message={snackbar.message}
