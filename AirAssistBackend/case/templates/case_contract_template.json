@@ -1,0 +1,82 @@
+{
+  "titles": {
+    "branded": "AirAssist Case Contract",
+    "plain": "Case Contract",
+    "subtitle": "Claim contract for case #{case_id}"
+  },
+  "section_titles": {
+    "metadata": "Reference Details",
+    "company": "Company Information",
+    "passenger": "Passenger Details",
+    "flights": "Flight Details",
+    "disruption": "Disruption Summary",
+    "compensation": "Compensation"
+  },
+  "labels": {
+    "reference_number": "Reference number",
+    "document_date": "Document date",
+    "claim_status": "Claim status",
+    "reservation": "Reservation",
+    "assigned_colleague": "Assigned colleague",
+    "organisation": "Organisation",
+    "contact_email": "Contact email",
+    "reply_to": "Reply-to",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "postal_code": "Postal code",
+    "disruption_type": "Disruption type",
+    "delay_length": "Delay length",
+    "notes": "Notes",
+    "estimated_compensation": "Estimated compensation"
+  },
+  "flight_headers": {
+    "flight_number": "Flight",
+    "airline": "Airline",
+    "departure_date": "Date",
+    "route": "Route",
+    "departure": "Departure",
+    "arrival": "Arrival",
+    "problem_flight": "Problem flight"
+  },
+  "layout": {
+    "margins_mm": {
+      "left": 20,
+      "right": 20,
+      "top": 22,
+      "bottom": 24
+    },
+    "section_spacing": {
+      "COMPACT": 6,
+      "STANDARD": 8,
+      "DETAILED": 10
+    },
+    "body": {
+      "COMPACT": {
+        "font_size": 9,
+        "leading": 12
+      },
+      "STANDARD": {
+        "font_size": 10,
+        "leading": 13
+      },
+      "DETAILED": {
+        "font_size": 10.5,
+        "leading": 14
+      }
+    }
+  },
+  "colors": {
+    "title": "#121c2a",
+    "subtitle": "#5b6472",
+    "section": "#003178",
+    "text": "#1f2937",
+    "table_label_bg": "#f4f7fb",
+    "table_grid": "#d7dce5",
+    "table_inner": "#e5e7eb",
+    "flight_header_bg": "#bfefff",
+    "flight_header_text": "#ffffff",
+    "footer": "#5b6472"
+  }
+}
