@@ -28,8 +28,10 @@ import {
 } from "@mui/material";
 import {
   ArrowBackOutlined as ArrowBackIcon,
+  BadgeOutlined as ColleagueRoleIcon,
   InfoOutlined as InfoIcon,
   DeleteOutlined as DeleteOutlineIcon,
+  FlightTakeoffOutlined as PassengerRoleIcon,
   PersonSearch as PersonSearchIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
@@ -64,11 +66,39 @@ interface UserEntry {
   assigned_case_count: number;
 }
 
-function roleChipColor(role: string): "primary" | "secondary" | "default" {
-  if (role === "COLLEAGUE") return "primary";
-  if (role === "PASSENGER") return "secondary";
-  return "default";
+function roleChipProps(role: string) {
+  if (role === "COLLEAGUE") {
+    return {
+      color: "primary" as const,
+      icon: <ColleagueRoleIcon fontSize="small" />,
+    };
+  }
+
+  if (role === "PASSENGER") {
+    return {
+      color: "secondary" as const,
+      icon: <PassengerRoleIcon fontSize="small" />,
+    };
+  }
+
+  return { color: "default" as const, icon: undefined };
 }
+
+const roleChipSx = {
+  fontWeight: 700,
+  letterSpacing: "0.02em",
+  "& .MuiChip-icon": { color: "inherit" },
+};
+
+const tableTextSx = {
+  "& .MuiTableHead-root .MuiTableCell-root": {
+    fontSize: "1rem",
+    fontWeight: 700,
+  },
+  "& .MuiTableBody-root .MuiTableCell-root": {
+    fontSize: "0.875rem",
+  },
+};
 
 function extractApiError(data: unknown, status: number): string {
   if (!data || typeof data !== "object") {
@@ -390,7 +420,7 @@ function AdminUsersPage() {
                     borderRadius: 2,
                   }}
                 >
-                  <Table stickyHeader>
+                  <Table stickyHeader sx={tableTextSx}>
                     <TableHead>
                       <TableRow>
                         {[
@@ -440,9 +470,10 @@ function AdminUsersPage() {
                             <TableCell>
                               <Chip
                                 label={user.role}
-                                color={roleChipColor(user.role)}
                                 size="small"
-                                variant="outlined"
+                                variant="filled"
+                                sx={roleChipSx}
+                                {...roleChipProps(user.role)}
                               />
                             </TableCell>
 
@@ -560,9 +591,10 @@ function AdminUsersPage() {
                   </Typography>
                   <Chip
                     label={detailUser.role}
-                    color={roleChipColor(detailUser.role)}
                     size="small"
-                    variant="outlined"
+                    variant="filled"
+                    sx={{ ...roleChipSx, alignSelf: "flex-start" }}
+                    {...roleChipProps(detailUser.role)}
                   />
 
                   <Typography variant="caption" color="text.secondary">
@@ -611,10 +643,10 @@ function AdminUsersPage() {
 
                   <Chip
                     label={deleteUser.role}
-                    color={roleChipColor(deleteUser.role)}
                     size="small"
-                    variant="outlined"
-                    sx={{ alignSelf: "flex-start" }}
+                    variant="filled"
+                    sx={{ ...roleChipSx, alignSelf: "flex-start" }}
+                    {...roleChipProps(deleteUser.role)}
                   />
                 </Box>
               )}
