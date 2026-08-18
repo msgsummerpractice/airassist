@@ -3,10 +3,9 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import ColleagueCaseList from "./ColleagueCaseList";
 import ColleagueCaseDetailsPage from "./ColleagueCaseDetailsPage";
-import { clearStoredUserIdentity } from "../../utils/auth";
+import { logoutToGuestCaseEntry } from "../../utils/auth";
 
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
-const REFRESH_TOKEN_STORAGE_KEY = "airassist_refresh_token";
 
 type ColleagueCasesPageProps = {
   isAllowed: boolean;
@@ -30,10 +29,7 @@ function ColleagueCasesPage({ isAllowed }: ColleagueCasesPageProps) {
   }, [caseId]);
 
   const handleLogout = () => {
-    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-    clearStoredUserIdentity();
-    setIsAuthenticated(false);
+    logoutToGuestCaseEntry();
   };
 
   if (!isAllowed || !isAuthenticated) {

@@ -34,9 +34,9 @@ import {
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import {
-  clearStoredUserIdentity,
   fetchWithAuth,
   getStoredUserIdentity,
+  logoutToGuestCaseEntry,
 } from "../../utils/auth";
 import { useNavigate } from "react-router-dom";
 import PortalUserHeader from "../portal/PortalUserHeader";
@@ -100,10 +100,7 @@ function AdminUsersPage() {
   const currentUser = getStoredUserIdentity();
 
   const handleLogout = () => {
-    localStorage.removeItem("airassist_access_token");
-    localStorage.removeItem("airassist_refresh_token");
-    clearStoredUserIdentity();
-    window.location.assign("/login");
+    logoutToGuestCaseEntry();
   };
 
   const { snackbar, closeSnackbar, showSuccessSnackbar, showErrorSnackbar } =

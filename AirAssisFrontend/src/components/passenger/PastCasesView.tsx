@@ -26,6 +26,8 @@ import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity, setStoredUserIdentity } from "../../utils/auth";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import CaseListFilters from "../cases/shared/list/CaseListFilters";
+import { AppSnackbar } from "../utils/app_snackbar";
+import { useAppSnackbar } from "../utils/use_app_snackbar";
 import {
   CaseListEmptyState,
   CaseListLoadingState,
@@ -66,6 +68,7 @@ function PastCasesView({
   onOpenCaseDetails,
 }: PastCasesViewProps) {
   const navigate = useNavigate();
+  const { snackbar, closeSnackbar, showSuccessSnackbar } = useAppSnackbar();
   const [cases, setCases] = useState<PassengerCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -173,15 +176,26 @@ function PastCasesView({
     );
   };
 
+  const handleContractDownload = () => {
+    showSuccessSnackbar("Contract downloaded successfully.");
+  };
+
   const currentUser = getStoredUserIdentity();
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        backgroundColor: "#ffffff",
-      }}
-    >
+    <>
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
+      <Box
+        sx={{
+          minHeight: "100vh",
+          backgroundColor: "#ffffff",
+        }}
+      >
       <PortalUserHeader
         name={currentUser.name}
         email={currentUser.email}
@@ -345,6 +359,7 @@ function PastCasesView({
                               href={item.contract_download_url}
                               target="_blank"
                               rel="noreferrer"
+                              onClick={handleContractDownload}
                               size="small"
                               variant="text"
                               endIcon={
@@ -399,6 +414,7 @@ function PastCasesView({
                               href={item.contract_download_url}
                               target="_blank"
                               rel="noreferrer"
+                              onClick={handleContractDownload}
                               size="small"
                               variant="outlined"
                               endIcon={
@@ -428,7 +444,8 @@ function PastCasesView({
           </CardContent>
         </Card>
       </Box>
-    </Box>
+      </Box>
+    </>
   );
 }
 

@@ -10,15 +10,14 @@ import {
 import { Box, Button, Stack } from "@mui/material";
 
 import {
-  clearStoredUserIdentity,
   getStoredUserIdentity,
+  logoutToGuestCaseEntry,
 } from "../../utils/auth";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import AdminCaseDetailsPage from "./AdminCaseDetailsPage";
 import AdminCaseList from "./AdminCaseList";
 
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
-const REFRESH_TOKEN_STORAGE_KEY = "airassist_refresh_token";
 
 function AdminCasesPage() {
   const navigate = useNavigate();
@@ -33,10 +32,7 @@ function AdminCasesPage() {
   }, [caseId]);
 
   const handleLogout = () => {
-    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-    clearStoredUserIdentity();
-    setIsAuthenticated(false);
+    logoutToGuestCaseEntry();
   };
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;

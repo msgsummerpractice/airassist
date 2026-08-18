@@ -44,6 +44,13 @@ export function clearStoredUserIdentity() {
   localStorage.removeItem(USER_EMAIL_STORAGE_KEY);
 }
 
+export function logoutToGuestCaseEntry() {
+  localStorage.removeItem("airassist_access_token");
+  localStorage.removeItem("airassist_refresh_token");
+  clearStoredUserIdentity();
+  window.location.assign("/case-entry");
+}
+
 const formatNameFromEmail = (email: string) => {
   const prefix = email.split("@")[0] ?? "";
   const parts = prefix

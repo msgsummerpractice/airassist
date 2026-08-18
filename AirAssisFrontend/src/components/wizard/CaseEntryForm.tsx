@@ -25,8 +25,8 @@ import OverviewStep from "./steps/OverviewStep.tsx";
 import WizardProgressBar from "./WizardProgressBar";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import {
-  clearStoredUserIdentity,
   getStoredUserIdentity,
+  logoutToGuestCaseEntry,
 } from "../../utils/auth";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
@@ -113,11 +113,7 @@ function CaseEntryForm({
   const isGuest = currentUser.isGuest;
 
   const handleLogout = () => {
-    localStorage.removeItem("airassist_access_token");
-    localStorage.removeItem("airassist_refresh_token");
-    clearStoredUserIdentity();
-    navigate("/case-entry", { replace: true });
-    window.location.reload();
+    logoutToGuestCaseEntry();
   };
 
   const resetForm = () => {
