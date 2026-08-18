@@ -2,15 +2,14 @@ from django.db.models import Q
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser
 
 from ..models.airport import Airport
 from ..services.airport_gap_service import AirportGapClient 
 from ..services.distance_service import DistanceService
 
 class PopulateAirportsView(APIView):
-    # Set to AllowAny for testing, but consider changing to IsAdminUser for production
-    permission_classes = [AllowAny] 
+    permission_classes = [IsAdminUser] 
 
     def post(self, request):
         client = AirportGapClient()

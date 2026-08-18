@@ -1,6 +1,7 @@
 from airports.services.distance_service import DistanceService
 from .compensation_service import CompensationService
-from user.models.users import User
+from user.models.users import Role, User
+from user.enums.roles import Roles
 from user.service.user_service import UserService
 import secrets
 from ..constants import *
@@ -39,13 +40,15 @@ class CaseService:
         if User.objects.filter(email = passenger.email).exists():
             return
 
+        Role.objects.get_or_create(role=Roles.PASSENGER.value)
+
         password = secrets.token_urlsafe(PASSWORD_SIZE)
 
         UserService.create_user(
             email = passenger.email,
             firstname = passenger.first_name,
             lastname = passenger.last_name,
-            role_name = "PASSENGER",
+            role_name = Roles.PASSENGER.value,
             password = password,
             must_change_password = True
         )

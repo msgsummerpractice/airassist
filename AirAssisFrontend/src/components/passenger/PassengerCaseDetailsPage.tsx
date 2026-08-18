@@ -9,6 +9,10 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -30,15 +34,20 @@ import {
   LogoutOutlined,
   PersonOutlineOutlined,
   SummarizeOutlined,
+  UploadFileOutlined,
 } from "@mui/icons-material";
 import {
   createPassengerCaseComment,
   type PassengerCaseCommentApiError,
 } from "./PassengerCaseCommentApi";
+import { uploadCaseDocument, type CaseApiError } from "../cases/api";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import { getStoredUserIdentity } from "../../utils/auth";
+import { AppSnackbar } from "../utils/app_snackbar";
+import { useAppSnackbar } from "../utils/use_app_snackbar";
+import { validateDocumentFile } from "../wizard/utils/documentUploadStepValidation";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
 
 const API_BASE_URL =
@@ -46,6 +55,7 @@ const API_BASE_URL =
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
 const COMMENT_MAX_LENGTH = 1000;
 const SECTION_ICON_COLOR = "#003178";
+const DOCUMENT_TYPE_OPTIONS = ["BOARDING_PASS", "PASSPORT", "CONTRACT"];
 
 type FlightDetails = {
   flight_date: string;
@@ -143,7 +153,11 @@ function PassengerCaseDetailsPage({
   const [details, setDetails] = useState<PassengerCaseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [documentType, setDocumentType] = useState("BOARDING_PASS");
   const [documentError, setDocumentError] = useState("");
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
+  const [isDraggingOverDropzone, setIsDraggingOverDropzone] = useState(false);
   const [downloadingDocumentId, setDownloadingDocumentId] = useState<
     number | null
   >(null);
@@ -214,6 +228,11 @@ function PassengerCaseDetailsPage({
     }
 
     return fallbackFilename;
+  };
+
+  const handleDocumentFileChange = (file: File | null) => {
+    setSelectedFile(file);
+    setDocumentError(file ? validateDocumentFile(file) : "");
   };
 
   const fetchDetails = useCallback(async () => {
@@ -337,6 +356,57 @@ function PassengerCaseDetailsPage({
       setIsSubmittingComment(false);
     }
   }, [fetchDetails, normalizedCommentText, onUnauthorized, resolvedCaseId]);
+
+  const uploadDocument = useCallback(async () => {
+    const validationError = validateDocumentFile(selectedFile);
+
+    if (validationError || !selectedFile) {
+      setDocumentError(validationError);
+      return;
+    }
+
+    if (resolvedCaseId === null) {
+      setDocumentError("Invalid case id.");
+      return;
+    }
+
+    setDocumentError("");
+    setIsUploadingDocument(true);
+
+    try {
+      const payload = await uploadCaseDocument({
+        scope: "passenger",
+        caseId: resolvedCaseId,
+        file: selectedFile,
+        documentType,
+        accessToken: getAccessToken(),
+      });
+
+      setSelectedFile(null);
+      showSuccessSnackbar(payload.message || "Document uploaded successfully.");
+      await fetchDetails();
+    } catch (error) {
+      const apiError = error as Partial<CaseApiError>;
+      if (apiError.status === 401 || apiError.status === 403) {
+        onUnauthorized?.();
+        return;
+      }
+
+      setDocumentError(
+        error instanceof Error ? error.message : "Could not upload document.",
+      );
+    } finally {
+      setIsUploadingDocument(false);
+    }
+  }, [
+    documentType,
+    fetchDetails,
+    getAccessToken,
+    onUnauthorized,
+    resolvedCaseId,
+    selectedFile,
+    showSuccessSnackbar,
+  ]);
 
   const downloadDocument = useCallback(
     async (document: CaseDocument) => {
@@ -636,6 +706,216 @@ function PassengerCaseDetailsPage({
                             </TableRow>
                             <TableRow>
                               <TableCell>Reservation Number</TableCell>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <PersonOutlineOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">Passenger details</Typography>
+                  </Box>
+                  {details.passenger ? (
+                    <TableContainer>
+                      <Table
+                        size="small"
+                        sx={{ "& td:first-of-type": { fontWeight: 400 } }}
+                      >
+                        <TableBody>
+                          <TableRow>
+                            <TableCell>Name</TableCell>
+                            <TableCell>
+                              {details.passenger.first_name}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Family Name</TableCell>
+                            <TableCell>{details.passenger.last_name}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Date of Birth</TableCell>
+                            <TableCell>
+                              {formatDate(details.passenger.date_of_birth)}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>E-mail</TableCell>
+                            <TableCell>{details.passenger.email}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Phone</TableCell>
+                            <TableCell>
+                              {details.passenger.phone ?? "-"}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Address</TableCell>
+                            <TableCell>
+                              {details.passenger.address ?? "-"}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Postal Code</TableCell>
+                            <TableCell>
+                              {details.passenger.postal_code ?? "-"}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Typography variant="body1" color="text.secondary">
+                      Passenger details are not available.
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <DescriptionOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">
+                      Attached Documents List
+                    </Typography>
+                  </Box>
+                  <Box
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setIsDraggingOverDropzone(true);
+                    }}
+                    onDragLeave={() => setIsDraggingOverDropzone(false)}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      setIsDraggingOverDropzone(false);
+                      handleDocumentFileChange(
+                        event.dataTransfer.files?.[0] ?? null,
+                      );
+                    }}
+                    sx={{
+                      border: "1px dashed",
+                      borderColor: isDraggingOverDropzone
+                        ? "primary.main"
+                        : "divider",
+                      borderRadius: 2,
+                      p: 2,
+                      mb: 2,
+                      backgroundColor: isDraggingOverDropzone
+                        ? "rgba(0, 49, 120, 0.04)"
+                        : "transparent",
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1.5 }}
+                    >
+                      Drag and drop a file here, or browse from your computer.
+                    </Typography>
+                    <Stack
+                      direction={{ xs: "column", md: "row" }}
+                      spacing={1.5}
+                      sx={{
+                        alignItems: { md: "center" },
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        startIcon={<UploadFileOutlined />}
+                        disabled={isUploadingDocument}
+                      >
+                        {selectedFile ? selectedFile.name : "Choose Document"}
+                        <input
+                          hidden
+                          type="file"
+                          accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"
+                          onChange={(event) => {
+                            handleDocumentFileChange(
+                              event.target.files?.[0] ?? null,
+                            );
+                            event.target.value = "";
+                          }}
+                        />
+                      </Button>
+                      <FormControl size="small" sx={{ minWidth: 180 }}>
+                        <InputLabel id="passenger-document-type-label">
+                          Document Type
+                        </InputLabel>
+                        <Select
+                          labelId="passenger-document-type-label"
+                          label="Document Type"
+                          value={documentType}
+                          onChange={(event) =>
+                            setDocumentType(event.target.value)
+                          }
+                        >
+                          {DOCUMENT_TYPE_OPTIONS.map((option) => (
+                            <MenuItem key={option} value={option}>
+                              {option.replaceAll("_", " ")}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <Button
+                        variant="contained"
+                        onClick={() => void uploadDocument()}
+                        disabled={
+                          !selectedFile ||
+                          Boolean(documentError) ||
+                          isUploadingDocument
+                        }
+                      >
+                        {isUploadingDocument ? "Uploading..." : "Upload"}
+                      </Button>
+                    </Stack>
+                  </Box>
+                  {documentError && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      {documentError}
+                    </Alert>
+                  )}
+                  {details.documents.length === 0 ? (
+                    <Typography variant="body1" color="text.secondary">
+                      No documents attached.
+                    </Typography>
+                  ) : (
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Filename</TableCell>
+                            <TableCell>Type</TableCell>
+                            <TableCell>Upload Timestamp</TableCell>
+                            <TableCell align="right">Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {details.documents.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell>{item.filename}</TableCell>
+                              <TableCell>{item.document_type}</TableCell>
                               <TableCell>
                                 {details.flight.reservation_number}
                               </TableCell>
@@ -997,6 +1277,13 @@ function PassengerCaseDetailsPage({
       </Box>
       </Box>
     </>
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
+    </Box>
   );
 }
 

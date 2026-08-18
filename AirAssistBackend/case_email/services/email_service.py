@@ -8,13 +8,17 @@ from email.mime.image import MIMEImage
 from django.template.loader import render_to_string
 
 
-def send_basic_email(to_email, subject, body):
+def send_basic_email(to_email, subject, body, attachments=None):
     email = EmailMessage(
         subject=subject,
         body=body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[to_email],
     )
+
+    for filename, content, mimetype in attachments or []:
+        email.attach(filename, content, mimetype)
+
     return email.send()
 
 

@@ -28,6 +28,7 @@ from .views.case_eligibility_view import CaseEligibilityView
 from .views.case_assigment_view import CaseAssignmentView
 from .views.passenger_case_comment_view import PassengerCaseCommentCreateView
 from .views.passenger_case_document_download_view import PassengerCaseDocumentDownloadView
+from .views.passenger_case_document_upload_view import PassengerCaseDocumentUploadView
 from .views.passenger_case_list_view import PassengerCaseListView
 from .views.passenger_case_details_view import PassengerCaseDetailsView
 from .views.pdf_history_list_view import PdfHistoryListView
@@ -65,6 +66,11 @@ urlpatterns = [
         "cases/me/<int:pk>/documents/<int:document_id>/download/",
         PassengerCaseDocumentDownloadView.as_view(),
         name="passenger-case-document-download",
+    ),
+    path(
+        "cases/me/<int:pk>/documents/",
+        PassengerCaseDocumentUploadView.as_view(),
+        name="passenger-case-document-upload",
     ),
     path("cases/me/<int:pk>/comments/", PassengerCaseCommentCreateView.as_view(),
          name="passenger-case-comment-create"),

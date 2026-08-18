@@ -134,11 +134,13 @@ export const createCaseComment = async ({
 };
 
 export const uploadCaseDocument = async ({
+  scope = "colleague",
   caseId,
   file,
   documentType,
   accessToken,
 }: {
+  scope?: CaseScope;
   caseId: number;
   file: File;
   documentType: string;
@@ -149,7 +151,7 @@ export const uploadCaseDocument = async ({
   formData.append("document_type", documentType);
 
   const response = await fetch(
-    `${API_BASE_URL}/api/cases/colleague/${caseId}/documents/`,
+    `${API_BASE_URL}${getCasePath(scope)}/${caseId}/documents/`,
     {
       method: "POST",
       headers: {
@@ -185,16 +187,18 @@ export const uploadCaseDocument = async ({
 };
 
 export const downloadCaseDocument = async ({
+  scope = "colleague",
   caseId,
   documentId,
   accessToken,
 }: {
+  scope?: CaseScope;
   caseId: number;
   documentId: number;
   accessToken: string;
 }): Promise<Response> => {
   const response = await fetch(
-    `${API_BASE_URL}/api/cases/colleague/${caseId}/documents/${documentId}/download/`,
+    `${API_BASE_URL}${getCasePath(scope)}/${caseId}/documents/${documentId}/download/`,
     {
       method: "GET",
       headers: {
