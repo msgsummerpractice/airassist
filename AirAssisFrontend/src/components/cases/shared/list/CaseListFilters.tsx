@@ -6,8 +6,14 @@ import {
   Stack,
 } from "@mui/material";
 
+type CaseListStatusOption = {
+  value: string;
+  label: string;
+};
+
 type CaseListFiltersProps = {
   statusFilter: string;
+  statusOptions: CaseListStatusOption[];
   assigneeFilter: string;
   assigneeOptions: string[];
   statusLabelId: string;
@@ -18,6 +24,7 @@ type CaseListFiltersProps = {
 
 function CaseListFilters({
   statusFilter,
+  statusOptions,
   assigneeFilter,
   assigneeOptions,
   statusLabelId,
@@ -46,9 +53,11 @@ function CaseListFilters({
           onChange={(event) => onStatusChange(event.target.value)}
         >
           <MenuItem value="ALL">All</MenuItem>
-          <MenuItem value="NEW">New</MenuItem>
-          <MenuItem value="VALID">Valid</MenuItem>
-          <MenuItem value="ASSIGNED">Assigned</MenuItem>
+          {statusOptions.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
         </Select>
       </FormControl>
 
