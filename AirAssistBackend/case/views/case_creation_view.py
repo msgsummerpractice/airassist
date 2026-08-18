@@ -35,7 +35,8 @@ class CaseCreationView(APIView):
 
         disruption_data = serializer.validated_data["disruption"]
         disruption_probe = Disruption(**disruption_data)
-        is_eligible = CaseEligibilityService.check_disruption_eligibility(disruption_probe)
+        is_eligible = CaseEligibilityService.check_disruption_eligibility(
+            disruption_probe)
 
         if not is_eligible:
             return Response(
@@ -104,7 +105,8 @@ class CaseCreationView(APIView):
                     "created_at": case.created_at,
                     "contract_document_id": contract_document.id,
                     "contract_download_url": request.build_absolute_uri(
-                        reverse("case-contract-download", kwargs={"case_id": case.id})
+                        reverse("case-contract-download",
+                                kwargs={"case_id": case.id})
                     ),
                 }
             },
