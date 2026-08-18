@@ -80,7 +80,9 @@ class CaseRegistrationEmailAttachmentTests(APITestCase):
         self.assertEqual(email.to, ["ada@example.com"])
         self.assertEqual(email.subject, "Case Submission Confirmation")
         self.assertIn(
-            f"Case ID: {response.data['data']['case_id']}", email.body)
+            f"<strong>Case ID:</strong> {response.data['data']['case_id']}",
+            email.body,
+        )
 
     @patch("case.views.case_creation_view.CaseService.create_passenger_account")
     @patch("case.views.case_creation_view.CaseService.calculate_case_compensation")
@@ -97,9 +99,13 @@ class CaseRegistrationEmailAttachmentTests(APITestCase):
             document_type=DocumentType.CONTRACT.value,
         )
         email = mail.outbox[0]
-        self.assertEqual(len(email.attachments), 1)
+        self.assertEqual(len(email.attachments), 2)
 
-        filename, content, mimetype = email.attachments[0]
+        filename, content, mimetype = next(
+            attachment
+            for attachment in email.attachments
+            if isinstance(attachment, tuple) and attachment[2] == "application/pdf"
+        )
         self.assertEqual(filename, contract_document.original_filename)
         self.assertEqual(mimetype, "application/pdf")
         self.assertTrue(content.startswith(b"%PDF"))
@@ -125,16 +131,16 @@ class CaseRegistrationEmailAttachmentTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(len(mail.outbox), 0)
 
-    @patch("case.views.case_creation_view.send_basic_email")
+    @patch("case.views.case_creation_view.send_template_email")
     @patch("case.views.case_creation_view.CaseService.create_passenger_account")
     @patch("case.views.case_creation_view.CaseService.calculate_case_compensation")
     def test_case_creation_still_succeeds_when_confirmation_email_fails(
         self,
         _calculate_case_compensation,
         _create_passenger_account,
-        mock_send_basic_email,
+        mock_send_template_email,
     ):
-        mock_send_basic_email.side_effect = RuntimeError("SMTP auth failed")
+        mock_send_template_email.side_effect = RuntimeError("SMTP auth failed")
 
         response = self.submit_case()
 
@@ -144,7 +150,7 @@ class CaseRegistrationEmailAttachmentTests(APITestCase):
             CaseDocument.objects.filter(document_type=DocumentType.CONTRACT.value).count(),
             1,
         )
-        mock_send_basic_email.assert_called_once()
+        mock_send_template_email.assert_called_once()
 
 
 class SendBasicEmailAttachmentTests(APITestCase):
