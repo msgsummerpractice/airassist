@@ -14,7 +14,7 @@ from user.models.users import User
 
 from ..models.passengers import Passenger
 from .disruption_serializer import DisruptionSerializer
-from .flights_serializer import FlightsSerializer
+from .flights_serializer import FlightsSerializer, validate_flight_times_in_airport_timezones
 
 from ..constants import MAX_FILE_SIZE, ALLOWED_EXTENSIONS, MAX_CONNECTION_FLIGHTS
 
@@ -99,6 +99,8 @@ class CaseCreationSerializer(serializers.Serializer):
     def validate(self, data):
         main_flight_problem = data.get("is_problem_flight")
         connection_flights = data.get("connection_flights", [])
+
+        validate_flight_times_in_airport_timezones(data)
 
         if connection_flights and connection_flights[0]["departing_airport"] != data["departing_airport"]:
             raise serializers.ValidationError(

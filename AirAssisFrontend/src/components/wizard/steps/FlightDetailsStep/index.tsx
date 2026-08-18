@@ -1,15 +1,19 @@
 import {
-  Alert,
   Box,
   Button,
   Card,
   CardContent,
   Typography,
 } from "@mui/material";
-import dayjs from "dayjs";
 import type { Leg } from "../../types/wizardTypes";
 import LegDetails from "./LegDetails";
 import { useState } from "react";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface FlightDetailsStepProps {
   legs: Leg[];
@@ -26,67 +30,60 @@ function FlightDetailsStep({
 }: FlightDetailsStepProps) {
   const [submitted, setSubmitted] = useState(false);
 
-  const getDepartureDateTime = (leg: Leg) => {
-    if (!leg.flightDate || !leg.plannedDepartureTime) {
+  const getAirportDateTime = (
+    flightDate: Leg["flightDate"],
+    flightTime: Leg["plannedDepartureTime"],
+    airportTimezone: string,
+    nextDay = false,
+  ) => {
+    if (!flightDate || !flightTime || !airportTimezone) {
       return null;
     }
 
-    return dayjs(leg.flightDate)
-      .hour(leg.plannedDepartureTime.hour())
-      .minute(leg.plannedDepartureTime.minute())
-      .second(0)
-      .millisecond(0);
+    const dateTime = `${flightDate.format("YYYY-MM-DD")}T${flightTime.format(
+      "HH:mm:ss",
+    )}`;
+
+    const zonedDateTime = dayjs.tz(dateTime, airportTimezone);
+    return nextDay ? zonedDateTime.add(1, "day") : zonedDateTime;
   };
 
-  const getArrivalDateTime = (leg: Leg) => {
-    if (!leg.flightDate || !leg.plannedArrivalTime) {
-      return null;
+  const getLegTimeError = (leg: Leg, nextDayArrival = leg.nextDayArrival) => {
+    const departure = getAirportDateTime(
+      leg.flightDate,
+      leg.plannedDepartureTime,
+      leg.departureTimezone,
+    );
+    const arrival = getAirportDateTime(
+      leg.flightDate,
+      leg.plannedArrivalTime,
+      leg.arrivalTimezone,
+      nextDayArrival,
+    );
+
+    if (!departure || !arrival) {
+      return undefined;
     }
 
-    let value = dayjs(leg.flightDate)
-      .hour(leg.plannedArrivalTime.hour())
-      .minute(leg.plannedArrivalTime.minute())
-      .second(0)
-      .millisecond(0);
-
-    const departure = getDepartureDateTime(leg);
-    const arrivesNextDay =
-      leg.nextDayArrival || (!!departure && value.isBefore(departure));
-
-    if (arrivesNextDay) {
-      value = value.add(1, "day");
-    }
-
-    return value;
+    return arrival.isAfter(departure)
+      ? undefined
+      : "Arrival date and time must be after departure date and time.";
   };
 
   const isLegValid = (leg: Leg) =>
     !!leg.flightDate &&
+    !!leg.departureTimezone &&
+    !!leg.arrivalTimezone &&
     !!leg.flightNumber &&
     !!leg.airline &&
     !!leg.reservationNumber &&
     !!leg.plannedDepartureTime &&
-    !!leg.plannedArrivalTime;
-
-  const hasValidConnectionSequence = legs.every((leg, index) => {
-    if (index === 0) {
-      return true;
-    }
-
-    const previousLeg = legs[index - 1];
-    const previousArrival = getArrivalDateTime(previousLeg);
-    const currentDeparture = getDepartureDateTime(leg);
-
-    if (!previousArrival || !currentDeparture) {
-      return true;
-    }
-
-    return currentDeparture.isAfter(previousArrival);
-  });
+    !!leg.plannedArrivalTime &&
+    !getLegTimeError(leg);
 
   const handleNext = () => {
     setSubmitted(true);
-    if (legs.every(isLegValid) && hasValidConnectionSequence) onNext();
+    if (legs.every(isLegValid)) onNext();
   };
   return (
     <Box sx={{ maxWidth: 1220, mx: "auto", px: { xs: 2, md: 4 }, py: 3 }}>
@@ -105,24 +102,25 @@ function FlightDetailsStep({
             Please provide the specifics for each leg of your disrupted journey.
             This information is crucial for determining EU 261/2004 eligibility.
           </Typography>
-          {submitted && !hasValidConnectionSequence && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              Each connecting leg must depart after the previous leg arrives.
-            </Alert>
-          )}
-          {legs.map((leg, i) => (
-            <LegDetails
-              key={i}
-              leg={leg}
-              index={i}
+          {legs.map((leg, i) => {
+            const timeError = getLegTimeError(leg);
+
+            return (
+              <LegDetails
+                key={i}
+                leg={leg}
+                index={i}
+                showNextDayOption={!!getLegTimeError(leg, false)}
+                timeError={timeError}
               onChange={(updated) =>
                 onLegsChange(
                   legs.map((leg, index) => (index === i ? updated : leg)),
                 )
               }
               showErrors={submitted}
-            />
-          ))}
+              />
+            );
+          })}
         </CardContent>
         <Box
           sx={{

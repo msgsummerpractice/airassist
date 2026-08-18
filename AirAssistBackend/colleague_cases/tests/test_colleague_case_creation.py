@@ -5,6 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from airports.models.airport import Airport
 from case.enums.document_type_enum import DocumentType
 from case.models.case import Case
 from case.models.document import CaseDocument
@@ -32,6 +33,16 @@ class ColleagueCaseCreationViewTests(APITestCase):
             password='testpass123',
             firstname='Normal',
             lastname='User',
+        )
+        Airport.objects.create(
+            iata='OTP',
+            name='OTP Airport',
+            timezone='Europe/Bucharest',
+        )
+        Airport.objects.create(
+            iata='FRA',
+            name='FRA Airport',
+            timezone='Europe/Berlin',
         )
 
     def build_payload(self, email='colleague@example.com'):

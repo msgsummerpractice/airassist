@@ -1,5 +1,4 @@
 import {
-  Alert,
   Box,
   Card,
   CardContent,
@@ -18,18 +17,47 @@ import {
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import type { Leg } from "../../types/wizardTypes";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface LegDetailsProps {
   leg: Leg;
   index: number;
+  showNextDayOption: boolean;
+  timeError?: string;
   onChange: (updated: Leg) => void;
   showErrors: boolean;
 }
 
-function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
+function LegDetails({
+  leg,
+  index,
+  showNextDayOption,
+  timeError,
+  onChange,
+  showErrors,
+}: LegDetailsProps) {
   const set = (field: keyof Leg) => (value: string | Dayjs | null) =>
     onChange({ ...leg, [field]: value });
+  const formatTimezoneText = (airportTimezone: string) => {
+    if (!airportTimezone) {
+      return undefined;
+    }
+
+    if (!leg.flightDate) {
+      return `Timezone: ${airportTimezone}`;
+    }
+
+    return `Timezone: ${airportTimezone} (UTC${dayjs
+      .tz(leg.flightDate.format("YYYY-MM-DD"), airportTimezone)
+      .format("Z")})`;
+  };
+  const departureTimezoneText = formatTimezoneText(leg.departureTimezone);
+  const arrivalTimezoneText = formatTimezoneText(leg.arrivalTimezone);
 
   const e = showErrors
     ? {
@@ -40,14 +68,11 @@ function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
         plannedDepartureTime: !leg.plannedDepartureTime
           ? "Required"
           : undefined,
-        plannedArrivalTime: !leg.plannedArrivalTime ? "Required" : undefined,
+        plannedArrivalTime: !leg.plannedArrivalTime
+          ? "Required"
+          : timeError,
       }
     : {};
-  const timeWarning =
-    !leg.nextDayArrival &&
-    leg.plannedDepartureTime &&
-    leg.plannedArrivalTime &&
-    leg.plannedArrivalTime.isBefore(leg.plannedDepartureTime);
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Card
@@ -166,7 +191,8 @@ function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
                   textField: {
                     fullWidth: true,
                     error: !!e.plannedDepartureTime,
-                    helperText: e.plannedDepartureTime,
+                    helperText:
+                      e.plannedDepartureTime ?? departureTimezoneText,
                   },
                 }}
               />
@@ -182,39 +208,25 @@ function LegDetails({ leg, index, onChange, showErrors }: LegDetailsProps) {
                   textField: {
                     fullWidth: true,
                     error: !!e.plannedArrivalTime,
-                    helperText: e.plannedArrivalTime,
+                    helperText: e.plannedArrivalTime ?? arrivalTimezoneText,
                   },
                 }}
               />
             </Grid>
-            {timeWarning && (
+            {showNextDayOption && (
               <Grid size={{ xs: 12 }}>
-                <Alert
-                  severity="warning"
-                  sx={{
-                    textAlign: "center",
-                    "& .MuiAlert-message": { flex: 1 },
-                  }}
-                >
-                  Arrival time is before departure time.
-                  <FormControlLabel
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      mt: 0.5,
-                    }}
-                    control={
-                      <Checkbox
-                        checked={leg.nextDayArrival}
-                        onChange={(e) =>
-                          set("nextDayArrival")(e.target.checked as never)
-                        }
-                        size="small"
-                      />
-                    }
-                    label="The flight lands the next day"
-                  />
-                </Alert>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={leg.nextDayArrival}
+                      onChange={(e) =>
+                        set("nextDayArrival")(e.target.checked as never)
+                      }
+                      size="small"
+                    />
+                  }
+                  label="The flight lands the next day"
+                />
               </Grid>
             )}
           </Grid>

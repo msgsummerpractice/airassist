@@ -7,6 +7,7 @@ export interface AirportOption {
   name: string;
   city: string;
   country: string;
+  timezone: string;
 }
 
 interface AutocompleteProps {
@@ -38,7 +39,7 @@ function AirportAutocomplete({
     const timer = setTimeout(async () => {
       setLoading(true);
       const res = await axios.get(`/api/airports/search/?q=${inputValue}`);
-      setOptions(res.data);
+      setOptions(res.data.filter((airport: AirportOption) => airport.timezone));
       setLoading(false);
     }, 300);
     return () => clearTimeout(timer);
