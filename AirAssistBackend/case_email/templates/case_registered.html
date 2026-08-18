@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>AirAssist - Case Registered</title>
+    </head>
+
+    <body style="margin:0;padding:0;background-color:#f4f7fb; font-family: Arial,sans-serrif;">
+        <div style="max-width: 600px;
+        margin: 40px auto;
+        background: #ffffff;
+        border-radius: 10px;
+        overflow: hidden;">
+        <div style="padding: 25px; text-align: center; background-color: #ffffff">
+            <img src="cid:logo_placeholder" alt="AirAssist" style="max-width: 180px; height: auto">
+        </div>
+
+        <div style="padding: 30px; color:#1f2937">
+            <h2 style="margin-top: 0;">Case Registered Successfully</h2>
+            <p>Hello {{first_name}},</p>
+            <p><strong>Case ID:</strong>{{case_id}}</p>
+            <p><strong>Status:</strong>{{case_status}}</p>
+            <p><strong>Registered on:</strong>{{created_at}}</p>
+
+            {% if reservation_number}
+            <p><strong>Reservation number:</strong> {{reservation_number}}</p>
+            {% endif %}
+
+            {% if has_contract %}
+            <p>
+          Your contract PDF is attached to this email. Please keep it for your
+          records.
+            </p>
+            {% else %} 
+            <p>
+          Your contract PDF is being prepared. You can download it from AirAssist
+          as soon as it is available.
+           </p>
+           {% endif %}
+
+           <p>Our team will review your case and keep you informed about every status change</p>
+            <p>
+          Kind regards,<br />
+          <strong>AirAssist Team</strong>
+        </div>
+        </div>  
+      
+    </body>
+</html>

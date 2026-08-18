@@ -18,7 +18,7 @@ def send_basic_email(to_email, subject, body):
     return email.send()
 
 
-def send_template_email(to_email, subject, template_name, context):
+def send_template_email(to_email, subject, template_name, context, attachments=None):
     html_body = render_to_string(template_name, context)
 
     email = EmailMessage(
@@ -44,6 +44,8 @@ def send_template_email(to_email, subject, template_name, context):
         filename=logo_path.name,
     )
     email.attach(logo)
+    for filename, content, mimetype in attachments or []:
+        email.attach(filename, content, mimetype)
 
     return email.send()
 
@@ -95,4 +97,34 @@ def send_case_status_update_email(passenger, case_id, case_status, note=""):
             "case_status": status_label,
             "note": note,
         },
+    )
+
+
+def send_case_registered_email(passenger, case, contract_document=None):
+    attachments = []
+
+    if contract_document is not None and contract_document.file:
+        with contract_document.file.open("rb") as contract_file:
+            attachments.append(
+                (
+                    contract_document.original_filename or f"case-{case.id}-contract.pdf",
+                    contract_file.read(),
+                    contract_document.content_type or "application/pdf",
+                )
+
+            )
+
+    return send_template_email(
+        to_email=passenger.email,
+        subject="Case Registered Successfully",
+        template_name="case_registered.html",
+        context={
+            "first_name": passenger.first_name,
+            "case_id": case.id,
+            "case_status": case.status,
+            "created_at": case.created_at,
+            "reservation_number": case.reservation_number,
+            "has_contract": bool(attachments),
+        },
+        attachments=attachments,
     )

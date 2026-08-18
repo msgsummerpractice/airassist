@@ -15,6 +15,7 @@ from ..services.case_contract_service import CaseContractGenerationError, CaseCo
 from ..services.case_service import CaseService
 from ..services.case_eligibility_service import CaseEligibilityService
 from ..services.case_state_service import CaseStateService
+from case_email.services.email_service import send_case_registered_email
 
 
 class CaseCreationView(APIView):
@@ -35,7 +36,8 @@ class CaseCreationView(APIView):
 
         disruption_data = serializer.validated_data["disruption"]
         disruption_probe = Disruption(**disruption_data)
-        is_eligible = CaseEligibilityService.check_disruption_eligibility(disruption_probe)
+        is_eligible = CaseEligibilityService.check_disruption_eligibility(
+            disruption_probe)
 
         if not is_eligible:
             return Response(
@@ -56,6 +58,12 @@ class CaseCreationView(APIView):
                 CaseService.create_passenger_account(passenger)
 
                 contract_document = CaseContractService.generate_for_case(case)
+                if passenger and passenger.email:
+                    transaction.on_commit(
+                        lambda: send_case_registered_email(
+                            passenger, case, contract_document
+                        )
+                    )
 
                 if passenger and passenger.email:
                     to_email = passenger.email
@@ -103,8 +111,10 @@ class CaseCreationView(APIView):
                     "status": case.status,
                     "created_at": case.created_at,
                     "contract_document_id": contract_document.id,
+                    "passenger_email": passenger.email if passenger else None,
                     "contract_download_url": request.build_absolute_uri(
-                        reverse("case-contract-download", kwargs={"case_id": case.id})
+                        reverse("case-contract-download",
+                                kwargs={"case_id": case.id})
                     ),
                 }
             },
