@@ -104,7 +104,18 @@ function PdfHistoryList() {
         ) : (
           <>
             <TableContainer sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
-              <Table stickyHeader>
+              <Table
+                stickyHeader
+                sx={{
+                  "& .MuiTableHead-root .MuiTableCell-root": {
+                    fontSize: "1rem",
+                    fontWeight: 700,
+                  },
+                  "& .MuiTableBody-root .MuiTableCell-root": {
+                    fontSize: "0.875rem",
+                  },
+                }}
+              >
                 <TableHead>
                   <TableRow>
                     <TableCell>ID</TableCell>
