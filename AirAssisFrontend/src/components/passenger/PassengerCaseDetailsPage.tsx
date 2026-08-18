@@ -9,6 +9,10 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -30,13 +34,18 @@ import {
   LogoutOutlined,
   PersonOutlineOutlined,
   SummarizeOutlined,
+  UploadFileOutlined,
 } from "@mui/icons-material";
 import {
   createPassengerCaseComment,
   type PassengerCaseCommentApiError,
 } from "./PassengerCaseCommentApi";
+import { uploadCaseDocument, type CaseApiError } from "../cases/api";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity } from "../../utils/auth";
+import { AppSnackbar } from "../utils/app_snackbar";
+import { useAppSnackbar } from "../utils/use_app_snackbar";
+import { validateDocumentFile } from "../wizard/utils/documentUploadStepValidation";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
 
 const API_BASE_URL =
@@ -44,6 +53,7 @@ const API_BASE_URL =
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
 const COMMENT_MAX_LENGTH = 1000;
 const SECTION_ICON_COLOR = "#003178";
+const DOCUMENT_TYPE_OPTIONS = ["BOARDING_PASS", "PASSPORT", "CONTRACT"];
 
 type FlightDetails = {
   flight_date: string;
@@ -136,12 +146,19 @@ function PassengerCaseDetailsPage({
   const navigate = useNavigate();
   const { caseId: routeCaseId } = useParams();
   const currentUser = getStoredUserIdentity();
+  const { snackbar, closeSnackbar, showSuccessSnackbar } = useAppSnackbar();
 
   const [details, setDetails] = useState<PassengerCaseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [documentType, setDocumentType] = useState("BOARDING_PASS");
   const [documentError, setDocumentError] = useState("");
-  const [downloadingDocumentId, setDownloadingDocumentId] = useState<number | null>(null);
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
+  const [isDraggingOverDropzone, setIsDraggingOverDropzone] = useState(false);
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<
+    number | null
+  >(null);
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentSubmitError, setCommentSubmitError] = useState("");
@@ -209,6 +226,11 @@ function PassengerCaseDetailsPage({
     }
 
     return fallbackFilename;
+  };
+
+  const handleDocumentFileChange = (file: File | null) => {
+    setSelectedFile(file);
+    setDocumentError(file ? validateDocumentFile(file) : "");
   };
 
   const fetchDetails = useCallback(async () => {
@@ -333,6 +355,57 @@ function PassengerCaseDetailsPage({
     }
   }, [fetchDetails, normalizedCommentText, onUnauthorized, resolvedCaseId]);
 
+  const uploadDocument = useCallback(async () => {
+    const validationError = validateDocumentFile(selectedFile);
+
+    if (validationError || !selectedFile) {
+      setDocumentError(validationError);
+      return;
+    }
+
+    if (resolvedCaseId === null) {
+      setDocumentError("Invalid case id.");
+      return;
+    }
+
+    setDocumentError("");
+    setIsUploadingDocument(true);
+
+    try {
+      const payload = await uploadCaseDocument({
+        scope: "passenger",
+        caseId: resolvedCaseId,
+        file: selectedFile,
+        documentType,
+        accessToken: getAccessToken(),
+      });
+
+      setSelectedFile(null);
+      showSuccessSnackbar(payload.message || "Document uploaded successfully.");
+      await fetchDetails();
+    } catch (error) {
+      const apiError = error as Partial<CaseApiError>;
+      if (apiError.status === 401 || apiError.status === 403) {
+        onUnauthorized?.();
+        return;
+      }
+
+      setDocumentError(
+        error instanceof Error ? error.message : "Could not upload document.",
+      );
+    } finally {
+      setIsUploadingDocument(false);
+    }
+  }, [
+    documentType,
+    fetchDetails,
+    getAccessToken,
+    onUnauthorized,
+    resolvedCaseId,
+    selectedFile,
+    showSuccessSnackbar,
+  ]);
+
   const downloadDocument = useCallback(
     async (document: CaseDocument) => {
       if (resolvedCaseId === null) {
@@ -380,7 +453,9 @@ function PassengerCaseDetailsPage({
         window.URL.revokeObjectURL(objectUrl);
       } catch (error) {
         setDocumentError(
-          error instanceof Error ? error.message : "Could not download document.",
+          error instanceof Error
+            ? error.message
+            : "Could not download document.",
         );
       } finally {
         setDownloadingDocumentId(null);
@@ -779,6 +854,99 @@ function PassengerCaseDetailsPage({
                       Attached Documents List
                     </Typography>
                   </Box>
+                  <Box
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setIsDraggingOverDropzone(true);
+                    }}
+                    onDragLeave={() => setIsDraggingOverDropzone(false)}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      setIsDraggingOverDropzone(false);
+                      handleDocumentFileChange(
+                        event.dataTransfer.files?.[0] ?? null,
+                      );
+                    }}
+                    sx={{
+                      border: "1px dashed",
+                      borderColor: isDraggingOverDropzone
+                        ? "primary.main"
+                        : "divider",
+                      borderRadius: 2,
+                      p: 2,
+                      mb: 2,
+                      backgroundColor: isDraggingOverDropzone
+                        ? "rgba(0, 49, 120, 0.04)"
+                        : "transparent",
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1.5 }}
+                    >
+                      Drag and drop a file here, or browse from your computer.
+                    </Typography>
+                    <Stack
+                      direction={{ xs: "column", md: "row" }}
+                      spacing={1.5}
+                      sx={{
+                        alignItems: { md: "center" },
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        startIcon={<UploadFileOutlined />}
+                        disabled={isUploadingDocument}
+                      >
+                        {selectedFile ? selectedFile.name : "Choose Document"}
+                        <input
+                          hidden
+                          type="file"
+                          accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"
+                          onChange={(event) => {
+                            handleDocumentFileChange(
+                              event.target.files?.[0] ?? null,
+                            );
+                            event.target.value = "";
+                          }}
+                        />
+                      </Button>
+                      <FormControl size="small" sx={{ minWidth: 180 }}>
+                        <InputLabel id="passenger-document-type-label">
+                          Document Type
+                        </InputLabel>
+                        <Select
+                          labelId="passenger-document-type-label"
+                          label="Document Type"
+                          value={documentType}
+                          onChange={(event) =>
+                            setDocumentType(event.target.value)
+                          }
+                        >
+                          {DOCUMENT_TYPE_OPTIONS.map((option) => (
+                            <MenuItem key={option} value={option}>
+                              {option.replaceAll("_", " ")}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <Button
+                        variant="contained"
+                        onClick={() => void uploadDocument()}
+                        disabled={
+                          !selectedFile ||
+                          Boolean(documentError) ||
+                          isUploadingDocument
+                        }
+                      >
+                        {isUploadingDocument ? "Uploading..." : "Upload"}
+                      </Button>
+                    </Stack>
+                  </Box>
                   {documentError && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                       {documentError}
@@ -955,9 +1123,14 @@ function PassengerCaseDetailsPage({
               </Card>
             </Stack>
           )}
-          </CardContent>
-        </Card>
-      </Box>
+        </CardContent>
+      </Card>
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
     </Box>
   );
 }
