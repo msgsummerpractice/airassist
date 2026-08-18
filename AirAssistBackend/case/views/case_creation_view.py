@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from psycopg2 import DatabaseError
 from rest_framework import status
@@ -15,6 +17,9 @@ from ..services.case_contract_service import CaseContractGenerationError, CaseCo
 from ..services.case_service import CaseService
 from ..services.case_eligibility_service import CaseEligibilityService
 from ..services.case_state_service import CaseStateService
+
+
+logger = logging.getLogger(__name__)
 
 
 class CaseCreationView(APIView):
@@ -78,22 +83,28 @@ class CaseCreationView(APIView):
                             )
 
                     def _send_submission_email():
-                        send_basic_email(
-                            to_email=to_email,
-                            subject="Case Submission Confirmation",
-                            body=(
-                                "Your case was submitted successfully.\n\n"
-                                f"Case ID: {submitted_case_id}\n"
-                                f"Status: {submitted_case_status}\n"
-                                f"Created At: {submitted_case_created_at}\n"
-                                + (
-                                    "\nYour case contract PDF is attached to this email.\n"
-                                    if email_attachments
-                                    else ""
-                                )
-                            ),
-                            attachments=email_attachments,
-                        )
+                        try:
+                            send_basic_email(
+                                to_email=to_email,
+                                subject="Case Submission Confirmation",
+                                body=(
+                                    "Your case was submitted successfully.\n\n"
+                                    f"Case ID: {submitted_case_id}\n"
+                                    f"Status: {submitted_case_status}\n"
+                                    f"Created At: {submitted_case_created_at}\n"
+                                    + (
+                                        "\nYour case contract PDF is attached to this email.\n"
+                                        if email_attachments
+                                        else ""
+                                    )
+                                ),
+                                attachments=email_attachments,
+                            )
+                        except Exception:
+                            logger.exception(
+                                "Failed to send case submission confirmation email for case %s.",
+                                submitted_case_id,
+                            )
 
                     transaction.on_commit(_send_submission_email)
 

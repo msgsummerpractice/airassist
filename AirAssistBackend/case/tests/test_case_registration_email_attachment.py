@@ -125,6 +125,27 @@ class CaseRegistrationEmailAttachmentTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(len(mail.outbox), 0)
 
+    @patch("case.views.case_creation_view.send_basic_email")
+    @patch("case.views.case_creation_view.CaseService.create_passenger_account")
+    @patch("case.views.case_creation_view.CaseService.calculate_case_compensation")
+    def test_case_creation_still_succeeds_when_confirmation_email_fails(
+        self,
+        _calculate_case_compensation,
+        _create_passenger_account,
+        mock_send_basic_email,
+    ):
+        mock_send_basic_email.side_effect = RuntimeError("SMTP auth failed")
+
+        response = self.submit_case()
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response.data["success"])
+        self.assertEqual(
+            CaseDocument.objects.filter(document_type=DocumentType.CONTRACT.value).count(),
+            1,
+        )
+        mock_send_basic_email.assert_called_once()
+
 
 class SendBasicEmailAttachmentTests(APITestCase):
     def setUp(self):

@@ -35,7 +35,11 @@
 
         <p>Hello {{ first_name }},</p>
 
+        {% if preset_message %}
+        <p style="white-space: pre-wrap">{{ preset_message }}</p>
+        {% else %}
         <p>The status of your AirAssist case has been updated.</p>
+        {% endif %}
 
         <p><strong>Case ID:</strong> {{ case_id }}</p>
         <p><strong>New status:</strong> {{ case_status }}</p>
@@ -63,8 +67,12 @@
 
         <p>
           Kind regards,<br />
-          <strong>AirAssist Team</strong>
+          <strong>{{ sender_name|default:"AirAssist Team" }}</strong>
         </p>
+
+        {% if footer_text %}
+        <p style="color: #6b7280; font-size: 13px">{{ footer_text }}</p>
+        {% endif %}
       </div>
     </div>
   </body>
