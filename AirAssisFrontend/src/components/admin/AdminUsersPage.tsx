@@ -47,7 +47,6 @@ import {
   FolderOutlined as FolderIcon,
   SettingsOutlined as SettingsIcon,
   LogoutOutlined as LogoutOutlinedIcon,
-  SettingsOutlined as SettingsIcon,
 } from "@mui/icons-material";
 
 const USER_DELETE_SUCCESS_HIDE_MS = 15000;

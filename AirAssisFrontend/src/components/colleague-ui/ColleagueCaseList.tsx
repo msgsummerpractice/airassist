@@ -5,6 +5,11 @@ import {
   Box,
   Card,
   CardContent,
+  Chip,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -22,7 +27,6 @@ import AssignColleagueButton, {
 import { fetchWithAuth } from "../../utils/auth";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import CaseListFilters from "../cases/shared/list/CaseListFilters";
-import CaseStatusChip from "../cases/shared/list/CaseStatusChip";
 import {
   CaseListEmptyState,
   CaseListErrorState,
@@ -71,24 +75,6 @@ const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   } catch {
     return null;
   }
-};
-
-const formatDate = (value: string | null) => {
-  if (!value) {
-    return "Not available";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
 };
 
 function ColleagueCaseList() {

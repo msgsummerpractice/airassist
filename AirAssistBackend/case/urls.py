@@ -54,19 +54,23 @@ urlpatterns = [
     path("cases/documents/", PdfHistoryListView.as_view(), name="pdf-history-list"),
     path("cases/documents/<int:document_id>/download/",
          PdfHistoryDownloadView.as_view(), name="pdf-history-download"),
-]
-    path("cases/eligibility-check/", CaseEligibilityView.as_view(), name="case-eligibility-check"),
-    path("cases/<int:case_id>/assign/", CaseAssignmentView.as_view(), name="case-assign"),
-    path("cases/me/<int:pk>/", PassengerCaseDetailsView.as_view(), name="passenger-case-details"),
+
+    path("cases/eligibility-check/", CaseEligibilityView.as_view(),
+         name="case-eligibility-check"),
+    path("cases/<int:case_id>/assign/",
+         CaseAssignmentView.as_view(), name="case-assign"),
+    path("cases/me/<int:pk>/", PassengerCaseDetailsView.as_view(),
+         name="passenger-case-details"),
     path(
         "cases/me/<int:pk>/documents/<int:document_id>/download/",
         PassengerCaseDocumentDownloadView.as_view(),
         name="passenger-case-document-download",
     ),
-    path("cases/me/<int:pk>/comments/", PassengerCaseCommentCreateView.as_view(), name="passenger-case-comment-create"),
+    path("cases/me/<int:pk>/comments/", PassengerCaseCommentCreateView.as_view(),
+         name="passenger-case-comment-create"),
     path(
-    "cases/<int:case_id>/status/",
-    CaseStatusUpdateView.as_view(),
-    name="case-status-update",
-)
-] 
+        "cases/<int:case_id>/status/",
+        CaseStatusUpdateView.as_view(),
+        name="case-status-update",
+    )
+]

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
@@ -43,7 +42,6 @@ import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import DeleteCaseDialog from "./DeleteCaseDialog";
 import PdfHistoryList from "./PdfHistoryList";
-import { useEffect } from "react";
 
 type SortField = "id" | "flight_date" | "status";
 type SortDirection = "asc" | "desc";
@@ -212,8 +210,6 @@ function AdminCaseList() {
             sx={{ minWidth: 220, flex: "1 1 220px" }}
           />
         </Stack>
-        {isLoading ? (
-
         {showPdfHistory ? (
           <PdfHistoryList />
         ) : isLoading ? (
