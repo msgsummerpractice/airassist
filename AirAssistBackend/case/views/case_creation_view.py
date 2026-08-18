@@ -63,6 +63,19 @@ class CaseCreationView(APIView):
                     submitted_case_id = case.id
                     submitted_case_status = case.status
                     submitted_case_created_at = case.created_at
+                    email_attachments = []
+
+                    # Read the contract bytes now so the attachment survives until on_commit.
+                    if contract_document and contract_document.file:
+                        with contract_document.file.open("rb") as contract_file:
+                            email_attachments.append(
+                                (
+                                    contract_document.original_filename
+                                    or f"case-{submitted_case_id}-contract.pdf",
+                                    contract_file.read(),
+                                    contract_document.content_type or "application/pdf",
+                                )
+                            )
 
                     def _send_submission_email():
                         send_basic_email(
@@ -73,7 +86,13 @@ class CaseCreationView(APIView):
                                 f"Case ID: {submitted_case_id}\n"
                                 f"Status: {submitted_case_status}\n"
                                 f"Created At: {submitted_case_created_at}\n"
+                                + (
+                                    "\nYour case contract PDF is attached to this email.\n"
+                                    if email_attachments
+                                    else ""
+                                )
                             ),
+                            attachments=email_attachments,
                         )
 
                     transaction.on_commit(_send_submission_email)
