@@ -154,48 +154,6 @@ const formatFilename = (filename: string) => {
   return `${filename.slice(0, MAX_VISIBLE_FILENAME_LENGTH)}...`;
 };
 
-function mapStatusToChipColor(
-  status: string,
-):
-  | "default"
-  | "primary"
-  | "secondary"
-  | "success"
-  | "warning"
-  | "error"
-  | "info" {
-  switch (status) {
-    case "NEW":
-      return "info";
-    case "VALID":
-      return "success";
-    case "ASSIGNED":
-      return "primary";
-    default:
-      return "default";
-  }
-}
-
-function getStatusChipSx(status: string) {
-  if (status === "NEW") {
-    return {
-      color: "#2563eb",
-      borderColor: "#93c5fd",
-      backgroundColor: "#eff6ff",
-    };
-  }
-
-  if (status === "VALID") {
-    return {
-      color: "#2e7d32",
-      borderColor: "#a5d6a7",
-      backgroundColor: "#f1f8e9",
-    };
-  }
-
-  return undefined;
-}
-
 function ColleagueCaseDetailsPage({
   onLogout,
   onUnauthorized,
@@ -214,7 +172,9 @@ function ColleagueCaseDetailsPage({
   const [documentType, setDocumentType] = useState("CONTRACT");
   const [documentError, setDocumentError] = useState("");
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
-  const [downloadingDocumentId, setDownloadingDocumentId] = useState<number | null>(null);
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<
+    number | null
+  >(null);
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentSubmitError, setCommentSubmitError] = useState("");
@@ -463,7 +423,9 @@ function ColleagueCaseDetailsPage({
         }
 
         setDocumentError(
-          error instanceof Error ? error.message : "Could not download document.",
+          error instanceof Error
+            ? error.message
+            : "Could not download document.",
         );
       } finally {
         setDownloadingDocumentId(null);
@@ -976,7 +938,9 @@ function ColleagueCaseDetailsPage({
                         type="file"
                         accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"
                         onChange={(event) => {
-                          handleDocumentFileChange(event.target.files?.[0] ?? null);
+                          handleDocumentFileChange(
+                            event.target.files?.[0] ?? null,
+                          );
                           event.target.value = "";
                         }}
                       />
@@ -989,7 +953,9 @@ function ColleagueCaseDetailsPage({
                         labelId="colleague-document-type-label"
                         label="Document Type"
                         value={documentType}
-                        onChange={(event) => setDocumentType(event.target.value)}
+                        onChange={(event) =>
+                          setDocumentType(event.target.value)
+                        }
                       >
                         {DOCUMENT_TYPE_OPTIONS.map((option) => (
                           <MenuItem key={option} value={option}>
@@ -1002,7 +968,9 @@ function ColleagueCaseDetailsPage({
                       variant="contained"
                       onClick={() => void uploadDocument()}
                       disabled={
-                        !selectedFile || Boolean(documentError) || isUploadingDocument
+                        !selectedFile ||
+                        Boolean(documentError) ||
+                        isUploadingDocument
                       }
                     >
                       {isUploadingDocument ? "Uploading..." : "Upload"}
@@ -1025,7 +993,6 @@ function ColleagueCaseDetailsPage({
                             <TableCell>Filename</TableCell>
                             <TableCell>Type</TableCell>
                             <TableCell>Upload Timestamp</TableCell>
-                            
                           </TableRow>
                         </TableHead>
                         <TableBody>
