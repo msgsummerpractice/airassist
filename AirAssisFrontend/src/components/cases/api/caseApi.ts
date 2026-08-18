@@ -23,6 +23,11 @@ export type CaseDocumentUploadResponse = CaseDocument & {
   message?: string;
 };
 
+export type ConversationActionResponse = {
+  message: string;
+  conversation_status: "OPEN" | "CLOSED";
+};
+
 const getCasePath = (scope: CaseScope) =>
   scope === "passenger"
     ? "/api/cases/me"
@@ -219,6 +224,59 @@ export const downloadCaseDocument = async ({
 
   return response;
 };
+
+const updateCaseConversation = async ({
+  caseId,
+  action,
+  accessToken,
+}: {
+  caseId: number;
+  action: "close" | "reopen";
+  accessToken: string;
+}): Promise<ConversationActionResponse> => {
+  const response = await fetch(
+    `${API_BASE_URL}/api/cases/colleague/${caseId}/conversation/${action}/`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+  throwForUnauthorized(response);
+
+  if (!response.ok) {
+    const payload = await readJsonSafely<ErrorPayload>(response);
+    throw toApiError(
+      response.status,
+      payload?.detail || "Could not update conversation.",
+    );
+  }
+
+  const payload = await readJsonSafely<ConversationActionResponse>(response);
+  if (!payload) {
+    throw toApiError(response.status, "Could not read conversation response.");
+  }
+
+  return payload;
+};
+
+export const closeCaseConversation = async ({
+  caseId,
+  accessToken,
+}: {
+  caseId: number;
+  accessToken: string;
+}) => updateCaseConversation({ caseId, accessToken, action: "close" });
+
+export const reopenCaseConversation = async ({
+  caseId,
+  accessToken,
+}: {
+  caseId: number;
+  accessToken: string;
+}) => updateCaseConversation({ caseId, accessToken, action: "reopen" });
 
 export type AdminCaseListItem = {
   id: number;

@@ -100,6 +100,8 @@ type PassengerCaseDetails = {
   passenger: PassengerDetails | null;
   documents: CaseDocument[];
   can_upload_documents: boolean;
+  conversation_status: "OPEN" | "CLOSED";
+  conversation_closed_at: string | null;
   comments?: CaseComment[];
   created_at: string;
   updated_at: string;
@@ -190,7 +192,8 @@ function PassengerCaseDetailsPage({
   const canSubmitComment =
     normalizedCommentText.length > 0 &&
     normalizedCommentText.length <= COMMENT_MAX_LENGTH &&
-    !isSubmittingComment;
+    !isSubmittingComment &&
+    details?.conversation_status === "OPEN";
 
   const getAccessToken = useCallback(() => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -1059,7 +1062,24 @@ function PassengerCaseDetailsPage({
                           sx={{ color: SECTION_ICON_COLOR }}
                         />
                         <Typography variant="h5">Add Comment</Typography>
+                        <Chip
+                          size="small"
+                          label={details.conversation_status}
+                          color={
+                            details.conversation_status === "OPEN"
+                              ? "success"
+                              : "default"
+                          }
+                          variant="outlined"
+                        />
                       </Box>
+
+                      {details.conversation_status === "CLOSED" && (
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                          This conversation is closed by the colleague. You can
+                          view existing messages, but cannot add new comments.
+                        </Alert>
+                      )}
 
                       <TextField
                         fullWidth
@@ -1067,6 +1087,7 @@ function PassengerCaseDetailsPage({
                         minRows={5}
                         maxRows={12}
                         value={commentText}
+                        disabled={details.conversation_status === "CLOSED"}
                         onChange={(event) => {
                           setCommentText(event.target.value);
                           if (commentSubmitError) {
