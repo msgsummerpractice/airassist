@@ -1,10 +1,11 @@
 import { Box, Divider, Link, Stack, Typography } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 
 const legalLinks = [
-  ["Privacy Policy", "#privacy-policy"],
-  ["Terms of Service", "#terms-of-service"],
-  ["Imprint", "#imprint"],
-  ["EU 261/2004 Info", "#eu-261-2004"],
+  ["Privacy Policy", "/privacy-policy"],
+  ["Terms of Service", "/terms-of-service"],
+  ["Imprint", "/imprint"],
+  ["EU 261/2004 Info", "/eu-261-2004-info"],
 ];
 
 function Footer() {
@@ -55,7 +56,8 @@ function Footer() {
           >
             {legalLinks.map(([label, href]) => (
               <Link
-                href={href}
+                component={RouterLink}
+                to={href}
                 key={href}
                 sx={{
                   fontSize: "0.8125rem",
