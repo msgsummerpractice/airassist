@@ -219,6 +219,7 @@ class CaseCreationSerializer(serializers.Serializer):
         CaseDocument.objects.create(
             case=case,
             document_type=DocumentType.BOARDING_PASS.value,
+            uploaded_by="PASSENGER",
             file=boarding_pass,
             original_filename=boarding_pass.name,
             content_type=getattr(boarding_pass, "content_type", ""),
@@ -228,6 +229,7 @@ class CaseCreationSerializer(serializers.Serializer):
         CaseDocument.objects.create(
             case=case,
             document_type=DocumentType.PASSPORT.value,
+            uploaded_by="PASSENGER",
             file=passport,
             original_filename=passport.name,
             content_type=getattr(passport, "content_type", ""),

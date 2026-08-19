@@ -22,6 +22,7 @@ class PassengerCaseDocumentUploadService:
         return CaseDocument.objects.create(
             case=owned_case,
             document_type=validated_data["document_type"],
+            uploaded_by="PASSENGER",
             file=uploaded_file,
             original_filename=uploaded_file.name,
             content_type=getattr(uploaded_file, "content_type", ""),
