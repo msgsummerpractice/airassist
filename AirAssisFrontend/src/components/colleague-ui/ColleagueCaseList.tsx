@@ -28,7 +28,6 @@ import {
   CaseListErrorState,
   CaseListLoadingState,
 } from "../cases/shared/list/CaseListStates";
-import { formatCaseDate } from "../cases/shared/list/caseListFormatting";
 
 type ColleagueCaseListItem = {
   id: number;
@@ -79,6 +78,20 @@ const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   } catch {
     return null;
   }
+};
+
+const formatColleagueCaseDate = (value: string | null | undefined) => {
+  if (!value) {
+    return "Not available";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString("en-GB");
 };
 
 function ColleagueCaseList() {
@@ -330,11 +343,11 @@ function ColleagueCaseList() {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        {formatCaseDate(caseItem.case_date)}
+                        {formatColleagueCaseDate(caseItem.case_date)}
                       </TableCell>
                       <TableCell>{caseItem.flight_number ?? "-"}</TableCell>
                       <TableCell>
-                        {formatCaseDate(caseItem.flight_date)}
+                        {formatColleagueCaseDate(caseItem.flight_date)}
                       </TableCell>
                       <TableCell>{caseItem.passenger_name ?? "-"}</TableCell>
                       <TableCell>
@@ -388,10 +401,10 @@ function ColleagueCaseList() {
                         Flight {caseItem.flight_number ?? "-"}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
-                        Case date: {formatCaseDate(caseItem.case_date)}
+                        Case date: {formatColleagueCaseDate(caseItem.case_date)}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
-                        Flight date: {formatCaseDate(caseItem.flight_date)}
+                        Flight date: {formatColleagueCaseDate(caseItem.flight_date)}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
                         Passenger: {caseItem.passenger_name ?? "-"}

@@ -149,7 +149,7 @@ const formatDateTime = (value: string | null | undefined) => {
     return value;
   }
 
-  return parsedDate.toLocaleString();
+  return parsedDate.toLocaleString("en-GB");
 };
 
 const formatFilename = (filename: string) => {
