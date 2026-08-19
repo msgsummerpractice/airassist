@@ -106,7 +106,7 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isClaimsVisible, setIsClaimsVisible] = useState(false);
+  const [isClaimsVisible, setIsClaimsVisible] = useState(true);
 
   const [colleague, setColleague] = useState<DashboardColleague | null>(null);
 
@@ -214,32 +214,30 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
         onClose={closeSnackbar}
       />
       <PortalUserHeader
-            name={isLoading ? "Colleague" : displayName}
-            email={colleague?.email || "Email unavailable"}
-            roleLabel="Colleague"
-            logoutAction={{
-              label: "Log Out",
-              icon: <LogoutOutlinedIcon fontSize="small" />,
-              onClick: handleLogout,
-            }}
-            actions={[
-              {
-                label: "See Cases",
-                icon: <VisibilityOutlinedIcon fontSize="small" />,
-                onClick: () => navigate("/colleague-dashboard"),
-              },
-              {
-                label: "Create Case",
-                icon: <AddTaskOutlinedIcon fontSize="small" />,
-                onClick: onCreateCase,
-              },
-            ]}
-          />
+        name={isLoading ? "Colleague" : displayName}
+        email={colleague?.email || "Email unavailable"}
+        roleLabel="Colleague"
+        logoutAction={{
+          label: "Log Out",
+          icon: <LogoutOutlinedIcon fontSize="small" />,
+          onClick: handleLogout,
+        }}
+        actions={[
+          {
+            label: "See Cases",
+            icon: <VisibilityOutlinedIcon fontSize="small" />,
+            onClick: () => navigate("/colleague-dashboard"),
+          },
+          {
+            label: "Create Case",
+            icon: <AddTaskOutlinedIcon fontSize="small" />,
+            onClick: onCreateCase,
+          },
+        ]}
+      />
 
       <Box className="colleague-dashboard__shell">
         <Stack spacing={3}>
-          
-
           {/* Active Claims */}
           <Card elevation={0} className="colleague-dashboard__claims-card">
             {isRefreshing ? (
@@ -251,30 +249,30 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                 direction={{ xs: "column", md: "row" }}
                 spacing={2}
                 sx={{
-                  justifyContent: "flex-end",
+                  justifyContent: "space-between",
                   alignItems: { xs: "stretch", md: "center" },
                 }}
               >
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                  {!isLoading && !hasError ? (
-                    <Chip
-                      icon={<DashboardOutlinedIcon />}
-                      label={`${claims.length} assigned`}
-                      color="primary"
-                      variant="outlined"
-                    />
-                  ) : null}
-                  <Button
-                    variant={isClaimsVisible ? "contained" : "outlined"}
-                    color="primary"
-                    startIcon={<AssignmentTurnedInOutlinedIcon />}
-                    onClick={() => setIsClaimsVisible((current) => !current)}
-                  >
-                    {isClaimsVisible
-                      ? "Hide Assigned Cases"
-                      : "Show Assigned Cases"}
-                  </Button>
-                </Stack>
+                {!isLoading && !hasError ? (
+                  <Chip
+                    icon={<DashboardOutlinedIcon />}
+                    label={`${claims.length} assigned`}
+                    color="success"
+                    variant="outlined"
+                  />
+                ) : (
+                  <Box />
+                )}
+                <Button
+                  variant={isClaimsVisible ? "contained" : "outlined"}
+                  color="primary"
+                  startIcon={<AssignmentTurnedInOutlinedIcon />}
+                  onClick={() => setIsClaimsVisible((current) => !current)}
+                >
+                  {isClaimsVisible
+                    ? "Hide Assigned Cases"
+                    : "Show Assigned Cases"}
+                </Button>
               </Stack>
 
               <Divider />
