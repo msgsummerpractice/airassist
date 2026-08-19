@@ -18,6 +18,7 @@ import AdminUsersPage from "./components/admin/AdminUsersPage";
 import AdminCasesPage from "./components/admin/AdminCasesPage";
 import AdminSystemOptionsPage from "./components/admin/AdminSystemOptionsPage";
 import Footer from "./components/portal/Footer";
+import BackgroundMusic from "./components/utils/BackgroundMusic";
 
 function App() {
   const { view, role, resolveView, showCaseEntry, showColleagueDashboard } =
@@ -150,6 +151,7 @@ function App() {
         </Routes>
       </main>
       <Footer />
+      <BackgroundMusic />
     </div>
   );
 }
