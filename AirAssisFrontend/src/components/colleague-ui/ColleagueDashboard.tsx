@@ -27,6 +27,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Tooltip,
   Typography,
@@ -113,6 +114,8 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
   const [claims, setClaims] = useState<DashboardClaim[]>([]);
   const [hasError, setHasError] = useState(false);
   const [dashboardReloadKey, setDashboardReloadKey] = useState(0);
+  const [claimsPage, setClaimsPage] = useState(0);
+  const [claimsRowsPerPage, setClaimsRowsPerPage] = useState(10);
 
   const { snackbar, closeSnackbar, showErrorSnackbar } = useAppSnackbar();
 
@@ -206,6 +209,11 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
     );
   }, [colleague]);
 
+  const paginatedClaims = claims.slice(
+    claimsPage * claimsRowsPerPage,
+    claimsPage * claimsRowsPerPage + claimsRowsPerPage,
+  );
+
   const handleLogout = () => {
     logoutToGuestCaseEntry();
   };
@@ -250,6 +258,10 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
             ) : null}
 
             <CardContent className="colleague-dashboard__claims-content">
+              <Typography variant="h5" sx={{ mb: 1 }}>
+                My Assigned Cases
+              </Typography>
+
               <Stack
                 direction={{ xs: "column", md: "row" }}
                 spacing={2}
@@ -310,90 +322,109 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                 </Box>
               ) : (
                 /* Claims Table */
-                <TableContainer
-                  sx={{
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Table stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Claim ID</TableCell>
+                <>
+                  <TableContainer
+                    sx={{
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: 2,
+                    }}
+                  >
+                    <Table stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Claim ID</TableCell>
 
-                        <TableCell>Passenger</TableCell>
+                          <TableCell>Passenger</TableCell>
 
-                        <TableCell>Status</TableCell>
+                          <TableCell>Status</TableCell>
 
-                        <TableCell>Created</TableCell>
+                          <TableCell>Created</TableCell>
 
-                        <TableCell align="right">Action</TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {claims.map((claim) => (
-                        <TableRow key={claim.case_id} hover>
-                          <TableCell className="colleague-dashboard__case-id">
-                            #{claim.case_id}
-                          </TableCell>
-
-                          <TableCell>
-                            <Stack spacing={0.35}>
-                              <Typography
-                                variant="body1"
-                                className="colleague-dashboard__passenger-name"
-                              >
-                                {claim.passenger_name ||
-                                  "Passenger unavailable"}
-                              </Typography>
-
-                              {claim.reservation_number ? (
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  Reservation {claim.reservation_number}
-                                </Typography>
-                              ) : null}
-                            </Stack>
-                          </TableCell>
-
-                          <TableCell>
-                            <Chip
-                              label={
-                                getCaseStatusPresentation(claim.status).label
-                              }
-                              color={
-                                getCaseStatusPresentation(claim.status).color
-                              }
-                              size="small"
-                              sx={getCaseStatusPresentation(claim.status).sx}
-                              variant="outlined"
-                            />
-                          </TableCell>
-
-                          <TableCell>{formatDate(claim.created_at)}</TableCell>
-
-                          <TableCell align="right">
-                            <Tooltip title="Open case details">
-                              <IconButton
-                                size="small"
-                                className="colleague-dashboard__action-button"
-                                onClick={() =>
-                                  navigate(`/colleague-cases/${claim.case_id}`)
-                                }
-                              >
-                                <ArrowOutwardOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
+                          <TableCell align="right">Action</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                      </TableHead>
+
+                      <TableBody>
+                        {paginatedClaims.map((claim) => (
+                          <TableRow key={claim.case_id} hover>
+                            <TableCell className="colleague-dashboard__case-id">
+                              #{claim.case_id}
+                            </TableCell>
+
+                            <TableCell>
+                              <Stack spacing={0.35}>
+                                <Typography
+                                  variant="body1"
+                                  className="colleague-dashboard__passenger-name"
+                                >
+                                  {claim.passenger_name ||
+                                    "Passenger unavailable"}
+                                </Typography>
+
+                                {claim.reservation_number ? (
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
+                                    Reservation {claim.reservation_number}
+                                  </Typography>
+                                ) : null}
+                              </Stack>
+                            </TableCell>
+
+                            <TableCell>
+                              <Chip
+                                label={
+                                  getCaseStatusPresentation(claim.status).label
+                                }
+                                color={
+                                  getCaseStatusPresentation(claim.status).color
+                                }
+                                size="small"
+                                sx={getCaseStatusPresentation(claim.status).sx}
+                                variant="outlined"
+                              />
+                            </TableCell>
+
+                            <TableCell>
+                              {formatDate(claim.created_at)}
+                            </TableCell>
+
+                            <TableCell align="right">
+                              <Tooltip title="Open case details">
+                                <IconButton
+                                  size="small"
+                                  className="colleague-dashboard__action-button"
+                                  onClick={() =>
+                                    navigate(
+                                      `/colleague-cases/${claim.case_id}`,
+                                    )
+                                  }
+                                >
+                                  <ArrowOutwardOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  <TablePagination
+                    component="div"
+                    count={claims.length}
+                    page={claimsPage}
+                    rowsPerPage={claimsRowsPerPage}
+                    rowsPerPageOptions={[5, 10, 25]}
+                    onPageChange={(_, newPage) => setClaimsPage(newPage)}
+                    onRowsPerPageChange={(event) => {
+                      setClaimsRowsPerPage(parseInt(event.target.value, 10));
+                      setClaimsPage(0);
+                    }}
+                  />
+                </>
               )}
             </CardContent>
           </Card>
