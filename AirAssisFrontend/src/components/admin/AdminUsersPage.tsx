@@ -31,9 +31,11 @@ import {
   BadgeOutlined as ColleagueRoleIcon,
   InfoOutlined as InfoIcon,
   DeleteOutlined as DeleteOutlineIcon,
+  EditOutlined as EditIcon,
   FlightTakeoffOutlined as PassengerRoleIcon,
   PersonSearch as PersonSearchIcon,
   Refresh as RefreshIcon,
+  SaveOutlined as SaveIcon,
 } from "@mui/icons-material";
 import {
   fetchWithAuth,
@@ -141,6 +143,13 @@ function AdminUsersPage() {
   const [minCasesFilter, setMinCasesFilter] = useState("");
 
   const [detailUser, setDetailUser] = useState<UserEntry | null>(null);
+  const [editingUser, setEditingUser] = useState(false);
+  const [editForm, setEditForm] = useState({
+    firstname: "",
+    lastname: "",
+    email: "",
+  });
+  const [savingUserId, setSavingUserId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -223,6 +232,72 @@ function AdminUsersPage() {
       );
     } finally {
       setDeletingUserId(null);
+    }
+  };
+
+  const openDetailsDialog = (user: UserEntry) => {
+    setDetailUser(user);
+    setEditingUser(false);
+    setEditForm({
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
+    });
+  };
+
+  const closeDetailsDialog = () => {
+    if (savingUserId === null) {
+      setDetailUser(null);
+      setEditingUser(false);
+    }
+  };
+
+  const startEditingUser = () => {
+    if (!detailUser) return;
+    setEditForm({
+      firstname: detailUser.firstname,
+      lastname: detailUser.lastname,
+      email: detailUser.email,
+    });
+    setEditingUser(true);
+  };
+
+  const saveUser = async () => {
+    if (!detailUser) return;
+
+    const targetId = detailUser.id;
+    setSavingUserId(targetId);
+
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/user/${targetId}/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(extractApiError(data, res.status));
+      }
+
+      const updatedUser: UserEntry = {
+        ...detailUser,
+        ...(data as Partial<UserEntry>),
+      };
+      setUsers((currentUsers) =>
+        currentUsers.map((user) =>
+          user.id === targetId ? updatedUser : user,
+        ),
+      );
+      setDetailUser(updatedUser);
+      setEditingUser(false);
+      showSuccessSnackbar("User account updated successfully.");
+    } catch (err) {
+      showErrorSnackbar(
+        err instanceof Error ? err.message : "Could not update user.",
+      );
+    } finally {
+      setSavingUserId(null);
     }
   };
 
@@ -496,7 +571,7 @@ function AdminUsersPage() {
                                 <IconButton
                                   size="small"
                                   color="primary"
-                                  onClick={() => setDetailUser(user)}
+                                  onClick={() => openDetailsDialog(user)}
                                 >
                                   <InfoIcon fontSize="small" />
                                 </IconButton>
@@ -548,18 +623,26 @@ function AdminUsersPage() {
 
           <Dialog
             open={!!detailUser}
-            onClose={() => setDetailUser(null)}
-            maxWidth="xs"
+            onClose={closeDetailsDialog}
+            maxWidth="md"
             fullWidth
+            slotProps={{
+              paper: {
+                sx: {
+                  width: "min(100% - 32px, 760px)",
+                  maxWidth: "760px",
+                },
+              },
+            }}
           >
-            <DialogTitle>User Details</DialogTitle>
+            <DialogTitle>{editingUser ? "Edit User" : "User Details"}</DialogTitle>
 
             <DialogContent dividers>
               {detailUser && (
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: "120px 1fr",
+                    gridTemplateColumns: { xs: "1fr", sm: "150px minmax(0, 1fr)" },
                     gap: 1.5,
                     alignItems: "start",
                   }}
@@ -572,19 +655,71 @@ function AdminUsersPage() {
                   <Typography variant="caption" color="text.secondary">
                     First Name
                   </Typography>
-                  <Typography variant="body1">
-                    {detailUser.firstname}
-                  </Typography>
+                  {editingUser ? (
+                    <TextField
+                      autoFocus
+                      fullWidth
+                      required
+                      size="small"
+                      label="First Name"
+                      value={editForm.firstname}
+                      onChange={(event) =>
+                        setEditForm((current) => ({
+                          ...current,
+                          firstname: event.target.value,
+                        }))
+                      }
+                      slotProps={{ htmlInput: { maxLength: 20 } }}
+                    />
+                  ) : (
+                    <Typography variant="body1">{detailUser.firstname}</Typography>
+                  )}
 
                   <Typography variant="caption" color="text.secondary">
                     Last Name
                   </Typography>
-                  <Typography variant="body1">{detailUser.lastname}</Typography>
+                  {editingUser ? (
+                    <TextField
+                      fullWidth
+                      required
+                      size="small"
+                      label="Last Name"
+                      value={editForm.lastname}
+                      onChange={(event) =>
+                        setEditForm((current) => ({
+                          ...current,
+                          lastname: event.target.value,
+                        }))
+                      }
+                      slotProps={{ htmlInput: { maxLength: 20 } }}
+                    />
+                  ) : (
+                    <Typography variant="body1">{detailUser.lastname}</Typography>
+                  )}
 
                   <Typography variant="caption" color="text.secondary">
                     Email
                   </Typography>
-                  <Typography variant="body1">{detailUser.email}</Typography>
+                  {editingUser ? (
+                    <TextField
+                      fullWidth
+                      required
+                      size="small"
+                      label="Email"
+                      type="email"
+                      value={editForm.email}
+                      onChange={(event) =>
+                        setEditForm((current) => ({
+                          ...current,
+                          email: event.target.value,
+                        }))
+                      }
+                    />
+                  ) : (
+                    <Typography variant="body1" sx={{ overflowWrap: "anywhere" }}>
+                      {detailUser.email}
+                    </Typography>
+                  )}
 
                   <Typography variant="caption" color="text.secondary">
                     Role
@@ -607,8 +742,38 @@ function AdminUsersPage() {
               )}
             </DialogContent>
 
-            <DialogActions>
-              <Button onClick={() => setDetailUser(null)}>Close</Button>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+              {editingUser ? (
+                <>
+                  <Button
+                    onClick={() => setEditingUser(false)}
+                    disabled={savingUserId !== null}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={saveUser}
+                    disabled={savingUserId !== null}
+                    startIcon={
+                      savingUserId !== null ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : (
+                        <SaveIcon />
+                      )
+                    }
+                  >
+                    {savingUserId !== null ? "Saving..." : "Save Changes"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button startIcon={<EditIcon />} onClick={startEditingUser}>
+                    Edit
+                  </Button>
+                  <Button onClick={closeDetailsDialog}>Close</Button>
+                </>
+              )}
             </DialogActions>
           </Dialog>
 
