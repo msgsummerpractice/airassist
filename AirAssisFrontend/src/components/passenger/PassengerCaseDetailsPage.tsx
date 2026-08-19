@@ -1009,7 +1009,7 @@ function PassengerCaseDetailsPage({
                                 <TableCell>Filename</TableCell>
                                 <TableCell>Type</TableCell>
                                 <TableCell>Upload Timestamp</TableCell>
-                                <TableCell align="right">Action</TableCell>
+                                <TableCell align="center">Download</TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
@@ -1020,7 +1020,7 @@ function PassengerCaseDetailsPage({
                                   <TableCell>
                                     {formatDateTime(item.uploaded_at)}
                                   </TableCell>
-                                  <TableCell align="right">
+                                  <TableCell align="center">
                                     <Button
                                       size="small"
                                       variant="text"
@@ -1034,7 +1034,7 @@ function PassengerCaseDetailsPage({
                                     >
                                       {downloadingDocumentId === item.id
                                         ? "Downloading..."
-                                        : "Download"}
+                                        : ""}
                                     </Button>
                                   </TableCell>
                                 </TableRow>
