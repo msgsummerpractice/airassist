@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
 
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from case_email.services.email_service import (
     send_basic_email,
@@ -52,9 +52,7 @@ class EmailServiceTests(SimpleTestCase):
             connection=mock_connection,
         )
         mock_get_connection.assert_called_once()
-
         mock_email.send.assert_called_once_with()
-
         self.assertEqual(result, 1)
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend")
@@ -174,7 +172,9 @@ class EmailServiceTests(SimpleTestCase):
             "sender_email": "ops@airassist.eu",
             "reply_to_email": "reply@airassist.eu",
         }
-        mock_send_via_sendgrid.side_effect = ValueError("SendGrid API key is not configured.")
+        mock_send_via_sendgrid.side_effect = ValueError(
+            "SendGrid API key is not configured.",
+        )
         mock_send_via_smtp.return_value = 1
 
         result = send_basic_email(
@@ -215,7 +215,10 @@ class EmailServiceTests(SimpleTestCase):
         send_response = Mock(status_code=202, text="")
         mock_requests_post.side_effect = [token_response, send_response]
 
-        with patch("case_email.services.email_service.render_to_string", return_value="<p>Hello</p>"), patch(
+        with patch(
+            "case_email.services.email_service.render_to_string",
+            return_value="<p>Hello</p>",
+        ), patch(
             "case_email.services.email_service._load_logo_attachment",
             return_value={
                 "filename": "logo.png",
@@ -234,8 +237,14 @@ class EmailServiceTests(SimpleTestCase):
 
         self.assertEqual(result, 1)
         self.assertEqual(mock_requests_post.call_count, 2)
-        self.assertIn("oauth2/v2.0/token", mock_requests_post.call_args_list[0].args[0])
-        self.assertIn("/users/ops@airassist.eu/sendMail", mock_requests_post.call_args_list[1].args[0])
+        self.assertIn(
+            "oauth2/v2.0/token",
+            mock_requests_post.call_args_list[0].args[0],
+        )
+        self.assertIn(
+            "/users/ops@airassist.eu/sendMail",
+            mock_requests_post.call_args_list[1].args[0],
+        )
         self.assertEqual(
             mock_requests_post.call_args_list[1].kwargs["json"]["message"]["body"]["contentType"],
             "HTML",
@@ -269,7 +278,9 @@ class EmailServiceTests(SimpleTestCase):
             "content_id": "logo",
             "disposition": "inline",
         }
-        mock_send_via_microsoft_graph.side_effect = ValueError("Microsoft Graph credentials are not configured.")
+        mock_send_via_microsoft_graph.side_effect = ValueError(
+            "Microsoft Graph credentials are not configured.",
+        )
         mock_send_via_smtp.return_value = 1
 
         result = send_template_email(
@@ -321,16 +332,19 @@ class EmailServiceTests(SimpleTestCase):
         self.assertEqual(result, 1)
 
     @patch("case_email.services.email_service.send_template_email")
+    @patch("case_email.services.email_service.Case")
     @patch("case_email.services.email_service.SystemOptionService.get_email_preset")
     def test_send_case_status_update_email_uses_preset_subject_and_message(
         self,
         mock_get_email_preset,
+        mock_case_model,
         mock_send_template_email,
     ):
         passenger = Mock()
         passenger.first_name = "John"
         passenger.last_name = "Doe"
         passenger.email = "john.doe@example.com"
+        mock_case_model.objects.prefetch_related.return_value.filter.return_value.first.return_value = None
         mock_get_email_preset.return_value = {
             "sender_name": "Operations Desk",
             "subject_template": "Case {{case_number}} is ready",
@@ -372,7 +386,7 @@ class EmailServiceTests(SimpleTestCase):
         user.email = "john.doe@example.com"
 
         mock_send_template_email.side_effect = Exception(
-            "Email sending error"
+            "Email sending error",
         )
 
         with self.assertRaises(Exception) as context:
@@ -395,9 +409,7 @@ class EmailServiceTests(SimpleTestCase):
         user.firstname = "John"
         user.email = "john.doe@example.com"
 
-        reset_url = (
-            "https://example.com/reset-password/abc123/"
-        )
+        reset_url = "https://example.com/reset-password/abc123/"
 
         mock_send_template_email.return_value = 1
 
@@ -427,12 +439,10 @@ class EmailServiceTests(SimpleTestCase):
         user.firstname = "John"
         user.email = "john.doe@example.com"
 
-        reset_url = (
-            "https://example.com/reset-password/abc123/"
-        )
+        reset_url = "https://example.com/reset-password/abc123/"
 
         mock_send_template_email.side_effect = Exception(
-            "Email sending error"
+            "Email sending error",
         )
 
         with self.assertRaises(Exception) as context:
@@ -445,3 +455,68 @@ class EmailServiceTests(SimpleTestCase):
             str(context.exception),
             "Email sending error",
         )
+
+
+@override_settings(
+    DEFAULT_FROM_EMAIL="noreply@airassist.com",
+)
+class CaseStatusEmailServiceTests(TestCase):
+
+    @patch("case_email.services.email_service.send_template_email")
+    @patch("case_email.services.email_service.SystemOptionService.get_email_preset")
+    def test_send_case_status_update_email_includes_main_flight_number_in_preset_message(
+        self,
+        mock_get_email_preset,
+        mock_send_template_email,
+    ):
+        from case.models import Case, Flight
+        from case.models.passengers import Passenger
+
+        case = Case.objects.create(status="PENDING")
+        passenger = Passenger.objects.create(
+            case=case,
+            first_name="John",
+            last_name="Doe",
+            date_of_birth="1990-01-01",
+            email="john.doe@example.com",
+        )
+        Flight.objects.create(
+            case=case,
+            flight_date="2026-08-19",
+            flight_number="RO123",
+            airline="Tarom",
+            reservation_number="ABC123",
+            departing_airport="OTP",
+            destination_airport="MAD",
+            planned_departure_time="09:00",
+            planned_arrival_time="12:00",
+            is_main_flight=True,
+        )
+
+        mock_get_email_preset.return_value = {
+            "sender_name": "Operations Desk",
+            "subject_template": "Case {{case_number}} is ready",
+            "body_template": "Hello {{passenger_name}} for flight {{flight_number}} from {{organisation_name}}",
+        }
+        mock_send_template_email.return_value = 1
+
+        result = send_case_status_update_email(
+            passenger=passenger,
+            case_id=case.id,
+            case_status="ELIGIBLE",
+            note="Bring ID.",
+        )
+
+        mock_send_template_email.assert_called_once_with(
+            to_email="john.doe@example.com",
+            subject=f"Case {case.id} is ready",
+            template_name="case_status_update.html",
+            context={
+                "first_name": "John",
+                "case_id": case.id,
+                "case_status": "Eligible",
+                "note": "Bring ID.",
+                "preset_message": "Hello John Doe for flight RO123 from Operations Desk",
+            },
+        )
+        self.assertEqual(result, 1)

@@ -73,9 +73,9 @@ function PortalUserHeader({
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
-              lg: "auto minmax(0, 1fr) auto",
+              lg: "minmax(180px, 220px) minmax(0, 1fr) auto",
             },
-            gap: { xs: 2, lg: 4 },
+            gap: { xs: 2, lg: 3 },
             alignItems: "center",
             width: "100%",
           }}
@@ -83,13 +83,15 @@ function PortalUserHeader({
           <Stack spacing={0.25}>
             <Box
               component="img"
-              src="/air-assist-logo.svg"
+              src="/logo-airassist.png"
               alt={title}
               sx={{
                 display: "block",
-                width: { xs: 220, md: 280 },
+                width: { xs: 150, md: 175, lg: 190 },
                 maxWidth: "100%",
                 height: "auto",
+                objectFit: "contain",
+                objectPosition: "left center",
               }}
             />
 
@@ -106,8 +108,10 @@ function PortalUserHeader({
               flexWrap: "wrap",
               justifyContent: {
                 xs: "flex-start",
-                lg: "space-evenly",
+                lg: "flex-start",
               },
+              alignItems: "center",
+              pl: { lg: 2 },
             }}
           >
             {actions.map((action) => (
@@ -118,12 +122,14 @@ function PortalUserHeader({
                 startIcon={action.icon}
                 onClick={action.onClick}
                 sx={{
-                  minHeight: 46,
-                  px: { xs: 2, md: 2.5 },
+                  minHeight: 40,
+                  px: { xs: 1.5, md: 2.25 },
+                  minWidth: 0,
                   justifyContent: "center",
                   color: action.active
                     ? "primary.contrastText"
                     : "text.primary",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {action.label}
@@ -133,7 +139,7 @@ function PortalUserHeader({
 
           <Stack
             direction="row"
-            spacing={{ xs: 2, md: 3 }}
+            spacing={{ xs: 1.5, md: 2 }}
             sx={{
               justifySelf: { xs: "stretch", lg: "end" },
               justifyContent: { xs: "space-between", sm: "flex-end" },
@@ -141,12 +147,21 @@ function PortalUserHeader({
             }}
           >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-              <Stack spacing={0.15} sx={{ textAlign: "right" }}>
+              <Stack spacing={0.15} sx={{ textAlign: "right", minWidth: 0 }}>
                 <Typography variant="body1" sx={{ fontWeight: 700 }}>
                   {name}
                 </Typography>
 
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    maxWidth: { md: 180, lg: 220 },
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {email}
                 </Typography>
               </Stack>
@@ -175,12 +190,13 @@ function PortalUserHeader({
                 startIcon={accountAction.icon}
                 onClick={accountAction.onClick}
                 sx={{
-                  minHeight: 46,
-                  px: { xs: 2, md: 2.5 },
+                  minHeight: 40,
+                  px: { xs: 1.5, md: 2 },
                   justifyContent: "center",
                   color: accountAction.active
                     ? "primary.contrastText"
                     : "text.primary",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {accountAction.label}

@@ -34,7 +34,11 @@ class CaseContractService:
         ).order_by("-uploaded_at").first()
 
         if existing_contract is not None:
-            return existing_contract
+            file_name = existing_contract.file.name
+            if file_name and existing_contract.file.storage.exists(file_name):
+                return existing_contract
+
+            existing_contract.delete()
 
         passenger = case.passengers.first()
         flights = list(case.flights.order_by("-is_main_flight", "flight_date", "planned_departure_time"))
