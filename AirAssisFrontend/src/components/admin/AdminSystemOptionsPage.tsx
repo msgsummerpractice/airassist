@@ -4,8 +4,6 @@ import {
   CheckBoxOutlineBlankOutlined as UncheckedIcon,
   CheckBoxOutlined as CheckedIcon,
   DescriptionOutlined as DescriptionIcon,
-  FolderOutlined as FolderIcon,
-  GroupOutlined as GroupIcon,
   LogoutOutlined as LogoutOutlinedIcon,
   MailOutlineOutlined as MailIcon,
   SaveOutlined as SaveIcon,
@@ -34,8 +32,8 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { SettingsOutlined as SettingsIcon } from "@mui/icons-material";
 
 import {
+  clearStoredUserIdentity,
   getStoredUserIdentity,
-  logoutToGuestCaseEntry,
 } from "../../utils/auth";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { AppSnackbar } from "../utils/app_snackbar";
@@ -50,6 +48,7 @@ import {
 } from "./systemOptionsApi";
 
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
+const REFRESH_TOKEN_STORAGE_KEY = "airassist_refresh_token";
 
 const EMAIL_PLACEHOLDERS = [
   "{{case_number}}",
@@ -116,7 +115,7 @@ function validateSettings(settings: SystemOptions): ValidationErrors {
 function AdminSystemOptionsPage() {
   const navigate = useNavigate();
   const currentUser = getStoredUserIdentity();
-  const [isAuthenticated] = useState(() =>
+  const [isAuthenticated, setIsAuthenticated] = useState(() =>
     Boolean(localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY)),
   );
   const [settings, setSettings] = useState<SystemOptions | null>(null);
@@ -157,7 +156,10 @@ function AdminSystemOptionsPage() {
   }, []);
 
   const handleLogout = () => {
-    logoutToGuestCaseEntry();
+    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    clearStoredUserIdentity();
+    setIsAuthenticated(false);
   };
 
   const updateEmailPreset = <K extends keyof EmailPreset>(
@@ -255,16 +257,6 @@ function AdminSystemOptionsPage() {
         }}
         actions={[
           {
-            label: "User View",
-            icon: <GroupIcon fontSize="small" />,
-            onClick: () => navigate("/admin/users"),
-          },
-          {
-            label: "Case View",
-            icon: <FolderIcon fontSize="small" />,
-            onClick: () => navigate("/admin/cases"),
-          },
-          {
             label: "System Options",
             active: true,
             icon: <SettingsIcon fontSize="small" />,
@@ -299,7 +291,7 @@ function AdminSystemOptionsPage() {
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate("/admin/users")}
           >
-            Back
+            Back to admin
           </Button>
           <Button
             variant="contained"

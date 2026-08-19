@@ -188,6 +188,52 @@ function PassengerCaseDetailsPage({
   };
 
   const normalizedCommentText = commentText.trim();
+  const canSubmitComment =
+    normalizedCommentText.length > 0 &&
+    normalizedCommentText.length <= COMMENT_MAX_LENGTH &&
+    !isSubmittingComment;
+
+  const getAccessToken = useCallback(() => {
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+
+    if (!accessToken) {
+      onUnauthorized?.();
+      throw new Error("Unauthorized.");
+    }
+
+    return accessToken;
+  }, [onUnauthorized]);
+
+  const parseDownloadFilename = (
+    contentDisposition: string | null,
+    fallbackFilename: string,
+  ) => {
+    if (!contentDisposition) {
+      return fallbackFilename;
+    }
+
+    const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) {
+      return decodeURIComponent(utf8Match[1]);
+    }
+
+    const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
+    if (quotedMatch?.[1]) {
+      return quotedMatch[1];
+    }
+
+    const bareMatch = contentDisposition.match(/filename=([^;]+)/i);
+    if (bareMatch?.[1]) {
+      return bareMatch[1].trim();
+    }
+
+    return fallbackFilename;
+  };
+
+  const handleDocumentFileChange = (file: File | null) => {
+    setSelectedFile(file);
+    setDocumentError(file ? validateDocumentFile(file) : "");
+  };
 
   const fetchDetails = useCallback(async () => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -890,6 +936,42 @@ function PassengerCaseDetailsPage({
                           Drag and drop a file here, or browse from your
                           computer.
                         </Typography>
+                      </Box>
+                      <Box
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          setIsDraggingOverDropzone(true);
+                        }}
+                        onDragLeave={() => setIsDraggingOverDropzone(false)}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          setIsDraggingOverDropzone(false);
+                          handleDocumentFileChange(
+                            event.dataTransfer.files?.[0] ?? null,
+                          );
+                        }}
+                        sx={{
+                          border: "1px dashed",
+                          borderColor: isDraggingOverDropzone
+                            ? "primary.main"
+                            : "divider",
+                          borderRadius: 2,
+                          p: 2,
+                          mb: 2,
+                          backgroundColor: isDraggingOverDropzone
+                            ? "rgba(0, 49, 120, 0.04)"
+                            : "transparent",
+                          textAlign: "center",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1.5 }}
+                        >
+                          Drag and drop a file here, or browse from your
+                          computer.
+                        </Typography>
                         <Stack
                           direction={{ xs: "column", md: "row" }}
                           spacing={1.5}
@@ -951,6 +1033,76 @@ function PassengerCaseDetailsPage({
                           </Button>
                         </Stack>
                       </Box>
+                      {documentError && (
+                        <Alert severity="error" sx={{ mb: 2 }}>
+                          {documentError}
+                        </Alert>
+                      )}
+                      {details.documents.length === 0 ? (
+                        <Typography variant="body1" color="text.secondary">
+                          No documents attached.
+                        </Typography>
+                      ) : (
+                        <TableContainer>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Filename</TableCell>
+                                <TableCell>Type</TableCell>
+                                <TableCell>Uploaded by</TableCell>
+                                <TableCell>Upload Timestamp</TableCell>
+                                <TableCell align="center">Download</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {details.documents.map((item) => (
+                                <TableRow key={item.id}>
+                                  <TableCell>{item.filename}</TableCell>
+                                  <TableCell>{item.document_type}</TableCell>
+                                  <TableCell>
+                                    {item.uploaded_by === "PASSENGER"
+                                      ? "Passenger"
+                                      : item.uploaded_by === "COLLEAGUE"
+                                        ? "Colleague"
+                                        : "Unknown"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {formatDateTime(item.uploaded_at)}
+                                  </TableCell>
+                                  <TableCell align="center">
+                                    <Button
+                                      size="small"
+                                      variant="text"
+                                      startIcon={<DownloadOutlined />}
+                                      onClick={() =>
+                                        void downloadDocument(item)
+                                      }
+                                      disabled={
+                                        downloadingDocumentId === item.id
+                                      }
+                                    >
+                                      {downloadingDocumentId === item.id
+                                        ? "Downloading..."
+                                        : ""}
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </Select>
+                          </FormControl>
+                          <Button
+                            variant="contained"
+                            onClick={() => void uploadDocument()}
+                            disabled={
+                              !selectedFile ||
+                              Boolean(documentError) ||
+                              isUploadingDocument
+                            }
+                          >
+                            {isUploadingDocument ? "Uploading..." : "Upload"}
+                          </Button>
+                        </Stack>
+                      </Box>
                     )}
 
                     {details.can_upload_documents === false && (
@@ -970,6 +1122,162 @@ function PassengerCaseDetailsPage({
                       <Typography variant="body1" color="text.secondary">
                         No documents attached.
                       </Typography>
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <FlightTakeoffOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">Flight details</Typography>
+                  </Box>
+                  {details.flight ? (
+                    <TableContainer>
+                      <Table
+                        size="small"
+                        sx={{
+                          "& td:first-of-type": {
+                            fontWeight: 400,
+                            width: "38%",
+                          },
+                          "& td:last-of-type": { pl: 2 },
+                        }}
+                      >
+                        <AddCommentOutlined
+                          sx={{ color: SECTION_ICON_COLOR }}
+                        />
+                        <Typography variant="h5">Add Comment</Typography>
+                      </Box>
+
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={5}
+                        maxRows={12}
+                        value={commentText}
+                        onChange={(event) => {
+                          setCommentText(event.target.value);
+                          if (commentSubmitError) {
+                            setCommentSubmitError("");
+                          }
+                          if (commentSubmitSuccess) {
+                            setCommentSubmitSuccess("");
+                          }
+                        }}
+                        placeholder="Add your additional information or question here..."
+                        slotProps={{
+                          htmlInput: { maxLength: COMMENT_MAX_LENGTH },
+                        }}
+                      />
+
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={1.5}
+                        sx={{ mt: 1.5, alignItems: { sm: "center" } }}
+                        <TableBody>
+                          <TableRow>
+                            <TableCell>Flight date</TableCell>
+                            <TableCell>
+                              {formatDate(details.flight.flight_date)}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Flight Nr.</TableCell>
+                            <TableCell>
+                              {details.flight.flight_number}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Airline</TableCell>
+                            <TableCell>{details.flight.airline}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Reservation Number</TableCell>
+                            <TableCell>
+                              {details.flight.reservation_number}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Departing Airport</TableCell>
+                            <TableCell>
+                              {details.flight.departing_airport}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Destination Airport</TableCell>
+                            <TableCell>
+                              {details.flight.destination_airport}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Planned Departure Time</TableCell>
+                            <TableCell>
+                              {details.flight.planned_departure_time}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Planned Arrival Time</TableCell>
+                            <TableCell>
+                              {details.flight.planned_arrival_time}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Typography variant="body1" color="text.secondary">
+                      Main flight details are not available.
+                    </Typography>
+                  )}
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 1,
+                    }}
+                  >
+                    <HubOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h6">Connecting Flights</Typography>
+                  </Box>
+                  {details.connecting_flights.length === 0 ? (
+                    <Typography variant="body1" color="text.secondary">
+                      None
+                    </Typography>
+                  ) : (
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Flight Date</TableCell>
+                            <TableCell>Flight Nr.</TableCell>
+                            <TableCell>From</TableCell>
+                            <TableCell>To</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {details.connecting_flights.map((flight, index) => (
+                            <TableRow key={`${flight.flight_number}-${index}`}>
+                              <TableCell>
+                                {formatDate(flight.flight_date)}
+                              </TableCell>
+                              <TableCell>{flight.flight_number}</TableCell>
+                              <TableCell>{flight.departing_airport}</TableCell>
+                              <TableCell>
+                                {flight.destination_airport}
+                              </TableCell>
                     ) : (
                       <TableContainer>
                         <Table size="small">
