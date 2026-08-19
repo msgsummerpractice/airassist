@@ -58,6 +58,7 @@ import { useAppSnackbar } from "../utils/use_app_snackbar";
 import { validateDocumentFile } from "../wizard/utils/documentUploadStepValidation";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import axios from "axios";
+import CommentListCard from "../cases/shared/cards/CommentListCard";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -160,6 +161,32 @@ const formatFilename = (filename: string) => {
   return `${filename.slice(0, MAX_VISIBLE_FILENAME_LENGTH)}...`;
 };
 
+const parseDownloadFilename = (
+  contentDisposition: string | null,
+  fallbackFilename: string,
+) => {
+  if (!contentDisposition) {
+    return fallbackFilename;
+  }
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]);
+  }
+
+  const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
+  if (quotedMatch?.[1]) {
+    return quotedMatch[1];
+  }
+
+  const bareMatch = contentDisposition.match(/filename=([^;]+)/i);
+  if (bareMatch?.[1]) {
+    return bareMatch[1].trim();
+  }
+
+  return fallbackFilename;
+};
+
 function ColleagueCaseDetailsPage({
   onLogout,
   onUnauthorized,
@@ -243,32 +270,6 @@ function ColleagueCaseDetailsPage({
 
     return accessToken;
   }, [onUnauthorized]);
-
-  const parseDownloadFilename = (
-    contentDisposition: string | null,
-    fallbackFilename: string,
-  ) => {
-    if (!contentDisposition) {
-      return fallbackFilename;
-    }
-
-    const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
-    if (utf8Match?.[1]) {
-      return decodeURIComponent(utf8Match[1]);
-    }
-
-    const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
-    if (quotedMatch?.[1]) {
-      return quotedMatch[1];
-    }
-
-    const bareMatch = contentDisposition.match(/filename=([^;]+)/i);
-    if (bareMatch?.[1]) {
-      return bareMatch[1].trim();
-    }
-
-    return fallbackFilename;
-  };
 
   const handleDocumentFileChange = (file: File | null) => {
     setSelectedFile(file);
@@ -1226,57 +1227,10 @@ function ColleagueCaseDetailsPage({
                   </CardContent>
                 </Card>
 
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography variant="h5" sx={{ mb: 2 }}>
-                      Comment List
-                    </Typography>
-                    {(details.comments ?? []).length === 0 ? (
-                      <Typography variant="body1" color="text.secondary">
-                        No comments yet.
-                      </Typography>
-                    ) : (
-                      <TableContainer>
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>User</TableCell>
-                              <TableCell>Role</TableCell>
-                              <TableCell>Timestamp</TableCell>
-                              <TableCell>Comment</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {(details.comments ?? []).map((comment) => (
-                              <TableRow key={comment.id}>
-                                <TableCell>{comment.author_email}</TableCell>
-                                <TableCell>
-                                  {["PASSENGER", "COLLEAGUE"].includes(
-                                    comment.author_role?.toUpperCase() ?? "",
-                                  ) ? (
-                                    <Chip
-                                      size="small"
-                                      label={comment.author_role}
-                                      color="primary"
-                                    />
-                                  ) : (
-                                    comment.author_role
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {formatDateTime(comment.created_at)}
-                                </TableCell>
-                                <TableCell sx={{ whiteSpace: "pre-wrap" }}>
-                                  {comment.text}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    )}
-                  </CardContent>
-                </Card>
+                <CommentListCard
+                  comments={details.comments ?? []}
+                  formatDateTime={formatDateTime}
+                />
 
                 <Card
                   variant="outlined"
