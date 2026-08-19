@@ -101,9 +101,11 @@ class UserServiceTests(TestCase):
 
         self.assertEqual(str(context.exception), "user not found")
 
+
 class UserDeleteServiceTests(TestCase):
     def setUp(self):
-        self.system_admin_role = Role.objects.create(role=Roles.SYSTEM_ADMIN.value)
+        self.system_admin_role = Role.objects.create(
+            role=Roles.SYSTEM_ADMIN.value)
         self.colleague_role = Role.objects.create(role=Roles.COLLEAGUE.value)
         self.passenger_role = Role.objects.create(role=Roles.PASSENGER.value)
 
@@ -161,7 +163,8 @@ class UserDeleteServiceTests(TestCase):
         self.assertEqual(result["deleted_user_role"], Roles.PASSENGER.value)
         self.assertEqual(result["deleted_case_passenger_rows"], 1)
         self.assertFalse(User.objects.filter(id=passenger_user.id).exists())
-        self.assertEqual(Passenger.objects.filter(email__iexact="passenger@example.com").count(), 0)
+        self.assertEqual(Passenger.objects.filter(
+            email__iexact="passenger@example.com").count(), 0)
 
     def test_delete_blocks_self_delete(self):
         with self.assertRaises(ValueError) as context:
@@ -169,7 +172,8 @@ class UserDeleteServiceTests(TestCase):
                 requesting_user_id=self.admin.id,
                 target_user_id=self.admin.id,
             )
-        self.assertEqual(str(context.exception), "You cannot delete your own account.")
+        self.assertEqual(str(context.exception),
+                         "You cannot delete your own account.")
 
     def test_delete_blocks_system_admin_target(self):
         second_admin = User.objects.create_user(
@@ -185,7 +189,8 @@ class UserDeleteServiceTests(TestCase):
                 requesting_user_id=self.admin.id,
                 target_user_id=second_admin.id,
             )
-        self.assertEqual(str(context.exception), "System admin accounts cannot be deleted.")
+        self.assertEqual(str(context.exception),
+                         "System admin accounts cannot be deleted.")
 
     def test_delete_returns_not_found_for_missing_user(self):
         with self.assertRaises(ValueError) as context:
@@ -195,9 +200,11 @@ class UserDeleteServiceTests(TestCase):
             )
         self.assertEqual(str(context.exception), "User not found.")
 
+
 class UserDeleteApiTests(APITestCase):
     def setUp(self):
-        self.system_admin_role = Role.objects.create(role=Roles.SYSTEM_ADMIN.value)
+        self.system_admin_role = Role.objects.create(
+            role=Roles.SYSTEM_ADMIN.value)
         self.colleague_role = Role.objects.create(role=Roles.COLLEAGUE.value)
 
         self.admin = User.objects.create_user(
@@ -225,7 +232,8 @@ class UserDeleteApiTests(APITestCase):
         response = self.client.delete(f"/user/{self.colleague.id}/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data.get("message"), "User account deleted successfully.")
+        self.assertEqual(response.data.get("message"),
+                         "User account deleted successfully.")
         self.assertFalse(User.objects.filter(id=self.colleague.id).exists())
 
     def test_admin_cannot_self_delete(self):
@@ -233,7 +241,8 @@ class UserDeleteApiTests(APITestCase):
         response = self.client.delete(f"/user/{self.admin.id}/")
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data.get("message"), "You cannot delete your own account.")
+        self.assertEqual(response.data.get("message"),
+                         "You cannot delete your own account.")
 
     def test_delete_missing_user_returns_404(self):
         self.client.force_authenticate(user=self.admin)
@@ -245,7 +254,8 @@ class UserDeleteApiTests(APITestCase):
 
 class UserProfileUpdateApiTests(APITestCase):
     def setUp(self):
-        self.system_admin_role = Role.objects.create(role=Roles.SYSTEM_ADMIN.value)
+        self.system_admin_role = Role.objects.create(
+            role=Roles.SYSTEM_ADMIN.value)
         self.colleague_role = Role.objects.create(role=Roles.COLLEAGUE.value)
         self.passenger_role = Role.objects.create(role=Roles.PASSENGER.value)
         self.admin = User.objects.create_user(

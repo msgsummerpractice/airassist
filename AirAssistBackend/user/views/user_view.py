@@ -44,6 +44,8 @@ class ColleagueListView(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 # Create your views here.
+
+
 class UserView(APIView):
     permission_classes = [IsSystemAdmin]
 
@@ -71,7 +73,8 @@ class UserView(APIView):
         users = UserService.get_users_for_admin_list()
         serializer = UserListSerializer(users, many=True)
         return airassist_response.status_ok(serializer.data)
-    
+
+
 class UserRoleView(APIView):
     def get_permissions(self):
         if self.request.method in {"DELETE", "PATCH"}:
@@ -109,7 +112,8 @@ class UserRoleView(APIView):
         except User.DoesNotExist:
             return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = UserProfileUpdateSerializer(target_user, data=request.data)
+        serializer = UserProfileUpdateSerializer(
+            target_user, data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -154,7 +158,7 @@ class ChangePasswordView(APIView):
         except ValueError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"message": "Password changed successfully."}, status = status.HTTP_200_OK)
+        return Response({"message": "Password changed successfully."}, status=status.HTTP_200_OK)
 
 
 class RequestPasswordResetView(APIView):
@@ -164,7 +168,8 @@ class RequestPasswordResetView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        frontend_base_url = request.headers.get("Origin") or "http://localhost:5173"
+        frontend_base_url = request.headers.get(
+            "Origin") or "http://localhost:5173"
         UserService.send_password_reset_email(
             email=serializer.validated_data["email"],
             frontend_base_url=frontend_base_url,

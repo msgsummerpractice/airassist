@@ -19,7 +19,7 @@ from case.models.passengers import Passenger
 class UserService:
     @staticmethod
     @transaction.atomic
-    def create_user(role_name: str, firstname: str, lastname: str, email: str, password: str, must_change_password = False) -> User:
+    def create_user(role_name: str, firstname: str, lastname: str, email: str, password: str, must_change_password=False) -> User:
         email = email.lower()
 
         if User.objects.filter(email=email).exists():
@@ -96,7 +96,8 @@ class UserService:
         email: str,
     ) -> User:
         try:
-            target_user = User.objects.select_related("role").get(pk=target_user_id)
+            target_user = User.objects.select_related(
+                "role").get(pk=target_user_id)
         except User.DoesNotExist:
             raise ValueError("User not found.")
 
@@ -105,7 +106,8 @@ class UserService:
 
         role_name = getattr(target_user.role, "role", None)
         if role_name not in {Roles.COLLEAGUE.value, Roles.PASSENGER.value}:
-            raise ValueError("Only colleague and passenger accounts can be edited.")
+            raise ValueError(
+                "Only colleague and passenger accounts can be edited.")
 
         previous_email = target_user.email
         target_user.firstname = firstname
