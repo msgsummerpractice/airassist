@@ -78,9 +78,9 @@ function Footer() {
         />
 
         <Stack
-          alignItems={{ xs: "flex-start", sm: "center" }}
           direction={{ xs: "column", sm: "row" }}
           spacing={{ xs: 0.25, sm: 1.25 }}
+          sx={{ alignItems: { xs: "flex-start", sm: "center" } }}
         >
           <Typography
             color="text.secondary"
