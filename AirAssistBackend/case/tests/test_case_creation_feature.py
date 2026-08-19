@@ -4,6 +4,8 @@ from unittest.mock import patch
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient
 
 from airports.models.airport import Airport
 from case.enums.cancellation_type_enum import CancellationType
@@ -118,6 +120,35 @@ class PassengerAccountCreationTests(TestCase):
 
         self.assertTrue(Role.objects.filter(role="PASSENGER").exists())
         self.assertTrue(User.objects.filter(email="ada@example.com").exists())
+
+    @patch("case.services.case_service.secrets.token_urlsafe", return_value="Temp-password-123")
+    @patch("user.service.user_service.send_user_created_email")
+    def test_created_passenger_can_login_and_must_change_password(
+        self,
+        mock_send_email,
+        _mock_token_urlsafe,
+    ):
+        case = Case.objects.create(gdpr_consent=True)
+        passenger = Passenger.objects.create(
+            case=case,
+            first_name="Ada",
+            last_name="Lovelace",
+            date_of_birth="1990-01-01",
+            email="ada@example.com",
+        )
+
+        CaseService.create_passenger_account(passenger)
+
+        mock_send_email.assert_called_once()
+        response = APIClient().post(
+            "/user/login/",
+            data={"email": "ada@example.com", "password": "Temp-password-123"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["must_change_password"])
+        self.assertIn("access", response.data)
 
 
 # ---------------------------------------------------------------------------

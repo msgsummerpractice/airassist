@@ -29,6 +29,7 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 type ResetPasswordProps = {
+  mode?: "auto" | "change-password" | "request-reset";
   onPasswordResetSuccess?: () => void;
   onBackToLogin?: () => void;
 };
@@ -96,6 +97,7 @@ const getPasswordStrength = (value: string) => {
 };
 
 const ResetPassword = ({
+  mode = "auto",
   onPasswordResetSuccess,
   onBackToLogin,
 }: ResetPasswordProps) => {
@@ -108,7 +110,10 @@ const ResetPassword = ({
   const hasAccessToken = Boolean(
     localStorage.getItem("airassist_access_token"),
   );
-  const isRequestResetMode = !hasResetToken && !hasAccessToken;
+  const isChangePasswordMode = mode === "change-password";
+  const isRequestResetMode =
+    mode === "request-reset" ||
+    (!isChangePasswordMode && !hasResetToken && !hasAccessToken);
 
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -213,7 +218,7 @@ const ResetPassword = ({
     try {
       let response: Response;
 
-      if (hasResetToken) {
+      if (hasResetToken && !isChangePasswordMode) {
         response = await fetch(`${API_BASE_URL}/user/reset-password/`, {
           method: "POST",
           headers: {
