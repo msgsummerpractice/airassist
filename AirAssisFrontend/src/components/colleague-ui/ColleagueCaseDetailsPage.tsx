@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Divider,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -797,7 +798,7 @@ function ColleagueCaseDetailsPage({
                               fontWeight: 400,
                               width: "38%",
                             },
-                            "& td:last-of-type": { pl: 2 },
+                            "& td:last-of-type": { pl: 2, fontWeight: 600 },
                           }}
                         >
                           <TableBody>
@@ -875,7 +876,13 @@ function ColleagueCaseDetailsPage({
                       </Typography>
                     ) : (
                       <TableContainer>
-                        <Table size="small">
+                        <Table
+                          size="small"
+                          sx={{
+                            "& th": { fontWeight: 400 },
+                            "& tbody td": { fontWeight: 600 },
+                          }}
+                        >
                           <TableHead>
                             <TableRow>
                               <TableCell>Flight Date</TableCell>
@@ -927,7 +934,10 @@ function ColleagueCaseDetailsPage({
                       <TableContainer>
                         <Table
                           size="small"
-                          sx={{ "& td:first-of-type": { fontWeight: 400 } }}
+                          sx={{
+                            "& td:first-of-type": { fontWeight: 400 },
+                            "& td:last-of-type": { fontWeight: 600 },
+                          }}
                         >
                           <TableBody>
                             <TableRow>
@@ -1068,6 +1078,7 @@ function ColleagueCaseDetailsPage({
                               <TableCell>Filename</TableCell>
                               <TableCell>Type</TableCell>
                               <TableCell>Upload Timestamp</TableCell>
+                              <TableCell align="center">Download</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -1095,18 +1106,17 @@ function ColleagueCaseDetailsPage({
                                 <TableCell>
                                   {formatDateTime(item.uploaded_at)}
                                 </TableCell>
-                                <TableCell align="right">
-                                  <Button
+                                <TableCell align="center">
+                                  <IconButton
                                     size="small"
-                                    variant="text"
-                                    startIcon={<DownloadOutlined />}
+                                    color="primary"
+                                    aria-label="Download document"
+                                    title="Download"
                                     onClick={() => void downloadDocument(item)}
                                     disabled={downloadingDocumentId === item.id}
                                   >
-                                    {downloadingDocumentId === item.id
-                                      ? "Downloading..."
-                                      : "Download"}
-                                  </Button>
+                                    <DownloadOutlined />
+                                  </IconButton>
                                 </TableCell>
                               </TableRow>
                             ))}
