@@ -16,6 +16,7 @@ class ColleagueCaseDocumentService:
         return CaseDocument.objects.create(
             case=assigned_case,
             document_type=validated_data["document_type"],
+            uploaded_by="COLLEAGUE",
             file=uploaded_file,
             original_filename=uploaded_file.name,
             content_type=getattr(uploaded_file, "content_type", ""),

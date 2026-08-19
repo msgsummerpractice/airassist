@@ -119,6 +119,7 @@ class ColleagueCaseCreationService:
         CaseDocument.objects.create(
             case=case,
             document_type=DocumentType.BOARDING_PASS.value,
+            uploaded_by="COLLEAGUE",
             file=boarding_pass,
             original_filename=boarding_pass.name,
             content_type=getattr(boarding_pass, "content_type", ""),
@@ -128,6 +129,7 @@ class ColleagueCaseCreationService:
         CaseDocument.objects.create(
             case=case,
             document_type=DocumentType.PASSPORT.value,
+            uploaded_by="COLLEAGUE",
             file=passport,
             original_filename=passport.name,
             content_type=getattr(passport, "content_type", ""),
