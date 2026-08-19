@@ -95,7 +95,11 @@ const formatColleagueCaseDate = (value: string | null | undefined) => {
   return date.toLocaleDateString("en-GB");
 };
 
-function ColleagueCaseList() {
+type ColleagueCaseListProps = {
+  onCaseAssigned?: () => void;
+};
+
+function ColleagueCaseList({ onCaseAssigned }: ColleagueCaseListProps = {}) {
   const [cases, setCases] = useState<ColleagueCaseListItem[]>([]);
   const [colleagues, setColleagues] = useState<ColleagueOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -381,6 +385,7 @@ function ColleagueCaseList() {
                           assignedColleagueId={caseItem.assigned_colleague_id}
                           onAssigned={() => {
                             setReloadKey((current) => current + 1);
+                            onCaseAssigned?.();
                           }}
                         />
                       </TableCell>
@@ -442,6 +447,7 @@ function ColleagueCaseList() {
                           assignedColleagueId={caseItem.assigned_colleague_id}
                           onAssigned={() => {
                             setReloadKey((current) => current + 1);
+                            onCaseAssigned?.();
                           }}
                         />
                       </Box>

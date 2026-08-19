@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ColleagueDashboard.css";
 
@@ -112,8 +112,13 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
 
   const [claims, setClaims] = useState<DashboardClaim[]>([]);
   const [hasError, setHasError] = useState(false);
+  const [dashboardReloadKey, setDashboardReloadKey] = useState(0);
 
   const { snackbar, closeSnackbar, showErrorSnackbar } = useAppSnackbar();
+
+  const refreshDashboard = useCallback(() => {
+    setDashboardReloadKey((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -188,7 +193,7 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
     return () => {
       isActive = false;
     };
-  }, [showErrorSnackbar]);
+  }, [showErrorSnackbar, dashboardReloadKey]);
 
   const displayName = useMemo(() => {
     if (!colleague) {
@@ -392,7 +397,7 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
               )}
             </CardContent>
           </Card>
-          <ColleagueCaseList />
+          <ColleagueCaseList onCaseAssigned={refreshDashboard} />
         </Stack>
       </Box>
     </Box>
