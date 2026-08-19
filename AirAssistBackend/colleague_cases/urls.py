@@ -16,5 +16,6 @@ urlpatterns = [
     path("cases/colleague/<int:pk>/comments/", ColleagueCaseCommentCreateView.as_view(), name="colleague-case-comment-create"),
     path("cases/colleague/<int:pk>/documents/", ColleagueCaseDocumentUploadView.as_view(), name="colleague-case-document-upload"),
     path("cases/colleague/<int:pk>/documents/<int:document_id>/download/", ColleagueCaseDocumentDownloadView.as_view(), name="colleague-case-document-download"),
+    path("cases/colleague/<int:pk>/documents/<int:document_id>/", ColleagueCaseDocumentDownloadView.as_view(), name="colleague-case-document-delete"),
 
 ]

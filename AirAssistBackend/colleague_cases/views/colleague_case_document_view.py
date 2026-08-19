@@ -11,6 +11,7 @@ from ..serializers.colleague_case_document_serializer import (
     ColleagueCaseDocumentUploadSerializer,
 )
 from ..services.colleague_case_document_service import ColleagueCaseDocumentService
+from case.services.case_document_deletion_service import CaseDocumentDeletionService
 
 
 class ColleagueCaseDocumentUploadView(APIView):
@@ -49,3 +50,12 @@ class ColleagueCaseDocumentDownloadView(APIView):
             filename=document.original_filename,
             content_type=document.content_type or "application/octet-stream",
         )
+
+    def delete(self, request, pk, document_id):
+        CaseDocumentDeletionService.delete_document(
+            case_id=pk,
+            document_id=document_id,
+            user=request.user,
+            uploaded_by="COLLEAGUE",
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)

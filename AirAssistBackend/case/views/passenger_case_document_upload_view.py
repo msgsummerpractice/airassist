@@ -15,6 +15,7 @@ from ..serializers.passenger_case_details_serializer import (
 from ..services.passenger_case_document_upload_service import (
     PassengerCaseDocumentUploadService,
 )
+from ..services.case_document_deletion_service import CaseDocumentDeletionService
 
 
 class PassengerCaseDocumentUploadView(APIView):
@@ -37,3 +38,12 @@ class PassengerCaseDocumentUploadView(APIView):
         response_data["message"] = "Document uploaded successfully."
 
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, pk, document_id):
+        CaseDocumentDeletionService.delete_document(
+            case_id=pk,
+            document_id=document_id,
+            user=request.user,
+            uploaded_by="PASSENGER",
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Divider,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -25,6 +26,7 @@ import {
 import {
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
+  DeleteOutlined,
   DescriptionOutlined,
   DownloadOutlined,
   FlightTakeoffOutlined,
@@ -36,11 +38,13 @@ import {
 } from "@mui/icons-material";
 import {
   createCaseComment,
+  deleteCaseDocument,
   downloadCaseDocument,
   uploadCaseDocument,
   type CaseApiError,
 } from "../cases/api";
 import CommentsCard from "../cases/shared/cards/CommentsCard";
+import DeleteDocumentDialog from "../cases/shared/dialogs/DeleteDocumentDialog";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
@@ -163,6 +167,12 @@ function PassengerCaseDetailsPage({
   const [downloadingDocumentId, setDownloadingDocumentId] = useState<
     number | null
   >(null);
+  const [deletingDocumentId, setDeletingDocumentId] = useState<number | null>(
+    null,
+  );
+  const [documentToDelete, setDocumentToDelete] = useState<CaseDocument | null>(
+    null,
+  );
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentSubmitError, setCommentSubmitError] = useState("");
@@ -480,6 +490,53 @@ function PassengerCaseDetailsPage({
     [getAccessToken, onUnauthorized, resolvedCaseId, showSuccessSnackbar],
   );
 
+  const deleteDocument = useCallback(async () => {
+    const documentItem = documentToDelete;
+    if (
+      !documentItem ||
+      resolvedCaseId === null ||
+      (documentItem.uploaded_by !== "PASSENGER" &&
+        documentItem.uploaded_by !== null &&
+        documentItem.uploaded_by !== undefined)
+    ) {
+      return;
+    }
+
+    setDocumentError("");
+    setDeletingDocumentId(documentItem.id);
+
+    try {
+      await deleteCaseDocument({
+        scope: "passenger",
+        caseId: resolvedCaseId,
+        documentId: documentItem.id,
+        accessToken: getAccessToken(),
+      });
+      setDocumentToDelete(null);
+      showSuccessSnackbar("Document deleted successfully.");
+      await fetchDetails();
+    } catch (error) {
+      const apiError = error as Partial<CaseApiError>;
+      if (apiError.status === 401 || apiError.status === 403) {
+        onUnauthorized?.();
+        return;
+      }
+
+      setDocumentError(
+        error instanceof Error ? error.message : "Could not delete document.",
+      );
+    } finally {
+      setDeletingDocumentId(null);
+    }
+  }, [
+    documentToDelete,
+    fetchDetails,
+    getAccessToken,
+    onUnauthorized,
+    resolvedCaseId,
+    showSuccessSnackbar,
+  ]);
+
   return (
     <>
       <AppSnackbar
@@ -546,11 +603,9 @@ function PassengerCaseDetailsPage({
                   px: { xs: 0, md: 10 },
                 }}
               >
-            
                 <Typography variant="h2" sx={{ mt: 0.5 }}>
                   Case Details
                 </Typography>
-               
               </Box>
             </Box>
 
@@ -640,8 +695,12 @@ function PassengerCaseDetailsPage({
                         <Typography variant="body1">Status:</Typography>
                         <Chip
                           size="small"
-                          label={getCaseStatusPresentation(details.status).label}
-                          color={getCaseStatusPresentation(details.status).color}
+                          label={
+                            getCaseStatusPresentation(details.status).label
+                          }
+                          color={
+                            getCaseStatusPresentation(details.status).color
+                          }
                           sx={getCaseStatusPresentation(details.status).sx}
                           variant="outlined"
                         />
@@ -774,7 +833,9 @@ function PassengerCaseDetailsPage({
                           </TableHead>
                           <TableBody>
                             {details.connecting_flights.map((flight, index) => (
-                              <TableRow key={`${flight.flight_number}-${index}`}>
+                              <TableRow
+                                key={`${flight.flight_number}-${index}`}
+                              >
                                 <TableCell>
                                   {formatDate(flight.flight_date)}
                                 </TableCell>
@@ -936,7 +997,9 @@ function PassengerCaseDetailsPage({
                             startIcon={<UploadFileOutlined />}
                             disabled={isUploadingDocument}
                           >
-                            {selectedFile ? selectedFile.name : "Choose Document"}
+                            {selectedFile
+                              ? selectedFile.name
+                              : "Choose Document"}
                             <input
                               hidden
                               type="file"
@@ -1007,7 +1070,7 @@ function PassengerCaseDetailsPage({
                               <TableCell>Type</TableCell>
                               <TableCell>Uploaded by</TableCell>
                               <TableCell>Upload Timestamp</TableCell>
-                              <TableCell align="center">Download</TableCell>
+                              <TableCell align="center">Actions</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -1026,17 +1089,29 @@ function PassengerCaseDetailsPage({
                                   {formatDateTime(item.uploaded_at)}
                                 </TableCell>
                                 <TableCell align="center">
-                                  <Button
+                                  <IconButton
                                     size="small"
-                                    variant="text"
-                                    startIcon={<DownloadOutlined />}
+                                    color="primary"
+                                    aria-label="Download document"
+                                    title="Download"
                                     onClick={() => void downloadDocument(item)}
                                     disabled={downloadingDocumentId === item.id}
                                   >
-                                    {downloadingDocumentId === item.id
-                                      ? "Downloading..."
-                                      : "Download"}
-                                  </Button>
+                                    <DownloadOutlined />
+                                  </IconButton>
+                                  {(item.uploaded_by === "PASSENGER" ||
+                                    item.uploaded_by == null) && (
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      aria-label="Delete document"
+                                      title="Delete"
+                                      onClick={() => setDocumentToDelete(item)}
+                                      disabled={deletingDocumentId === item.id}
+                                    >
+                                      <DeleteOutlined />
+                                    </IconButton>
+                                  )}
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -1077,7 +1152,9 @@ function PassengerCaseDetailsPage({
                     <Chip
                       size="small"
                       label={conversationStatus}
-                      color={conversationStatus === "OPEN" ? "success" : "default"}
+                      color={
+                        conversationStatus === "OPEN" ? "success" : "default"
+                      }
                       variant="outlined"
                     />
                   }
@@ -1087,6 +1164,14 @@ function PassengerCaseDetailsPage({
           </CardContent>
         </Card>
       </Box>
+      <DeleteDocumentDialog
+        document={documentToDelete}
+        isDeleting={deletingDocumentId !== null}
+        onCancel={() => {
+          if (deletingDocumentId === null) setDocumentToDelete(null);
+        }}
+        onConfirm={() => void deleteDocument()}
+      />
     </>
   );
 }

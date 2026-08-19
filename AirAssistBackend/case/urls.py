@@ -76,6 +76,11 @@ urlpatterns = [
         PassengerCaseDocumentUploadView.as_view(),
         name="passenger-case-document-upload",
     ),
+     path(
+          "cases/me/<int:pk>/documents/<int:document_id>/",
+          PassengerCaseDocumentUploadView.as_view(),
+          name="passenger-case-document-delete",
+     ),
     path("cases/me/<int:pk>/comments/", PassengerCaseCommentCreateView.as_view(),
          name="passenger-case-comment-create"),
     path(
