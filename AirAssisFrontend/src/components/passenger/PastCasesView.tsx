@@ -196,254 +196,320 @@ function PastCasesView({
           backgroundColor: "#ffffff",
         }}
       >
-      <PortalUserHeader
-        name={currentUser.name}
-        email={currentUser.email}
-        roleLabel={currentUser.roleLabel}
-        logoutAction={{
-          label: "Log Out",
-          icon: <LogoutOutlinedIcon fontSize="small" />,
-          onClick: onLogout,
-        }}
-        actions={[
-          {
-            label: "My Cases",
-            active: true,
-            icon: <AssignmentTurnedInOutlinedIcon fontSize="small" />,
-            onClick: () => navigate("/passenger-cases"),
-          },
-          {
-            label: "New Claim",
-            icon: <AddTaskOutlinedIcon fontSize="small" />,
-            onClick: () => navigate("/case-entry"),
-          },
-        ]}
-      />
+        <PortalUserHeader
+          name={currentUser.name}
+          email={currentUser.email}
+          roleLabel={currentUser.roleLabel}
+          logoutAction={{
+            label: "Log Out",
+            icon: <LogoutOutlinedIcon fontSize="small" />,
+            onClick: onLogout,
+          }}
+          actions={[
+            {
+              label: "My Cases",
+              active: true,
+              icon: <AssignmentTurnedInOutlinedIcon fontSize="small" />,
+              onClick: () => navigate("/passenger-cases"),
+            },
+            {
+              label: "New Claim",
+              icon: <AddTaskOutlinedIcon fontSize="small" />,
+              onClick: () => navigate("/case-entry"),
+            },
+          ]}
+        />
 
-      <Box
-        sx={{
-          maxWidth: 1220,
-          mx: "auto",
-          px: { xs: 2, md: 4 },
-          py: { xs: 3, md: 5 },
-        }}
-      >
-        <Card
-          elevation={1}
+        <Box
           sx={{
             maxWidth: 1220,
             mx: "auto",
-            border: "none",
-            overflow: "hidden",
+            px: { xs: 2, md: 4 },
+            py: { xs: 3, md: 5 },
           }}
         >
-          <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-          <Box
+          <Card
+            elevation={1}
             sx={{
-              position: "relative",
-              mb: 3,
-              pb: { xs: 1, md: 0 },
+              maxWidth: 1220,
+              mx: "auto",
+              border: "none",
+              overflow: "hidden",
             }}
           >
-            <Box
-              sx={{
-                width: "100%",
-                textAlign: "center",
-                px: { xs: 0, md: 10 },
-              }}
-            >
-              <Typography variant="h2" sx={{ mt: 0.5 }}>
-                Your Past Cases
-              </Typography>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
-              ></Typography>
-            </Box>
-          </Box>
-
-          <CaseListFilters
-            statusFilter={statusFilter}
-            statusOptions={STATUS_FILTER_OPTIONS}
-            assigneeFilter={assigneeFilter}
-            assigneeOptions={assigneeOptions}
-            statusLabelId="past-cases-status-label"
-            assigneeLabelId="past-cases-assignee-label"
-            onStatusChange={setStatusFilter}
-            onAssigneeChange={setAssigneeFilter}
-          />
-
-          {errorMessage && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {errorMessage}
-            </Alert>
-          )}
-
-          {isLoading ? (
-            <CaseListLoadingState label="Loading your cases..." />
-          ) : displayedCases.length === 0 ? (
-            <CaseListEmptyState />
-          ) : (
-            <Box
-              sx={{
-                maxHeight: { xs: 520, md: 640 },
-                overflowY: "auto",
-                px: 1,
-                scrollbarGutter: "stable both-edges",
-              }}
-            >
-              <TableContainer
+            <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+              <Box
                 sx={{
-                  display: { xs: "none", md: "block" },
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 2,
+                  position: "relative",
+                  mb: 3,
+                  pb: { xs: 1, md: 0 },
                 }}
               >
-                <Table stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sortDirection={caseIdSortDirection}>
-                        <TableSortLabel
-                          active={sorting === "id" || sorting === "-id"}
-                          direction={caseIdSortDirection}
-                          onClick={handleCaseIdSort}
-                        >
-                          Case ID
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell>Flight Number</TableCell>
-                      <TableCell>Passenger Name</TableCell>
-                      <TableCell sortDirection={statusSortDirection}>
-                        <TableSortLabel
-                          active={sorting === "status" || sorting === "-status"}
-                          direction={statusSortDirection}
-                          onClick={handleStatusSort}
-                        >
-                          Status
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell>Assignee</TableCell>
-                      <TableCell>Contract</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {displayedCases.map((item) => (
-                      <TableRow key={item.id} hover>
-                        <TableCell>
-                          <Button
-                            variant="text"
-                            onClick={() => onOpenCaseDetails?.(item.id)}
-                            sx={{ minWidth: 0, px: 0, textTransform: "none" }}
-                          >
-                            #{item.id}
-                          </Button>
-                        </TableCell>
-                        <TableCell>{item.flight_number ?? "-"}</TableCell>
-                        <TableCell>{item.passenger_name ?? "-"}</TableCell>
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            label={getCaseStatusPresentation(item.status).label}
-                            color={getCaseStatusPresentation(item.status).color}
-                            sx={getCaseStatusPresentation(item.status).sx}
-                            variant="outlined"
-                          />
-                        </TableCell>
-                        <TableCell>{item.assignee ?? "Unassigned"}</TableCell>
-                        <TableCell>
-                          {item.contract_download_url ? (
-                            <Button
-                              component="a"
-                              href={item.contract_download_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={handleContractDownload}
-                              size="small"
-                              variant="text"
-                              endIcon={
-                                <OpenInNewOutlinedIcon fontSize="small" />
-                              }
-                              sx={{ px: 0, minWidth: 0 }}
-                            >
-                              PDF
-                            </Button>
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                <Box
+                  sx={{
+                    width: "100%",
+                    textAlign: "center",
+                    px: { xs: 0, md: 10 },
+                  }}
+                >
+                  <Typography variant="h2" sx={{ mt: 0.5 }}>
+                    Your Past Cases
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
+                  ></Typography>
+                </Box>
+              </Box>
 
-              <Stack spacing={1.5} sx={{ display: { xs: "flex", md: "none" } }}>
-                {displayedCases.map((item) => (
-                  <Card key={item.id} variant="outlined">
-                    <CardContent>
-                      <Stack spacing={1}>
-                        <Typography variant="caption" color="text.secondary">
-                          <Button
-                            variant="text"
-                            onClick={() => onOpenCaseDetails?.(item.id)}
-                            sx={{
-                              minWidth: 0,
-                              px: 0,
-                              py: 0,
-                              textTransform: "none",
-                            }}
+              <CaseListFilters
+                statusFilter={statusFilter}
+                statusOptions={STATUS_FILTER_OPTIONS}
+                assigneeFilter={assigneeFilter}
+                assigneeOptions={assigneeOptions}
+                statusLabelId="past-cases-status-label"
+                assigneeLabelId="past-cases-assignee-label"
+                onStatusChange={setStatusFilter}
+                onAssigneeChange={setAssigneeFilter}
+              />
+
+              {errorMessage && (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  {errorMessage}
+                </Alert>
+              )}
+
+              {isLoading ? (
+                <CaseListLoadingState label="Loading your cases..." />
+              ) : displayedCases.length === 0 ? (
+                <CaseListEmptyState />
+              ) : (
+                <Box
+                  sx={{
+                    maxHeight: { xs: 520, md: 640 },
+                    overflowY: "auto",
+                    px: 1,
+                    scrollbarGutter: "stable both-edges",
+                  }}
+                >
+                  <TableContainer
+                    sx={{
+                      display: { xs: "none", md: "block" },
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: 2,
+                    }}
+                  >
+                    <Table stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell
+                            sx={{ textAlign: "center" }}
+                            sortDirection={caseIdSortDirection}
                           >
-                            CASE #{item.id}
-                          </Button>
-                        </Typography>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                          Flight {item.flight_number ?? "-"}
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                          Passenger: {item.passenger_name ?? "-"}
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                          Assignee: {item.assignee ?? "Unassigned"}
-                        </Typography>
-                        {item.contract_download_url ? (
-                          <Box>
-                            <Button
-                              component="a"
-                              href={item.contract_download_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={handleContractDownload}
-                              size="small"
-                              variant="outlined"
-                              endIcon={
-                                <OpenInNewOutlinedIcon fontSize="small" />
-                              }
+                            <TableSortLabel
+                              active={sorting === "id" || sorting === "-id"}
+                              direction={caseIdSortDirection}
+                              onClick={handleCaseIdSort}
                             >
-                              Download contract
-                            </Button>
-                          </Box>
-                        ) : null}
-                        <Box>
-                          <Chip
-                            size="small"
-                            label={getCaseStatusPresentation(item.status).label}
-                            color={getCaseStatusPresentation(item.status).color}
-                            sx={getCaseStatusPresentation(item.status).sx}
-                            variant="outlined"
-                          />
-                        </Box>
-                      </Stack>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Stack>
-            </Box>
-          )}
-          </CardContent>
-        </Card>
-      </Box>
+                              Case ID
+                            </TableSortLabel>
+                          </TableCell>
+                          <TableCell sx={{ textAlign: "center" }}>
+                            Flight Number
+                          </TableCell>
+                          <TableCell sx={{ textAlign: "center" }}>
+                            Passenger Name
+                          </TableCell>
+                          <TableCell
+                            sx={{ textAlign: "center" }}
+                            sortDirection={statusSortDirection}
+                          >
+                            <TableSortLabel
+                              active={
+                                sorting === "status" || sorting === "-status"
+                              }
+                              direction={statusSortDirection}
+                              onClick={handleStatusSort}
+                            >
+                              Status
+                            </TableSortLabel>
+                          </TableCell>
+                          <TableCell sx={{ textAlign: "center" }}>
+                            Assignee
+                          </TableCell>
+                          <TableCell sx={{ textAlign: "center" }}>
+                            Contract
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {displayedCases.map((item) => (
+                          <TableRow key={item.id} hover>
+                            <TableCell
+                              sx={{ fontSize: "0.875rem", textAlign: "center" }}
+                            >
+                              <Button
+                                variant="text"
+                                onClick={() => onOpenCaseDetails?.(item.id)}
+                                sx={{
+                                  minWidth: 0,
+                                  px: 0,
+                                  textTransform: "none",
+                                }}
+                              >
+                                #{item.id}
+                              </Button>
+                            </TableCell>
+                            <TableCell
+                              sx={{ fontSize: "0.875rem", textAlign: "center" }}
+                            >
+                              {item.flight_number ?? "-"}
+                            </TableCell>
+                            <TableCell
+                              sx={{ fontSize: "0.875rem", textAlign: "center" }}
+                            >
+                              {item.passenger_name ?? "-"}
+                            </TableCell>
+                            <TableCell
+                              sx={{
+                                fontSize: "1.125rem",
+                                textAlign: "center",
+                                display: "table-cell",
+                                verticalAlign: "middle",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <Chip
+                                  size="small"
+                                  label={
+                                    getCaseStatusPresentation(item.status).label
+                                  }
+                                  color={
+                                    getCaseStatusPresentation(item.status).color
+                                  }
+                                  sx={getCaseStatusPresentation(item.status).sx}
+                                  variant="outlined"
+                                />
+                              </div>
+                            </TableCell>
+                            <TableCell
+                              sx={{ fontSize: "0.875rem", textAlign: "center" }}
+                            >
+                              {item.assignee ?? "Unassigned"}
+                            </TableCell>
+                            <TableCell
+                              sx={{ fontSize: "0.875rem", textAlign: "center" }}
+                            >
+                              {item.contract_download_url ? (
+                                <Button
+                                  component="a"
+                                  href={item.contract_download_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={handleContractDownload}
+                                  size="small"
+                                  variant="text"
+                                  endIcon={
+                                    <OpenInNewOutlinedIcon fontSize="small" />
+                                  }
+                                  sx={{ px: 0, minWidth: 0 }}
+                                ></Button>
+                              ) : (
+                                ""
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  <Stack
+                    spacing={1.5}
+                    sx={{ display: { xs: "flex", md: "none" } }}
+                  >
+                    {displayedCases.map((item) => (
+                      <Card key={item.id} variant="outlined">
+                        <CardContent>
+                          <Stack spacing={1}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              <Button
+                                variant="text"
+                                onClick={() => onOpenCaseDetails?.(item.id)}
+                                sx={{
+                                  minWidth: 0,
+                                  px: 0,
+                                  py: 0,
+                                  textTransform: "none",
+                                }}
+                              >
+                                CASE #{item.id}
+                              </Button>
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              Flight {item.flight_number ?? "-"}
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary">
+                              Passenger: {item.passenger_name ?? "-"}
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary">
+                              Assignee: {item.assignee ?? "Unassigned"}
+                            </Typography>
+                            {item.contract_download_url ? (
+                              <Box>
+                                <Button
+                                  component="a"
+                                  href={item.contract_download_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={handleContractDownload}
+                                  size="small"
+                                  variant="outlined"
+                                  endIcon={
+                                    <OpenInNewOutlinedIcon fontSize="small" />
+                                  }
+                                >
+                                  Download contract
+                                </Button>
+                              </Box>
+                            ) : null}
+                            <Box>
+                              <Chip
+                                size="small"
+                                label={
+                                  getCaseStatusPresentation(item.status).label
+                                }
+                                color={
+                                  getCaseStatusPresentation(item.status).color
+                                }
+                                sx={getCaseStatusPresentation(item.status).sx}
+                                variant="outlined"
+                              />
+                            </Box>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Box>
       </Box>
     </>
   );

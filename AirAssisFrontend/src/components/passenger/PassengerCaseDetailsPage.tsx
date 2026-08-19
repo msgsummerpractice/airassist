@@ -124,7 +124,7 @@ const formatDate = (value: string | null | undefined) => {
     return value;
   }
 
-  return parsedDate.toLocaleDateString();
+  return parsedDate.toLocaleDateString("en-GB");
 };
 
 const formatDateTime = (value: string | null | undefined) => {
@@ -137,7 +137,7 @@ const formatDateTime = (value: string | null | undefined) => {
     return value;
   }
 
-  return parsedDate.toLocaleString();
+  return parsedDate.toLocaleString("en-GB");
 };
 
 function PassengerCaseDetailsPage({
@@ -540,19 +540,8 @@ function PassengerCaseDetailsPage({
                     px: { xs: 0, md: 10 },
                   }}
                 >
-                  <Typography variant="caption" color="secondary.main">
-                    AIRASSIST PORTAL
-                  </Typography>
                   <Typography variant="h2" sx={{ mt: 0.5 }}>
                     Case Details
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    color="text.secondary"
-                    sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
-                  >
-                    Review flight, passenger, and attached documents for this
-                    case.
                   </Typography>
                 </Box>
               </Box>
@@ -686,7 +675,7 @@ function PassengerCaseDetailsPage({
                                 fontWeight: 400,
                                 width: "38%",
                               },
-                              "& td:last-of-type": { pl: 2 },
+                              "& td:last-of-type": { pl: 2, fontWeight: 600 },
                             }}
                           >
                             <TableBody>
@@ -764,7 +753,13 @@ function PassengerCaseDetailsPage({
                         </Typography>
                       ) : (
                         <TableContainer>
-                          <Table size="small">
+                          <Table
+                            size="small"
+                            sx={{
+                              "& th": { fontWeight: 400 },
+                              "& tbody td": { fontWeight: 600 },
+                            }}
+                          >
                             <TableHead>
                               <TableRow>
                                 <TableCell>Flight Date</TableCell>
@@ -820,7 +815,10 @@ function PassengerCaseDetailsPage({
                         <TableContainer>
                           <Table
                             size="small"
-                            sx={{ "& td:first-of-type": { fontWeight: 400 } }}
+                            sx={{
+                              "& td:first-of-type": { fontWeight: 400 },
+                              "& td:last-of-type": { fontWeight: 600 },
+                            }}
                           >
                             <TableBody>
                               <TableRow>
