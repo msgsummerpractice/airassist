@@ -29,6 +29,7 @@ interface LegDetailsProps {
   index: number;
   showNextDayOption: boolean;
   timeError?: string;
+  departureTimeError?: string;
   onChange: (updated: Leg) => void;
   showErrors: boolean;
 }
@@ -38,6 +39,7 @@ function LegDetails({
   index,
   showNextDayOption,
   timeError,
+  departureTimeError,
   onChange,
   showErrors,
 }: LegDetailsProps) {
@@ -59,20 +61,19 @@ function LegDetails({
   const departureTimezoneText = formatTimezoneText(leg.departureTimezone);
   const arrivalTimezoneText = formatTimezoneText(leg.arrivalTimezone);
 
-  const e = showErrors
-    ? {
-        flightDate: !leg.flightDate ? "Required" : undefined,
-        flightNumber: !leg.flightNumber ? "Required" : undefined,
-        airline: !leg.airline ? "Required" : undefined,
-        reservationNumber: !leg.reservationNumber ? "Required" : undefined,
-        plannedDepartureTime: !leg.plannedDepartureTime
-          ? "Required"
-          : undefined,
-        plannedArrivalTime: !leg.plannedArrivalTime
-          ? "Required"
-          : timeError,
-      }
-    : {};
+  const e = {
+    flightDate: showErrors && !leg.flightDate ? "Required" : undefined,
+    flightNumber: showErrors && !leg.flightNumber ? "Required" : undefined,
+    airline: showErrors && !leg.airline ? "Required" : undefined,
+    reservationNumber:
+      showErrors && !leg.reservationNumber ? "Required" : undefined,
+    plannedDepartureTime:
+      showErrors && !leg.plannedDepartureTime
+        ? "Required"
+        : departureTimeError,
+    plannedArrivalTime:
+      showErrors && !leg.plannedArrivalTime ? "Required" : timeError,
+  };
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Card

@@ -28,35 +28,35 @@ def _airport_timezone(iata, field_name):
         })
 
 
+def flight_time_as_airport_utc(data, time_field, airport_field):
+    airport_timezone = _airport_timezone(data[airport_field], airport_field)
+    flight_time = data[time_field]
+
+    local_time = datetime.combine(
+        flight_time.date(),
+        flight_time.time(),
+        airport_timezone,
+    )
+
+    return local_time.astimezone(timezone.utc)
+
+
 def validate_flight_times_in_airport_timezones(data):
-    departure_timezone = _airport_timezone(
-        data["departing_airport"],
+    departure_utc = flight_time_as_airport_utc(
+        data,
+        "planned_departure_time",
         "departing_airport",
     )
-    arrival_timezone = _airport_timezone(
-        data["destination_airport"],
+    arrival_utc = flight_time_as_airport_utc(
+        data,
+        "planned_arrival_time",
         "destination_airport",
     )
 
-    departure_time = data["planned_departure_time"]
-    arrival_time = data["planned_arrival_time"]
-
-    departure_local = datetime.combine(
-        departure_time.date(),
-        departure_time.time(),
-        departure_timezone,
-    )
-    arrival_local = datetime.combine(
-        arrival_time.date(),
-        arrival_time.time(),
-        arrival_timezone,
-    )
-
-    if arrival_local.astimezone(timezone.utc) <= departure_local.astimezone(timezone.utc):
+    if arrival_utc <= departure_utc:
         raise serializers.ValidationError({
             "planned_arrival_time": "Arrival date and time must be after departure date and time."
         })
-
 
 
 class FlightsSerializer(serializers.Serializer):

@@ -14,7 +14,7 @@ from user.models.users import User
 
 from ..models.passengers import Passenger
 from .disruption_serializer import DisruptionSerializer
-from .flights_serializer import FlightsSerializer, validate_flight_times_in_airport_timezones
+from .flights_serializer import FlightsSerializer, flight_time_as_airport_utc, validate_flight_times_in_airport_timezones
 
 from ..constants import MAX_FILE_SIZE, ALLOWED_EXTENSIONS, MAX_CONNECTION_FLIGHTS
 
@@ -116,6 +116,22 @@ class CaseCreationSerializer(serializers.Serializer):
             if connection_flights[i]["destination_airport"] != connection_flights[i + 1]["departing_airport"]:
                 raise serializers.ValidationError(
                         f"Connection flight {i + 1} destination must match connection flight {i + 2} departure airport."
+                )
+
+            current_arrival_utc = flight_time_as_airport_utc(
+                connection_flights[i],
+                "planned_arrival_time",
+                "destination_airport",
+            )
+            next_departure_utc = flight_time_as_airport_utc(
+                connection_flights[i + 1],
+                "planned_departure_time",
+                "departing_airport",
+            )
+
+            if next_departure_utc <= current_arrival_utc:
+                raise serializers.ValidationError(
+                    f"Connection flight {i + 2} departure date and time must be after connection flight {i + 1} arrival date and time."
                 )
 
         all_problem_flights = []

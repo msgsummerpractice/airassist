@@ -70,7 +70,33 @@ function FlightDetailsStep({
       : "Arrival date and time must be after departure date and time.";
   };
 
-  const isLegValid = (leg: Leg) =>
+  const getConnectionTimeError = (previousLeg: Leg | undefined, leg: Leg) => {
+    if (!previousLeg) {
+      return undefined;
+    }
+
+    const previousArrival = getAirportDateTime(
+      previousLeg.flightDate,
+      previousLeg.plannedArrivalTime,
+      previousLeg.arrivalTimezone,
+      previousLeg.nextDayArrival,
+    );
+    const departure = getAirportDateTime(
+      leg.flightDate,
+      leg.plannedDepartureTime,
+      leg.departureTimezone,
+    );
+
+    if (!previousArrival || !departure) {
+      return undefined;
+    }
+
+    return departure.isAfter(previousArrival)
+      ? undefined
+      : "Departure date and time must be after previous leg arrival date and time.";
+  };
+
+  const isLegValid = (leg: Leg, index: number) =>
     !!leg.flightDate &&
     !!leg.departureTimezone &&
     !!leg.arrivalTimezone &&
@@ -79,7 +105,8 @@ function FlightDetailsStep({
     !!leg.reservationNumber &&
     !!leg.plannedDepartureTime &&
     !!leg.plannedArrivalTime &&
-    !getLegTimeError(leg);
+    !getLegTimeError(leg) &&
+    !getConnectionTimeError(legs[index - 1], leg);
 
   const handleNext = () => {
     setSubmitted(true);
@@ -104,6 +131,7 @@ function FlightDetailsStep({
           </Typography>
           {legs.map((leg, i) => {
             const timeError = getLegTimeError(leg);
+            const departureTimeError = getConnectionTimeError(legs[i - 1], leg);
 
             return (
               <LegDetails
@@ -112,6 +140,7 @@ function FlightDetailsStep({
                 index={i}
                 showNextDayOption={!!getLegTimeError(leg, false)}
                 timeError={timeError}
+                departureTimeError={departureTimeError}
               onChange={(updated) =>
                 onLegsChange(
                   legs.map((leg, index) => (index === i ? updated : leg)),

@@ -329,6 +329,160 @@ class CaseCreationSerializerValidationTests(TestCase):
         self.assertFalse(s.is_valid())
         self.assertIn("connection_flights", s.errors)
 
+    def test_rejects_connection_flight_arrival_not_after_departure(self):
+        connection = [
+            {
+                "flight_number": "LH456",
+                "flight_date": "2026-08-03",
+                "airline": "Lufthansa",
+                "reservation_number": "ABC123",
+                "departing_airport": "OTP",
+                "destination_airport": "FRA",
+                "planned_departure_time": "2026-08-03T12:30:00Z",
+                "planned_arrival_time": "2026-08-03T09:00:00Z",
+                "is_problem_flight": True,
+                "is_main_flight": False,
+            }
+        ]
+
+        s = CaseCreationSerializer(
+            data=_build_serializer_payload(
+                is_problem_flight=False,
+                connection_flights=json.dumps(connection),
+            )
+        )
+
+        self.assertFalse(s.is_valid())
+        self.assertIn("connection_flights", s.errors)
+
+    def test_rejects_next_connection_departing_before_previous_arrival(self):
+        _create_airport("CDG", "Europe/Paris")
+        connection = [
+            {
+                "flight_number": "LH456",
+                "flight_date": "2026-08-03",
+                "airline": "Lufthansa",
+                "reservation_number": "ABC123",
+                "departing_airport": "OTP",
+                "destination_airport": "CDG",
+                "planned_departure_time": "2026-08-03T10:30:00Z",
+                "planned_arrival_time": "2026-08-03T12:00:00Z",
+                "is_problem_flight": False,
+                "is_main_flight": False,
+            },
+            {
+                "flight_number": "LH789",
+                "flight_date": "2026-08-03",
+                "airline": "Lufthansa",
+                "reservation_number": "ABC123",
+                "departing_airport": "CDG",
+                "destination_airport": "FRA",
+                "planned_departure_time": "2026-08-03T11:30:00Z",
+                "planned_arrival_time": "2026-08-03T13:00:00Z",
+                "is_problem_flight": True,
+                "is_main_flight": False,
+            },
+        ]
+
+        s = CaseCreationSerializer(
+            data=_build_serializer_payload(
+                is_problem_flight=False,
+                connection_flights=json.dumps(connection),
+            )
+        )
+
+        self.assertFalse(s.is_valid())
+        self.assertIn("non_field_errors", s.errors)
+
+    def test_rejects_frankfurt_connection_departing_before_cluj_arrival(self):
+        _create_airport("CLJ", "Europe/Bucharest")
+        _create_airport("JFK", "America/New_York")
+        connection = [
+            {
+                "flight_number": "111",
+                "flight_date": "2026-08-12",
+                "airline": "111",
+                "reservation_number": "111",
+                "departing_airport": "CLJ",
+                "destination_airport": "FRA",
+                "planned_departure_time": "2026-08-12T05:00:00",
+                "planned_arrival_time": "2026-08-12T06:00:00",
+                "is_problem_flight": False,
+                "is_main_flight": False,
+            },
+            {
+                "flight_number": "222",
+                "flight_date": "2026-08-12",
+                "airline": "222",
+                "reservation_number": "222",
+                "departing_airport": "FRA",
+                "destination_airport": "JFK",
+                "planned_departure_time": "2026-08-12T05:00:00",
+                "planned_arrival_time": "2026-08-12T06:00:00",
+                "is_problem_flight": True,
+                "is_main_flight": False,
+            },
+        ]
+
+        s = CaseCreationSerializer(
+            data=_build_serializer_payload(
+                departing_airport="CLJ",
+                destination_airport="JFK",
+                planned_departure_time="2026-08-12T05:00:00",
+                planned_arrival_time="2026-08-12T06:00:00",
+                is_problem_flight=False,
+                connection_flights=json.dumps(connection),
+            )
+        )
+
+        self.assertFalse(s.is_valid())
+        self.assertIn("non_field_errors", s.errors)
+
+    def test_rejects_paris_connection_departing_before_paris_arrival_same_day(self):
+        _create_airport("BCN", "Europe/Madrid")
+        _create_airport("BVA", "Europe/Paris")
+        _create_airport("MEX", "America/Mexico_City")
+        connection = [
+            {
+                "flight_number": "111",
+                "flight_date": "2026-08-12",
+                "airline": "111",
+                "reservation_number": "111",
+                "departing_airport": "BCN",
+                "destination_airport": "BVA",
+                "planned_departure_time": "2026-08-12T12:00:00",
+                "planned_arrival_time": "2026-08-12T14:00:00",
+                "is_problem_flight": False,
+                "is_main_flight": False,
+            },
+            {
+                "flight_number": "222",
+                "flight_date": "2026-08-12",
+                "airline": "222",
+                "reservation_number": "222",
+                "departing_airport": "BVA",
+                "destination_airport": "MEX",
+                "planned_departure_time": "2026-08-12T13:00:00",
+                "planned_arrival_time": "2026-08-12T13:00:00",
+                "is_problem_flight": True,
+                "is_main_flight": False,
+            },
+        ]
+
+        s = CaseCreationSerializer(
+            data=_build_serializer_payload(
+                departing_airport="BCN",
+                destination_airport="MEX",
+                planned_departure_time="2026-08-12T12:00:00",
+                planned_arrival_time="2026-08-12T13:00:00",
+                is_problem_flight=False,
+                connection_flights=json.dumps(connection),
+            )
+        )
+
+        self.assertFalse(s.is_valid())
+        self.assertIn("non_field_errors", s.errors)
+
 
 # ---------------------------------------------------------------------------
 # Case creation endpoint tests  POST /api/cases/
