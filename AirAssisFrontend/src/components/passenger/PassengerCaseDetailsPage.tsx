@@ -1076,25 +1076,35 @@ function PassengerCaseDetailsPage({
                           </TableHead>
                           <TableBody>
                             {details.documents.map((item) => (
-                              <TableRow
-                                key={item.id}
-                                sx={{
-                                  backgroundColor:
-                                    item.uploaded_by === "PASSENGER"
-                                      ? "rgba(27, 109, 36, 0.10)"
-                                      : item.uploaded_by === "COLLEAGUE"
-                                        ? "rgba(0, 49, 120, 0.10)"
-                                        : "transparent",
-                                }}
-                              >
+                              <TableRow key={item.id}>
                                 <TableCell>{item.filename}</TableCell>
                                 <TableCell>{item.document_type}</TableCell>
                                 <TableCell>
-                                  {item.uploaded_by === "PASSENGER"
-                                    ? "Passenger"
-                                    : item.uploaded_by === "COLLEAGUE"
-                                      ? "Colleague"
-                                      : "Unknown"}
+                                  <Chip
+                                    size="small"
+                                    label={
+                                      item.uploaded_by === "PASSENGER"
+                                        ? "Passenger"
+                                        : item.uploaded_by === "COLLEAGUE"
+                                          ? "Colleague"
+                                          : "Unknown"
+                                    }
+                                    sx={{
+                                      backgroundColor:
+                                        item.uploaded_by === "PASSENGER"
+                                          ? "rgba(27, 109, 36, 0.10)"
+                                          : item.uploaded_by === "COLLEAGUE"
+                                            ? "rgba(0, 49, 120, 0.10)"
+                                            : "transparent",
+                                      color:
+                                        item.uploaded_by === "PASSENGER"
+                                          ? "rgb(27, 109, 36)"
+                                          : item.uploaded_by === "COLLEAGUE"
+                                            ? "rgb(0, 49, 120)"
+                                            : "text.secondary",
+                                      fontWeight: 600,
+                                    }}
+                                  />
                                 </TableCell>
                                 <TableCell>
                                   {formatDateTime(item.uploaded_at)}
