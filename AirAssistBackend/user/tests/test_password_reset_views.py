@@ -73,6 +73,29 @@ class PasswordResetViewTests(TestCase):
         self.assertTrue(check_password("new-password-456", self.user.password))
         self.assertFalse(self.user.must_change_password)
 
+    def test_reset_password_rejects_same_as_current_password(self):
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+        response = self.client.post(
+            "/user/reset-password/",
+            data={
+                "uid": uid,
+                "token": token,
+                "new_password": "old-password-123",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["error"],
+            "New password cannot be the same as the current password.",
+        )
+        self.user.refresh_from_db()
+        self.assertTrue(check_password("old-password-123", self.user.password))
+        self.assertTrue(self.user.must_change_password)
+
     def test_reset_password_rejects_invalid_token(self):
         uid = urlsafe_base64_encode(force_bytes(self.user.pk))
 
