@@ -14,6 +14,7 @@ from django.core.mail import EmailMessage, get_connection
 from django.template.loader import render_to_string
 
 from system_options.services import SystemOptionService
+from case.models import Case
 
 
 SMTP_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -418,13 +419,26 @@ def send_case_status_update_email(passenger, case_id, case_status, note=""):
     }
     status_label = status_labels.get(
         case_status, case_status.replace("_", " ").title())
+    case = (
+        Case.objects.prefetch_related("flights")
+        .filter(id=case_id)
+        .first()
+    )
+    main_flight = None
+    if case is not None:
+        main_flight = next(
+            (flight for flight in case.flights.all() if flight.is_main_flight),
+            None,
+        )
+        if main_flight is None:
+            main_flight = case.flights.first()
     placeholder_values = {
         "case_number": case_id,
         "passenger_name": f"{passenger.first_name} {passenger.last_name}".strip(),
-        "flight_number": "",
+        "flight_number": main_flight.flight_number if main_flight else "",
         "organisation_name": email_preset.get("sender_name") or "AirAssist Team",
-        "departure_airport": "",
-        "arrival_airport": "",
+        "departure_airport": main_flight.departing_airport if main_flight else "",
+        "arrival_airport": main_flight.destination_airport if main_flight else "",
     }
     preset_subject = _render_preset_template(
         email_preset.get("subject_template", "Case Status Update"),
