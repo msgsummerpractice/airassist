@@ -93,6 +93,7 @@ type CaseDocument = {
   document_type: string;
   filename: string;
   uploaded_at: string;
+  uploaded_by?: "PASSENGER" | "COLLEAGUE" | null;
 };
 
 type CaseComment = {
@@ -1067,6 +1068,7 @@ function ColleagueCaseDetailsPage({
                             <TableRow>
                               <TableCell>Filename</TableCell>
                               <TableCell>Type</TableCell>
+                              <TableCell>Uploaded by</TableCell>
                               <TableCell>Upload Timestamp</TableCell>
                             </TableRow>
                           </TableHead>
@@ -1092,6 +1094,13 @@ function ColleagueCaseDetailsPage({
                                   </Tooltip>
                                 </TableCell>
                                 <TableCell>{item.document_type}</TableCell>
+                                <TableCell>
+                                  {item.uploaded_by === "PASSENGER"
+                                    ? "Passenger"
+                                    : item.uploaded_by === "COLLEAGUE"
+                                      ? "Colleague"
+                                      : "Unknown"}
+                                </TableCell>
                                 <TableCell>
                                   {formatDateTime(item.uploaded_at)}
                                 </TableCell>
