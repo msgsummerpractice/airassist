@@ -549,8 +549,6 @@ function PassengerCaseDetailsPage({
       <Box
         sx={{
           minHeight: "100vh",
-          px: { xs: 2, md: 4 },
-          py: { xs: 3, md: 5 },
           backgroundColor: "#ffffff",
         }}
       >
@@ -578,99 +576,106 @@ function PassengerCaseDetailsPage({
           ]}
         />
 
-        <Card
-          elevation={1}
+        <Box
           sx={{
             maxWidth: 1080,
             mx: "auto",
-            mt: 3,
-            border: "1px solid",
-            borderColor: "divider",
-            overflow: "hidden",
+            px: { xs: 2, md: 4 },
+            py: { xs: 3, md: 5 },
           }}
         >
-          <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-            <Box
-              sx={{
-                position: "relative",
-                mb: 3,
-                pb: { xs: 1, md: 0 },
-              }}
-            >
+          <Card
+            elevation={1}
+            sx={{
+              maxWidth: 1080,
+              mx: "auto",
+              border: "1px solid",
+              borderColor: "divider",
+              overflow: "hidden",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2, md: 4 } }}>
               <Box
                 sx={{
-                  width: "100%",
-                  textAlign: "center",
-                  px: { xs: 0, md: 10 },
+                  position: "relative",
+                  mb: 3,
+                  pb: { xs: 1, md: 0 },
                 }}
               >
-                <Typography variant="h2" sx={{ mt: 0.5 }}>
-                  Case Details
-                </Typography>
+                <Box
+                  sx={{
+                    width: "100%",
+                    textAlign: "center",
+                    px: { xs: 0, md: 10 },
+                  }}
+                >
+                  <Typography variant="h2" sx={{ mt: 0.5 }}>
+                    Case Details
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
 
-            <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
-              <Button variant="outlined" onClick={handleBack}>
-                Back
-              </Button>
-            </Stack>
+              <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
+                <Button variant="outlined" onClick={handleBack}>
+                  Back
+                </Button>
+              </Stack>
 
-            {errorMessage && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {errorMessage}
-              </Alert>
-            )}
+              {errorMessage && (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  {errorMessage}
+                </Alert>
+              )}
 
-            {isLoading ? (
-              <Box
-                sx={{
-                  py: 8,
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                <CircularProgress size={28} />
-                <Typography variant="body1" color="text.secondary">
-                  Loading case details...
-                </Typography>
-              </Box>
-            ) : !details ? (
-              <Box
-                sx={{
-                  py: 6,
-                  borderRadius: 2,
-                  border: "1px dashed",
-                  borderColor: "divider",
-                  textAlign: "center",
-                }}
-              >
-                <Typography variant="body1" color="text.secondary">
-                  No details available for this case.
-                </Typography>
-              </Box>
-            ) : (
-              <Stack spacing={3}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                      }}
-                    >
-                      <SummarizeOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                      <Typography variant="h5">Summary</Typography>
-                    </Box>
-                    <Stack
-                      direction={{ xs: "column", md: "row" }}
-                      spacing={2}
-                      sx={{ justifyContent: "space-between" }}
-                    >
+              {isLoading ? (
+                <Box
+                  sx={{
+                    py: 8,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <CircularProgress size={28} />
+                  <Typography variant="body1" color="text.secondary">
+                    Loading case details...
+                  </Typography>
+                </Box>
+              ) : !details ? (
+                <Box
+                  sx={{
+                    py: 6,
+                    borderRadius: 2,
+                    border: "1px dashed",
+                    borderColor: "divider",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="body1" color="text.secondary">
+                    No details available for this case.
+                  </Typography>
+                </Box>
+              ) : (
+                <Stack spacing={3}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 2,
+                        }}
+                      >
+                        <SummarizeOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                        <Typography variant="h5">Summary</Typography>
+                      </Box>
+                      <Stack
+                        direction={{ xs: "column", md: "row" }}
+                        spacing={2}
+                        sx={{ justifyContent: "space-between" }}
+                      >
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
@@ -711,37 +716,37 @@ function PassengerCaseDetailsPage({
                           Created: {formatDateTime(details.created_at)}
                         </Typography>
                       </Box>
-                    </Stack>
-                  </CardContent>
-                </Card>
+                      </Stack>
+                    </CardContent>
+                  </Card>
 
-                <Card variant="outlined">
-                  <CardContent>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                      }}
-                    >
-                      <FlightTakeoffOutlined
-                        sx={{ color: SECTION_ICON_COLOR }}
-                      />
-                      <Typography variant="h5">Flight details</Typography>
-                    </Box>
-                    {details.flight ? (
-                      <TableContainer>
-                        <Table
-                          size="small"
-                          sx={{
-                            "& td:first-of-type": {
-                              fontWeight: 400,
-                              width: "38%",
-                            },
-                            "& td:last-of-type": { pl: 2, fontWeight: 600 },
-                          }}
-                        >
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 2,
+                        }}
+                      >
+                        <FlightTakeoffOutlined
+                          sx={{ color: SECTION_ICON_COLOR }}
+                        />
+                        <Typography variant="h5">Flight details</Typography>
+                      </Box>
+                      {details.flight ? (
+                        <TableContainer>
+                          <Table
+                            size="small"
+                            sx={{
+                              "& td:first-of-type": {
+                                fontWeight: 400,
+                                width: "38%",
+                              },
+                              "& td:last-of-type": { pl: 2, fontWeight: 600 },
+                            }}
+                          >
                           <TableBody>
                             <TableRow>
                               <TableCell>Flight Date</TableCell>
@@ -1174,6 +1179,7 @@ function PassengerCaseDetailsPage({
             )}
           </CardContent>
         </Card>
+      </Box>
       </Box>
       <DeleteDocumentDialog
         document={documentToDelete}
