@@ -21,3 +21,6 @@ tzdata==2026.3
 urllib3==2.7.0
 vcs-versioning==2.2.4
 wrapt==2.3.0
+Pillow==12.3.0
+pytesseract==0.3.13
+mrz==0.6.2

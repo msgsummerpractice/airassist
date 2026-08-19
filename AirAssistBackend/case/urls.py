@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from .views.passport_scan_view import PassportScanView
+
 from .views.case_status_update_view import CaseStatusUpdateView
 from .views.case_contract_download_view import CaseContractDownloadView
 
@@ -98,4 +100,5 @@ urlpatterns = [
           ColleagueCaseConversationReopenView.as_view(),
           name="colleague-case-conversation-reopen",
      ),
+     path("cases/passport-scan/", PassportScanView.as_view(), name="passport-scan"),
 ]
