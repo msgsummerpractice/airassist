@@ -34,25 +34,26 @@ import {
   SummarizeOutlined,
   UploadFileOutlined,
 } from "@mui/icons-material";
+import {
+  createCaseComment,
+  downloadCaseDocument,
+  uploadCaseDocument,
+  type CaseApiError,
+} from "../cases/api";
+import CommentsCard from "../cases/shared/cards/CommentsCard";
 import PortalUserHeader from "../portal/PortalUserHeader";
+import { AppSnackbar } from "../utils/app_snackbar";
+import { useAppSnackbar } from "../utils/use_app_snackbar";
+import { validateDocumentFile } from "../wizard/utils/documentUploadStepValidation";
 import { getStoredUserIdentity } from "../../utils/auth";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
-import { createCaseComment, type CaseApiError } from "../cases/api";
-import CommentsCard from "../cases/shared/cards/CommentsCard";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
 const COMMENT_MAX_LENGTH = 1000;
 const SECTION_ICON_COLOR = "#003178";
-const DOCUMENT_TYPE_OPTIONS = [
-  "TICKET",
-  "BOARDING_PASS",
-  "AIRLINE_RECEIPT",
-  "PROOF_OF_PAYMENT",
-  "ID_DOCUMENT",
-  "OTHER",
-];
+const DOCUMENT_TYPE_OPTIONS = ["BOARDING_PASS", "PASSPORT", "CONTRACT"];
 
 type FlightDetails = {
   flight_date: string;
@@ -81,7 +82,7 @@ type CaseDocument = {
   filename: string;
   uploaded_at: string;
   uploaded_by?: "PASSENGER" | "COLLEAGUE" | null;
-  download_url?: string;
+  download_url?: string | null;
 };
 
 type CaseComment = {
@@ -99,10 +100,12 @@ type PassengerCaseDetails = {
   connecting_flights: FlightDetails[];
   passenger: PassengerDetails | null;
   documents: CaseDocument[];
+  can_upload_documents?: boolean;
+  conversation_status?: "OPEN" | "CLOSED";
+  conversation_closed_at?: string | null;
   comments?: CaseComment[];
   created_at: string;
   updated_at: string;
-  can_upload_documents?: boolean;
 };
 
 type PassengerCaseDetailsPageProps = {
@@ -147,24 +150,23 @@ function PassengerCaseDetailsPage({
   const navigate = useNavigate();
   const { caseId: routeCaseId } = useParams();
   const currentUser = getStoredUserIdentity();
+  const { snackbar, closeSnackbar, showSuccessSnackbar } = useAppSnackbar();
 
   const [details, setDetails] = useState<PassengerCaseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  const [commentText, setCommentText] = useState("");
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [commentSubmitError, setCommentSubmitError] = useState("");
-  const [commentSubmitSuccess, setCommentSubmitSuccess] = useState("");
-
-  // Document upload states
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [documentType, setDocumentType] = useState("");
-  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
+  const [documentType, setDocumentType] = useState("BOARDING_PASS");
   const [documentError, setDocumentError] = useState("");
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
   const [isDraggingOverDropzone, setIsDraggingOverDropzone] = useState(false);
   const [downloadingDocumentId, setDownloadingDocumentId] = useState<
     number | null
   >(null);
+  const [commentText, setCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentSubmitError, setCommentSubmitError] = useState("");
+  const [commentSubmitSuccess, setCommentSubmitSuccess] = useState("");
 
   const resolvedCaseId = useMemo(() => {
     if (typeof caseId === "number" && Number.isInteger(caseId)) {
@@ -188,10 +190,7 @@ function PassengerCaseDetailsPage({
   };
 
   const normalizedCommentText = commentText.trim();
-  const canSubmitComment =
-    normalizedCommentText.length > 0 &&
-    normalizedCommentText.length <= COMMENT_MAX_LENGTH &&
-    !isSubmittingComment;
+  const conversationStatus = details?.conversation_status ?? "OPEN";
 
   const getAccessToken = useCallback(() => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -230,10 +229,10 @@ function PassengerCaseDetailsPage({
     return fallbackFilename;
   };
 
-  const handleDocumentFileChange = (file: File | null) => {
+  const handleDocumentFileChange = useCallback((file: File | null) => {
     setSelectedFile(file);
     setDocumentError(file ? validateDocumentFile(file) : "");
-  };
+  }, []);
 
   const fetchDetails = useCallback(async () => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -358,37 +357,11 @@ function PassengerCaseDetailsPage({
     }
   }, [fetchDetails, normalizedCommentText, onUnauthorized, resolvedCaseId]);
 
-  const handleDocumentFileChange = useCallback((file: File | null) => {
-    if (file) {
-      const validTypes = ["application/pdf", "image/jpeg"];
-      const validExtensions = [".pdf", ".jpg", ".jpeg"];
-      const hasValidType = validTypes.includes(file.type);
-      const hasValidExtension = validExtensions.some((ext) =>
-        file.name.toLowerCase().endsWith(ext),
-      );
-
-      if (!hasValidType && !hasValidExtension) {
-        setDocumentError("Only PDF and JPEG files are allowed.");
-        setSelectedFile(null);
-        return;
-      }
-
-      setSelectedFile(file);
-      setDocumentError("");
-    } else {
-      setSelectedFile(null);
-    }
-  }, []);
-
   const uploadDocument = useCallback(async () => {
-    if (!selectedFile || !documentType) {
-      setDocumentError("Please select both a file and document type.");
-      return;
-    }
+    const validationError = validateDocumentFile(selectedFile);
 
-    const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-    if (!accessToken) {
-      onUnauthorized?.();
+    if (validationError || !selectedFile) {
+      setDocumentError(validationError);
       return;
     }
 
@@ -397,169 +370,188 @@ function PassengerCaseDetailsPage({
       return;
     }
 
-    setIsUploadingDocument(true);
     setDocumentError("");
+    setIsUploadingDocument(true);
 
     try {
-      const formData = new FormData();
-      formData.append("document_type", documentType);
-      formData.append("file", selectedFile);
+      const payload = await uploadCaseDocument({
+        scope: "passenger",
+        caseId: resolvedCaseId,
+        file: selectedFile,
+        documentType,
+        accessToken: getAccessToken(),
+      });
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/cases/me/${resolvedCaseId}/documents/`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: formData,
-        },
-      );
-
-      if (response.status === 401 || response.status === 403) {
+      setSelectedFile(null);
+      setDocumentType("BOARDING_PASS");
+      showSuccessSnackbar(payload.message || "Document uploaded successfully.");
+      await fetchDetails();
+    } catch (error) {
+      const apiError = error as Partial<CaseApiError>;
+      if (apiError.status === 401 || apiError.status === 403) {
         onUnauthorized?.();
         return;
       }
 
-      if (!response.ok) {
-        const responseText = await response.text();
-        throw new Error(responseText || "Could not upload document.");
-      }
-
-      setSelectedFile(null);
-      setDocumentType("");
-      await fetchDetails();
-    } catch (error) {
-      if (error instanceof Error) {
-        setDocumentError(error.message);
-      } else {
-        setDocumentError("Could not upload document.");
-      }
+      setDocumentError(
+        error instanceof Error ? error.message : "Could not upload document.",
+      );
     } finally {
       setIsUploadingDocument(false);
     }
   }, [
-    selectedFile,
     documentType,
-    resolvedCaseId,
-    onUnauthorized,
     fetchDetails,
+    getAccessToken,
+    onUnauthorized,
+    resolvedCaseId,
+    selectedFile,
+    showSuccessSnackbar,
   ]);
 
   const downloadDocument = useCallback(
-    async (item: CaseDocument) => {
-      const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-      if (!accessToken) {
-        onUnauthorized?.();
+    async (documentItem: CaseDocument) => {
+      if (resolvedCaseId === null) {
+        setDocumentError("Invalid case id.");
         return;
       }
 
-      setDownloadingDocumentId(item.id);
+      setDocumentError("");
+      setDownloadingDocumentId(documentItem.id);
 
       try {
-        const response = await fetch(item.download_url || "", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = documentItem.download_url
+          ? await fetch(
+              documentItem.download_url.startsWith("http")
+                ? documentItem.download_url
+                : `${API_BASE_URL}${documentItem.download_url}`,
+              {
+                method: "GET",
+                headers: {
+                  Authorization: `Bearer ${getAccessToken()}`,
+                },
+              },
+            )
+          : await downloadCaseDocument({
+              scope: "passenger",
+              caseId: resolvedCaseId,
+              documentId: documentItem.id,
+              accessToken: getAccessToken(),
+            });
+
+        if (response.status === 401 || response.status === 403) {
+          onUnauthorized?.();
+          return;
+        }
 
         if (!response.ok) {
-          throw new Error("Failed to download document.");
+          throw new Error("Could not download document.");
         }
 
         const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = item.filename;
+        const objectUrl = window.URL.createObjectURL(blob);
+        const link = window.document.createElement("a");
+        link.href = objectUrl;
+        link.download = parseDownloadFilename(
+          response.headers.get("Content-Disposition"),
+          documentItem.filename,
+        );
+        window.document.body.appendChild(link);
         link.click();
-        URL.revokeObjectURL(url);
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        showSuccessSnackbar("Document downloaded successfully.");
       } catch (error) {
+        const apiError = error as Partial<CaseApiError>;
+        if (apiError.status === 401 || apiError.status === 403) {
+          onUnauthorized?.();
+          return;
+        }
+
         setDocumentError(
           error instanceof Error
             ? error.message
-            : "Failed to download document.",
+            : "Could not download document.",
         );
       } finally {
         setDownloadingDocumentId(null);
       }
     },
-    [onUnauthorized],
+    [getAccessToken, onUnauthorized, resolvedCaseId, showSuccessSnackbar],
   );
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        px: { xs: 2, md: 4 },
-        py: { xs: 3, md: 5 },
-        backgroundColor: "#ffffff",
-      }}
-    >
-      <PortalUserHeader
-        name={currentUser.name}
-        email={currentUser.email}
-        roleLabel={currentUser.roleLabel}
-        logoutAction={{
-          label: "Log Out",
-          icon: <LogoutOutlined fontSize="small" />,
-          onClick: onLogout,
-        }}
-        actions={[
-          {
-            label: "My Cases",
-            active: true,
-            icon: <AssignmentTurnedInOutlined fontSize="small" />,
-            onClick: () => navigate("/passenger-cases"),
-          },
-          {
-            label: "New Claim",
-            icon: <AddTaskOutlined fontSize="small" />,
-            onClick: () => navigate("/case-entry"),
-          },
-        ]}
+    <>
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
       />
-
-      <Card
-        elevation={1}
+      <Box
         sx={{
-          maxWidth: 1080,
-          mx: "auto",
-          mt: 3,
-          border: "1px solid",
-          borderColor: "divider",
-          overflow: "hidden",
+          minHeight: "100vh",
+          px: { xs: 2, md: 4 },
+          py: { xs: 3, md: 5 },
+          backgroundColor: "#ffffff",
         }}
       >
-        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-          <Box
-            sx={{
-              position: "relative",
-              mb: 3,
-              pb: { xs: 1, md: 0 },
-            }}
-          >
+        <PortalUserHeader
+          name={currentUser.name}
+          email={currentUser.email}
+          roleLabel={currentUser.roleLabel}
+          logoutAction={{
+            label: "Log Out",
+            icon: <LogoutOutlined fontSize="small" />,
+            onClick: onLogout,
+          }}
+          actions={[
+            {
+              label: "My Cases",
+              active: true,
+              icon: <AssignmentTurnedInOutlined fontSize="small" />,
+              onClick: () => navigate("/passenger-cases"),
+            },
+            {
+              label: "New Claim",
+              icon: <AddTaskOutlined fontSize="small" />,
+              onClick: () => navigate("/case-entry"),
+            },
+          ]}
+        />
+
+        <Card
+          elevation={1}
+          sx={{
+            maxWidth: 1080,
+            mx: "auto",
+            mt: 3,
+            border: "1px solid",
+            borderColor: "divider",
+            overflow: "hidden",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, md: 4 } }}>
             <Box
               sx={{
-                width: "100%",
-                textAlign: "center",
-                px: { xs: 0, md: 10 },
+                position: "relative",
+                mb: 3,
+                pb: { xs: 1, md: 0 },
               }}
             >
-              <Typography variant="caption" color="secondary.main">
-                AIRASSIST PORTAL
-              </Typography>
-              <Typography variant="h2" sx={{ mt: 0.5 }}>
-                Case Details
-              </Typography>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
+              <Box
+                sx={{
+                  width: "100%",
+                  textAlign: "center",
+                  px: { xs: 0, md: 10 },
+                }}
               >
-                Review flight, passenger, and attached documents for this case.
-              </Typography>
+            
+                <Typography variant="h2" sx={{ mt: 0.5 }}>
+                  Case Details
+                </Typography>
+               
+              </Box>
             </Box>
 
             <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
@@ -648,12 +640,8 @@ function PassengerCaseDetailsPage({
                         <Typography variant="body1">Status:</Typography>
                         <Chip
                           size="small"
-                          label={
-                            getCaseStatusPresentation(details.status).label
-                          }
-                          color={
-                            getCaseStatusPresentation(details.status).color
-                          }
+                          label={getCaseStatusPresentation(details.status).label}
+                          color={getCaseStatusPresentation(details.status).color}
                           sx={getCaseStatusPresentation(details.status).sx}
                           variant="outlined"
                         />
@@ -786,9 +774,7 @@ function PassengerCaseDetailsPage({
                           </TableHead>
                           <TableBody>
                             {details.connecting_flights.map((flight, index) => (
-                              <TableRow
-                                key={`${flight.flight_number}-${index}`}
-                              >
+                              <TableRow key={`${flight.flight_number}-${index}`}>
                                 <TableCell>
                                   {formatDate(flight.flight_date)}
                                 </TableCell>
@@ -900,43 +886,7 @@ function PassengerCaseDetailsPage({
                       </Typography>
                     </Box>
 
-                    {details.can_upload_documents && (
-                      <Box
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          setIsDraggingOverDropzone(true);
-                        }}
-                        onDragLeave={() => setIsDraggingOverDropzone(false)}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          setIsDraggingOverDropzone(false);
-                          handleDocumentFileChange(
-                            event.dataTransfer.files?.[0] ?? null,
-                          );
-                        }}
-                        sx={{
-                          border: "1px dashed",
-                          borderColor: isDraggingOverDropzone
-                            ? "primary.main"
-                            : "divider",
-                          borderRadius: 2,
-                          p: 2,
-                          mb: 2,
-                          backgroundColor: isDraggingOverDropzone
-                            ? "rgba(0, 49, 120, 0.04)"
-                            : "transparent",
-                          textAlign: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 1.5 }}
-                        >
-                          Drag and drop a file here, or browse from your
-                          computer.
-                        </Typography>
-                      </Box>
+                    {details.can_upload_documents ? (
                       <Box
                         onDragOver={(event) => {
                           event.preventDefault();
@@ -986,9 +936,7 @@ function PassengerCaseDetailsPage({
                             startIcon={<UploadFileOutlined />}
                             disabled={isUploadingDocument}
                           >
-                            {selectedFile
-                              ? selectedFile.name
-                              : "Choose Document"}
+                            {selectedFile ? selectedFile.name : "Choose Document"}
                             <input
                               hidden
                               type="file"
@@ -1033,84 +981,12 @@ function PassengerCaseDetailsPage({
                           </Button>
                         </Stack>
                       </Box>
-                      {documentError && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                          {documentError}
-                        </Alert>
-                      )}
-                      {details.documents.length === 0 ? (
-                        <Typography variant="body1" color="text.secondary">
-                          No documents attached.
-                        </Typography>
-                      ) : (
-                        <TableContainer>
-                          <Table size="small">
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>Filename</TableCell>
-                                <TableCell>Type</TableCell>
-                                <TableCell>Uploaded by</TableCell>
-                                <TableCell>Upload Timestamp</TableCell>
-                                <TableCell align="center">Download</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {details.documents.map((item) => (
-                                <TableRow key={item.id}>
-                                  <TableCell>{item.filename}</TableCell>
-                                  <TableCell>{item.document_type}</TableCell>
-                                  <TableCell>
-                                    {item.uploaded_by === "PASSENGER"
-                                      ? "Passenger"
-                                      : item.uploaded_by === "COLLEAGUE"
-                                        ? "Colleague"
-                                        : "Unknown"}
-                                  </TableCell>
-                                  <TableCell>
-                                    {formatDateTime(item.uploaded_at)}
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <Button
-                                      size="small"
-                                      variant="text"
-                                      startIcon={<DownloadOutlined />}
-                                      onClick={() =>
-                                        void downloadDocument(item)
-                                      }
-                                      disabled={
-                                        downloadingDocumentId === item.id
-                                      }
-                                    >
-                                      {downloadingDocumentId === item.id
-                                        ? "Downloading..."
-                                        : ""}
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </Select>
-                          </FormControl>
-                          <Button
-                            variant="contained"
-                            onClick={() => void uploadDocument()}
-                            disabled={
-                              !selectedFile ||
-                              Boolean(documentError) ||
-                              isUploadingDocument
-                            }
-                          >
-                            {isUploadingDocument ? "Uploading..." : "Upload"}
-                          </Button>
-                        </Stack>
-                      </Box>
-                    )}
-
-                    {details.can_upload_documents === false && (
+                    ) : details.can_upload_documents === false ? (
                       <Alert severity="info" sx={{ mb: 2 }}>
                         Document uploads are available after the colleague
                         requests additional documents.
                       </Alert>
-                    )}
+                    ) : null}
 
                     {documentError && (
                       <Alert severity="error" sx={{ mb: 2 }}>
@@ -1122,162 +998,6 @@ function PassengerCaseDetailsPage({
                       <Typography variant="body1" color="text.secondary">
                         No documents attached.
                       </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-
-              <Card variant="outlined">
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <FlightTakeoffOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                    <Typography variant="h5">Flight details</Typography>
-                  </Box>
-                  {details.flight ? (
-                    <TableContainer>
-                      <Table
-                        size="small"
-                        sx={{
-                          "& td:first-of-type": {
-                            fontWeight: 400,
-                            width: "38%",
-                          },
-                          "& td:last-of-type": { pl: 2 },
-                        }}
-                      >
-                        <AddCommentOutlined
-                          sx={{ color: SECTION_ICON_COLOR }}
-                        />
-                        <Typography variant="h5">Add Comment</Typography>
-                      </Box>
-
-                      <TextField
-                        fullWidth
-                        multiline
-                        minRows={5}
-                        maxRows={12}
-                        value={commentText}
-                        onChange={(event) => {
-                          setCommentText(event.target.value);
-                          if (commentSubmitError) {
-                            setCommentSubmitError("");
-                          }
-                          if (commentSubmitSuccess) {
-                            setCommentSubmitSuccess("");
-                          }
-                        }}
-                        placeholder="Add your additional information or question here..."
-                        slotProps={{
-                          htmlInput: { maxLength: COMMENT_MAX_LENGTH },
-                        }}
-                      />
-
-                      <Stack
-                        direction={{ xs: "column", sm: "row" }}
-                        spacing={1.5}
-                        sx={{ mt: 1.5, alignItems: { sm: "center" } }}
-                        <TableBody>
-                          <TableRow>
-                            <TableCell>Flight date</TableCell>
-                            <TableCell>
-                              {formatDate(details.flight.flight_date)}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Flight Nr.</TableCell>
-                            <TableCell>
-                              {details.flight.flight_number}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Airline</TableCell>
-                            <TableCell>{details.flight.airline}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Reservation Number</TableCell>
-                            <TableCell>
-                              {details.flight.reservation_number}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Departing Airport</TableCell>
-                            <TableCell>
-                              {details.flight.departing_airport}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Destination Airport</TableCell>
-                            <TableCell>
-                              {details.flight.destination_airport}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Planned Departure Time</TableCell>
-                            <TableCell>
-                              {details.flight.planned_departure_time}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Planned Arrival Time</TableCell>
-                            <TableCell>
-                              {details.flight.planned_arrival_time}
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ) : (
-                    <Typography variant="body1" color="text.secondary">
-                      Main flight details are not available.
-                    </Typography>
-                  )}
-
-                  <Divider sx={{ my: 2 }} />
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 1,
-                    }}
-                  >
-                    <HubOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                    <Typography variant="h6">Connecting Flights</Typography>
-                  </Box>
-                  {details.connecting_flights.length === 0 ? (
-                    <Typography variant="body1" color="text.secondary">
-                      None
-                    </Typography>
-                  ) : (
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Flight Date</TableCell>
-                            <TableCell>Flight Nr.</TableCell>
-                            <TableCell>From</TableCell>
-                            <TableCell>To</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {details.connecting_flights.map((flight, index) => (
-                            <TableRow key={`${flight.flight_number}-${index}`}>
-                              <TableCell>
-                                {formatDate(flight.flight_date)}
-                              </TableCell>
-                              <TableCell>{flight.flight_number}</TableCell>
-                              <TableCell>{flight.departing_airport}</TableCell>
-                              <TableCell>
-                                {flight.destination_airport}
-                              </TableCell>
                     ) : (
                       <TableContainer>
                         <Table size="small">
@@ -1315,7 +1035,7 @@ function PassengerCaseDetailsPage({
                                   >
                                     {downloadingDocumentId === item.id
                                       ? "Downloading..."
-                                      : ""}
+                                      : "Download"}
                                   </Button>
                                 </TableCell>
                               </TableRow>
@@ -1344,13 +1064,30 @@ function PassengerCaseDetailsPage({
                       setCommentSubmitSuccess("");
                     }
                   }}
+                  disabled={conversationStatus === "CLOSED"}
+                  disabledMessage={
+                    conversationStatus === "CLOSED"
+                      ? [
+                          "This conversation is closed by the colleague.",
+                          "You can view existing messages, but cannot add new comments.",
+                        ].join(" ")
+                      : undefined
+                  }
+                  headerAction={
+                    <Chip
+                      size="small"
+                      label={conversationStatus}
+                      color={conversationStatus === "OPEN" ? "success" : "default"}
+                      variant="outlined"
+                    />
+                  }
                 />
               </Stack>
             )}
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    </>
   );
 }
 

@@ -45,150 +45,152 @@ function PortalUserHeader({
   authAction,
   logoutAction,
 }: PortalUserHeaderProps) {
-  const navigationActions = [...actions].sort(
-    (firstAction, secondAction) =>
-      Number(Boolean(secondAction.active)) -
-      Number(Boolean(firstAction.active)),
-  );
-
   const accountAction = logoutAction ?? authAction;
 
   return (
-  <Box
-    sx={{
-      position: "sticky",
-      top: 0,
-      zIndex: 20,
-      width: "100%",
-      backgroundColor: "#ffffff",
-      borderBottom: "1px solid",
-      borderColor: "divider",
-      boxShadow: "0 6px 20px rgba(18, 28, 42, 0.04)",
-      backdropFilter: "blur(10px)",
-    }}
-  >
     <Box
       sx={{
+        position: "sticky",
+        top: 0,
+        zIndex: 20,
         width: "100%",
-        px: { xs: 2, md: 5 },
-        py: { xs: 2, md: 2.5 },
+        backgroundColor: "#ffffff",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        boxShadow: "0 6px 20px rgba(18, 28, 42, 0.04)",
+        backdropFilter: "blur(10px)",
       }}
     >
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            lg: "auto minmax(0, 1fr) auto",
-          },
-          gap: { xs: 2, lg: 4 },
-          alignItems: "center",
           width: "100%",
+          px: { xs: 2, md: 5 },
+          py: { xs: 2, md: 2.5 },
         }}
       >
-        <Stack spacing={0.25}>
-          <Typography variant="h2" sx={{ color: "primary.main" }}>
-            {title}
-          </Typography>
-
-          <Typography variant="caption" color="text.secondary">
-            {roleLabel}
-          </Typography>
-        </Stack>
-
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={{ xs: 1, md: 2 }}
+        <Box
           sx={{
-            width: "100%",
-            flexWrap: "wrap",
-            justifyContent: {
-              xs: "flex-start",
-              lg: "space-evenly",
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              lg: "auto minmax(0, 1fr) auto",
             },
-          }}
-        >
-          {navigationActions.map((action) => (
-            <Button
-              key={action.label}
-              variant={action.active ? "contained" : "text"}
-              color={action.active ? "primary" : "inherit"}
-              startIcon={action.icon}
-              onClick={action.onClick}
-              sx={{
-                minHeight: 46,
-                px: { xs: 2, md: 2.5 },
-                justifyContent: "center",
-                color: action.active
-                  ? "primary.contrastText"
-                  : "text.primary",
-              }}
-            >
-              {action.label}
-            </Button>
-          ))}
-        </Stack>
-
-        <Stack
-          direction="row"
-          spacing={{ xs: 2, md: 3 }}
-          sx={{
-            justifySelf: { xs: "stretch", lg: "end" },
-            justifyContent: { xs: "space-between", sm: "flex-end" },
+            gap: { xs: 2, lg: 4 },
             alignItems: "center",
+            width: "100%",
           }}
         >
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <Stack spacing={0.15} sx={{ textAlign: "right" }}>
-              <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                {name}
-              </Typography>
-
-              <Typography variant="caption" color="text.secondary">
-                {email}
-              </Typography>
-            </Stack>
-
-            <Avatar
+          <Stack spacing={0.25}>
+            <Box
+              component="img"
+              src="/air-assist-logo.svg"
+              alt={title}
               sx={{
-                width: 42,
-                height: 42,
-                bgcolor: "rgba(0, 49, 120, 0.08)",
-                color: "primary.main",
+                display: "block",
+                width: { xs: 220, md: 280 },
+                maxWidth: "100%",
+                height: "auto",
               }}
-            >
-              {name === "Guest" ? (
-                <PersonOutlineOutlinedIcon fontSize="small" />
-              ) : (
-                getAvatarLabel(name)
-              )}
-            </Avatar>
+            />
+
+            <Typography variant="caption" color="text.secondary">
+              {roleLabel}
+            </Typography>
           </Stack>
 
-          {accountAction ? (
-            <Button
-              key={accountAction.label}
-              variant={accountAction.active ? "contained" : "text"}
-              color={accountAction.active ? "primary" : "inherit"}
-              startIcon={accountAction.icon}
-              onClick={accountAction.onClick}
-              sx={{
-                minHeight: 46,
-                px: { xs: 2, md: 2.5 },
-                justifyContent: "center",
-                color: accountAction.active
-                  ? "primary.contrastText"
-                  : "text.primary",
-              }}
-            >
-              {accountAction.label}
-            </Button>
-          ) : null}
-        </Stack>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={{ xs: 1, md: 2 }}
+            sx={{
+              width: "100%",
+              flexWrap: "wrap",
+              justifyContent: {
+                xs: "flex-start",
+                lg: "space-evenly",
+              },
+            }}
+          >
+            {actions.map((action) => (
+              <Button
+                key={action.label}
+                variant={action.active ? "contained" : "text"}
+                color={action.active ? "primary" : "inherit"}
+                startIcon={action.icon}
+                onClick={action.onClick}
+                sx={{
+                  minHeight: 46,
+                  px: { xs: 2, md: 2.5 },
+                  justifyContent: "center",
+                  color: action.active
+                    ? "primary.contrastText"
+                    : "text.primary",
+                }}
+              >
+                {action.label}
+              </Button>
+            ))}
+          </Stack>
+
+          <Stack
+            direction="row"
+            spacing={{ xs: 2, md: 3 }}
+            sx={{
+              justifySelf: { xs: "stretch", lg: "end" },
+              justifyContent: { xs: "space-between", sm: "flex-end" },
+              alignItems: "center",
+            }}
+          >
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <Stack spacing={0.15} sx={{ textAlign: "right" }}>
+                <Typography variant="body1" sx={{ fontWeight: 700 }}>
+                  {name}
+                </Typography>
+
+                <Typography variant="caption" color="text.secondary">
+                  {email}
+                </Typography>
+              </Stack>
+
+              <Avatar
+                sx={{
+                  width: 42,
+                  height: 42,
+                  bgcolor: "rgba(0, 49, 120, 0.08)",
+                  color: "primary.main",
+                }}
+              >
+                {name === "Guest" ? (
+                  <PersonOutlineOutlinedIcon fontSize="small" />
+                ) : (
+                  getAvatarLabel(name)
+                )}
+              </Avatar>
+            </Stack>
+
+            {accountAction ? (
+              <Button
+                key={accountAction.label}
+                variant={accountAction.active ? "contained" : "text"}
+                color={accountAction.active ? "primary" : "inherit"}
+                startIcon={accountAction.icon}
+                onClick={accountAction.onClick}
+                sx={{
+                  minHeight: 46,
+                  px: { xs: 2, md: 2.5 },
+                  justifyContent: "center",
+                  color: accountAction.active
+                    ? "primary.contrastText"
+                    : "text.primary",
+                }}
+              >
+                {accountAction.label}
+              </Button>
+            ) : null}
+          </Stack>
+        </Box>
       </Box>
     </Box>
-  </Box>
-);
+  );
 }
 
 export type { PortalUserHeaderAction };
