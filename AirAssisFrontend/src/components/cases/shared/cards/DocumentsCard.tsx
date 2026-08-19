@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Alert,
   Button,
+  Chip,
   FormControl,
   InputLabel,
   Link,
@@ -258,11 +259,31 @@ function DocumentsCard({
                   </TableCell>
                   <TableCell>{document.document_type}</TableCell>
                   <TableCell>
-                    {document.uploaded_by === "PASSENGER"
-                      ? "Passenger"
-                      : document.uploaded_by === "COLLEAGUE"
-                        ? "Colleague"
-                        : "Unknown"}
+                    <Chip
+                      size="small"
+                      label={
+                        document.uploaded_by === "PASSENGER"
+                          ? "Passenger"
+                          : document.uploaded_by === "COLLEAGUE"
+                            ? "Colleague"
+                            : "Unknown"
+                      }
+                      sx={{
+                        backgroundColor:
+                          document.uploaded_by === "PASSENGER"
+                            ? "rgba(27, 109, 36, 0.10)"
+                            : document.uploaded_by === "COLLEAGUE"
+                              ? "rgba(0, 49, 120, 0.10)"
+                              : "transparent",
+                        color:
+                          document.uploaded_by === "PASSENGER"
+                            ? "rgb(27, 109, 36)"
+                            : document.uploaded_by === "COLLEAGUE"
+                              ? "rgb(0, 49, 120)"
+                              : "text.secondary",
+                        fontWeight: 600,
+                      }}
+                    />
                   </TableCell>
                   <TableCell>{formatDateTime(document.uploaded_at)}</TableCell>
                   {canManageDocuments && (
