@@ -40,7 +40,6 @@ function PortalUserHeader({
   title = "AIR-ASSIST.EU",
   name,
   email,
-  roleLabel,
   actions,
   authAction,
   logoutAction,
@@ -94,24 +93,20 @@ function PortalUserHeader({
                 objectPosition: "left center",
               }}
             />
-
-            <Typography variant="caption" color="text.secondary">
-              {roleLabel}
-            </Typography>
           </Stack>
 
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            spacing={{ xs: 1, md: 2 }}
+            spacing={{ xs: 1.5, md: 3 }}
             sx={{
               width: "100%",
               flexWrap: "wrap",
               justifyContent: {
-                xs: "flex-start",
-                lg: "flex-start",
+                xs: "center",
+                lg: "center",
               },
               alignItems: "center",
-              pl: { lg: 2 },
+              px: { lg: 3 },
             }}
           >
             {actions.map((action) => (
