@@ -22,7 +22,7 @@ class CaseContractService:
     }
 
     @staticmethod
-    def generate_for_case(case):
+    def generate_for_case(case, uploaded_by=None):
         existing_contract = case.documents.filter(
             document_type=DocumentType.CONTRACT.value,
         ).order_by("-uploaded_at").first()
@@ -53,6 +53,7 @@ class CaseContractService:
             return CaseDocument.objects.create(
                 case=case,
                 document_type=DocumentType.CONTRACT.value,
+                uploaded_by=uploaded_by,
                 file=contract_file,
                 original_filename=file_name,
                 content_type="application/pdf",
