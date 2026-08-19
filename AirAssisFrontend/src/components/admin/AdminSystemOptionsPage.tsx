@@ -4,6 +4,8 @@ import {
   CheckBoxOutlineBlankOutlined as UncheckedIcon,
   CheckBoxOutlined as CheckedIcon,
   DescriptionOutlined as DescriptionIcon,
+  FolderOutlined as FolderIcon,
+  GroupOutlined as GroupIcon,
   LogoutOutlined as LogoutOutlinedIcon,
   MailOutlineOutlined as MailIcon,
   SaveOutlined as SaveIcon,
@@ -256,6 +258,16 @@ function AdminSystemOptionsPage() {
           onClick: handleLogout,
         }}
         actions={[
+          {
+            label: "User View",
+            icon: <GroupIcon fontSize="small" />,
+            onClick: () => navigate("/admin/users"),
+          },
+          {
+            label: "Case View",
+            icon: <FolderIcon fontSize="small" />,
+            onClick: () => navigate("/admin/cases"),
+          },
           {
             label: "System Options",
             active: true,
