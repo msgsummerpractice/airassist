@@ -225,6 +225,38 @@ export const downloadCaseDocument = async ({
   return response;
 };
 
+export const deleteCaseDocument = async ({
+  scope = "colleague",
+  caseId,
+  documentId,
+  accessToken,
+}: {
+  scope?: CaseScope;
+  caseId: number;
+  documentId: number;
+  accessToken: string;
+}): Promise<void> => {
+  const response = await fetch(
+    `${API_BASE_URL}${getCasePath(scope)}/${caseId}/documents/${documentId}/`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+  throwForUnauthorized(response);
+
+  if (!response.ok) {
+    const payload = await readJsonSafely<ErrorPayload>(response);
+    throw toApiError(
+      response.status,
+      payload?.detail || "Could not delete document.",
+    );
+  }
+};
+
 const updateCaseConversation = async ({
   caseId,
   action,

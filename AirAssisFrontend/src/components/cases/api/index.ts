@@ -1,6 +1,7 @@
 export {
   closeCaseConversation,
   createCaseComment,
+  deleteCaseDocument,
   deleteAdminCase,
   downloadCaseDocument,
   fetchAdminCases,
