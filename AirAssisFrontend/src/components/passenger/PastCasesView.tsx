@@ -12,6 +12,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
@@ -76,6 +77,8 @@ function PastCasesView({
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [assigneeFilter, setAssigneeFilter] = useState("ALL");
   const [sorting, setSorting] = useState<SortValue>("-id");
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 10;
 
   const fetchCases = useCallback(async () => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -163,14 +166,35 @@ function PastCasesView({
     );
   }, [cases, assigneeFilter]);
 
+  const paginatedCases = useMemo(
+    () =>
+      displayedCases.slice(
+        page * rowsPerPage,
+        page * rowsPerPage + rowsPerPage,
+      ),
+    [displayedCases, page],
+  );
+
   const caseIdSortDirection = sorting === "id" ? "asc" : "desc";
   const statusSortDirection = sorting === "-status" ? "desc" : "asc";
 
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setPage(0);
+  };
+
+  const handleAssigneeFilterChange = (value: string) => {
+    setAssigneeFilter(value);
+    setPage(0);
+  };
+
   const handleCaseIdSort = () => {
+    setPage(0);
     setSorting((previousSorting) => (previousSorting === "-id" ? "id" : "-id"));
   };
 
   const handleStatusSort = () => {
+    setPage(0);
     setSorting((previousSorting) =>
       previousSorting === "status" ? "-status" : "status",
     );
@@ -270,8 +294,8 @@ function PastCasesView({
                 assigneeOptions={assigneeOptions}
                 statusLabelId="past-cases-status-label"
                 assigneeLabelId="past-cases-assignee-label"
-                onStatusChange={setStatusFilter}
-                onAssigneeChange={setAssigneeFilter}
+                onStatusChange={handleStatusFilterChange}
+                onAssigneeChange={handleAssigneeFilterChange}
               />
 
               {errorMessage && (
@@ -345,7 +369,7 @@ function PastCasesView({
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {displayedCases.map((item) => (
+                        {paginatedCases.map((item) => (
                           <TableRow key={item.id} hover>
                             <TableCell
                               sx={{ fontSize: "0.875rem", textAlign: "center" }}
@@ -436,7 +460,7 @@ function PastCasesView({
                     spacing={1.5}
                     sx={{ display: { xs: "flex", md: "none" } }}
                   >
-                    {displayedCases.map((item) => (
+                    {paginatedCases.map((item) => (
                       <Card key={item.id} variant="outlined">
                         <CardContent>
                           <Stack spacing={1}>
@@ -506,6 +530,17 @@ function PastCasesView({
                     ))}
                   </Stack>
                 </Box>
+              )}
+
+              {!isLoading && displayedCases.length > 0 && (
+                <TablePagination
+                  component="div"
+                  count={displayedCases.length}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[rowsPerPage]}
+                  onPageChange={(_, newPage) => setPage(newPage)}
+                />
               )}
             </CardContent>
           </Card>
