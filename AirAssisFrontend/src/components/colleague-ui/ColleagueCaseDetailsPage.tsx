@@ -26,7 +26,6 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  AddCommentOutlined,
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
   DescriptionOutlined,
@@ -58,7 +57,7 @@ import { useAppSnackbar } from "../utils/use_app_snackbar";
 import { validateDocumentFile } from "../wizard/utils/documentUploadStepValidation";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import axios from "axios";
-import CommentListCard from "../cases/shared/cards/CommentListCard";
+import CommentsCard from "../cases/shared/cards/CommentsCard";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -244,11 +243,6 @@ function ColleagueCaseDetailsPage({
   };
 
   const normalizedCommentText = commentText.trim();
-  const canSubmitComment =
-    normalizedCommentText.length > 0 &&
-    normalizedCommentText.length <= COMMENT_MAX_LENGTH &&
-    !isSubmittingComment &&
-    details?.conversation_status === "OPEN";
   const normalizedDecisionNote = decisionNote.trim();
   const decisionRequiresNote =
     selectedDecision === "NON_ELIGIBLE" ||
@@ -1118,35 +1112,41 @@ function ColleagueCaseDetailsPage({
                   </CardContent>
                 </Card>
 
-                <Card variant="outlined">
-                  <CardContent>
+                <CommentsCard
+                  comments={details.comments ?? []}
+                  formatDateTime={formatDateTime}
+                  commentText={commentText}
+                  setCommentText={setCommentText}
+                  isSubmitting={isSubmittingComment}
+                  errorMessage={commentSubmitError}
+                  successMessage={commentSubmitSuccess}
+                  submitComment={submitComment}
+                  clearMessages={() => {
+                    if (commentSubmitError) {
+                      setCommentSubmitError("");
+                    }
+                    if (commentSubmitSuccess) {
+                      setCommentSubmitSuccess("");
+                    }
+                  }}
+                  disabled={details.conversation_status === "CLOSED"}
+                  disabledMessage="This conversation is closed. Reopen it to add comments."
+                  headerAction={
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
                       spacing={1.5}
-                      sx={{
-                        alignItems: { sm: "center" },
-                        justifyContent: "space-between",
-                        mb: 2,
-                      }}
+                      sx={{ alignItems: { sm: "center" } }}
                     >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <AddCommentOutlined
-                          sx={{ color: SECTION_ICON_COLOR }}
-                        />
-                        <Typography variant="h5">Add Comment</Typography>
-                        <Chip
-                          size="small"
-                          label={details.conversation_status}
-                          color={
-                            details.conversation_status === "OPEN"
-                              ? "success"
-                              : "default"
-                          }
-                          variant="outlined"
-                        />
-                      </Box>
+                      <Chip
+                        size="small"
+                        label={details.conversation_status}
+                        color={
+                          details.conversation_status === "OPEN"
+                            ? "success"
+                            : "default"
+                        }
+                        variant="outlined"
+                      />
                       <Button
                         size="small"
                         variant="outlined"
@@ -1167,69 +1167,7 @@ function ColleagueCaseDetailsPage({
                             : "Reopen conversation"}
                       </Button>
                     </Stack>
-
-                    {details.conversation_status === "CLOSED" && (
-                      <Alert severity="info" sx={{ mb: 2 }}>
-                        This conversation is closed. Reopen it to add comments.
-                      </Alert>
-                    )}
-
-                    <TextField
-                      fullWidth
-                      multiline
-                      minRows={5}
-                      maxRows={12}
-                      value={commentText}
-                      disabled={details.conversation_status === "CLOSED"}
-                      onChange={(event) => {
-                        setCommentText(event.target.value);
-                        if (commentSubmitError) {
-                          setCommentSubmitError("");
-                        }
-                        if (commentSubmitSuccess) {
-                          setCommentSubmitSuccess("");
-                        }
-                      }}
-                      placeholder="Add your additional information or question here..."
-                      slotProps={{
-                        htmlInput: { maxLength: COMMENT_MAX_LENGTH },
-                      }}
-                    />
-
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={1.5}
-                      sx={{ mt: 1.5, alignItems: { sm: "center" } }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        {commentText.length}/{COMMENT_MAX_LENGTH}
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        onClick={() => void submitComment()}
-                        disabled={!canSubmitComment}
-                      >
-                        {isSubmittingComment ? "Adding..." : "Add Comment"}
-                      </Button>
-                    </Stack>
-
-                    {commentSubmitError && (
-                      <Alert severity="error" sx={{ mt: 2 }}>
-                        {commentSubmitError}
-                      </Alert>
-                    )}
-
-                    {commentSubmitSuccess && (
-                      <Alert severity="success" sx={{ mt: 2 }}>
-                        {commentSubmitSuccess}
-                      </Alert>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <CommentListCard
-                  comments={details.comments ?? []}
-                  formatDateTime={formatDateTime}
+                  }
                 />
 
                 <Card

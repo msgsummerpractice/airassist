@@ -16,11 +16,9 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from "@mui/material";
 import {
-  AddCommentOutlined,
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
   DescriptionOutlined,
@@ -34,7 +32,7 @@ import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity } from "../../utils/auth";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import { createCaseComment, type CaseApiError } from "../cases/api";
-import CommentListCard from "../cases/shared/cards/CommentListCard";
+import CommentsCard from "../cases/shared/cards/CommentsCard";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -163,10 +161,6 @@ function PassengerCaseDetailsPage({
   };
 
   const normalizedCommentText = commentText.trim();
-  const canSubmitComment =
-    normalizedCommentText.length > 0 &&
-    normalizedCommentText.length <= COMMENT_MAX_LENGTH &&
-    !isSubmittingComment;
 
   const fetchDetails = useCallback(async () => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -707,73 +701,23 @@ function PassengerCaseDetailsPage({
                 </CardContent>
               </Card>
 
-              <Card variant="outlined">
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <AddCommentOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                    <Typography variant="h5">Add Comment</Typography>
-                  </Box>
-
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={5}
-                    maxRows={12}
-                    value={commentText}
-                    onChange={(event) => {
-                      setCommentText(event.target.value);
-                      if (commentSubmitError) {
-                        setCommentSubmitError("");
-                      }
-                      if (commentSubmitSuccess) {
-                        setCommentSubmitSuccess("");
-                      }
-                    }}
-                    placeholder="Add your additional information or question here..."
-                    slotProps={{ htmlInput: { maxLength: COMMENT_MAX_LENGTH } }}
-                  />
-
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={1.5}
-                    sx={{ mt: 1.5, alignItems: { sm: "center" } }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      {commentText.length}/{COMMENT_MAX_LENGTH}
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      onClick={() => void submitComment()}
-                      disabled={!canSubmitComment}
-                    >
-                      {isSubmittingComment ? "Adding..." : "Add Comment"}
-                    </Button>
-                  </Stack>
-
-                  {commentSubmitError && (
-                    <Alert severity="error" sx={{ mt: 2 }}>
-                      {commentSubmitError}
-                    </Alert>
-                  )}
-
-                  {commentSubmitSuccess && (
-                    <Alert severity="success" sx={{ mt: 2 }}>
-                      {commentSubmitSuccess}
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
-
-              <CommentListCard
+              <CommentsCard
                 comments={details.comments ?? []}
                 formatDateTime={formatDateTime}
+                commentText={commentText}
+                setCommentText={setCommentText}
+                isSubmitting={isSubmittingComment}
+                errorMessage={commentSubmitError}
+                successMessage={commentSubmitSuccess}
+                submitComment={submitComment}
+                clearMessages={() => {
+                  if (commentSubmitError) {
+                    setCommentSubmitError("");
+                  }
+                  if (commentSubmitSuccess) {
+                    setCommentSubmitSuccess("");
+                  }
+                }}
               />
             </Stack>
           )}
