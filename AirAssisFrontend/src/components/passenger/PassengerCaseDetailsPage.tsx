@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
@@ -124,12 +125,12 @@ const formatDate = (value: string | null | undefined) => {
     return "-";
   }
 
-  const parsedDate = new Date(value);
-  if (Number.isNaN(parsedDate.getTime())) {
+  const parsedDate = dayjs(value);
+  if (!parsedDate.isValid()) {
     return value;
   }
 
-  return parsedDate.toLocaleDateString("en-GB");
+  return parsedDate.format("DD/MM/YYYY");
 };
 
 const formatDateTime = (value: string | null | undefined) => {
@@ -743,7 +744,7 @@ function PassengerCaseDetailsPage({
                         >
                           <TableBody>
                             <TableRow>
-                              <TableCell>Flight date</TableCell>
+                              <TableCell>Flight Date</TableCell>
                               <TableCell>
                                 {formatDate(details.flight.flight_date)}
                               </TableCell>
@@ -1075,7 +1076,17 @@ function PassengerCaseDetailsPage({
                           </TableHead>
                           <TableBody>
                             {details.documents.map((item) => (
-                              <TableRow key={item.id}>
+                              <TableRow
+                                key={item.id}
+                                sx={{
+                                  backgroundColor:
+                                    item.uploaded_by === "PASSENGER"
+                                      ? "rgba(27, 109, 36, 0.10)"
+                                      : item.uploaded_by === "COLLEAGUE"
+                                        ? "rgba(0, 49, 120, 0.10)"
+                                        : "transparent",
+                                }}
+                              >
                                 <TableCell>{item.filename}</TableCell>
                                 <TableCell>{item.document_type}</TableCell>
                                 <TableCell>
