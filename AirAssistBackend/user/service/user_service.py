@@ -148,6 +148,9 @@ class UserService:
         if not new_password:
             raise ValueError("New password is required.")
 
+        if check_password(new_password, user.password):
+            raise ValueError("New password cannot be the same as the current password.")
+
         user.set_password(new_password)
         user.must_change_password = False
         user.save(update_fields=["password", "must_change_password"])
