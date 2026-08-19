@@ -9,6 +9,7 @@ from ..serializers.user_serializer import (
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     UserListSerializer,
+    UserProfileUpdateSerializer,
     UserRoleSerializer,
     UserSerializer,
 )
@@ -73,7 +74,7 @@ class UserView(APIView):
     
 class UserRoleView(APIView):
     def get_permissions(self):
-        if self.request.method == "DELETE":
+        if self.request.method in {"DELETE", "PATCH"}:
             return [IsSystemAdmin()]
         return [IsAuthenticated()]
 
@@ -101,6 +102,27 @@ class UserRoleView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+    def patch(self, request, user_id):
+        try:
+            target_user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserProfileUpdateSerializer(target_user, data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = UserService.update_user_profile(
+                requesting_user_id=request.user.id,
+                target_user_id=user_id,
+                **serializer.validated_data,
+            )
+        except ValueError as exc:
+            return Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(UserListSerializer(user).data, status=status.HTTP_200_OK)
 
 
 class LoginView(APIView):

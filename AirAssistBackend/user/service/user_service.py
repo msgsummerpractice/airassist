@@ -87,6 +87,42 @@ class UserService:
         }
 
     @staticmethod
+    @transaction.atomic
+    def update_user_profile(
+        requesting_user_id: int,
+        target_user_id: int,
+        firstname: str,
+        lastname: str,
+        email: str,
+    ) -> User:
+        try:
+            target_user = User.objects.select_related("role").get(pk=target_user_id)
+        except User.DoesNotExist:
+            raise ValueError("User not found.")
+
+        if requesting_user_id == target_user.id:
+            raise ValueError("You cannot edit your own account.")
+
+        role_name = getattr(target_user.role, "role", None)
+        if role_name not in {Roles.COLLEAGUE.value, Roles.PASSENGER.value}:
+            raise ValueError("Only colleague and passenger accounts can be edited.")
+
+        previous_email = target_user.email
+        target_user.firstname = firstname
+        target_user.lastname = lastname
+        target_user.email = email
+        target_user.save(update_fields=["firstname", "lastname", "email"])
+
+        if role_name == Roles.PASSENGER.value:
+            Passenger.objects.filter(email__iexact=previous_email).update(
+                first_name=firstname,
+                last_name=lastname,
+                email=email,
+            )
+
+        return target_user
+
+    @staticmethod
     def get_user_role(user_id):
         try:
             user = User.objects.get(pk=user_id)

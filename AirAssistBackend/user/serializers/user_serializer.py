@@ -49,4 +49,21 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "firstname", "lastname", "email", "role", "assigned_case_count"]
-        
+
+
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["firstname", "lastname", "email"]
+
+    def validate_email(self, value):
+        normalized_email = value.lower()
+        existing_user = User.objects.filter(email__iexact=normalized_email).exclude(
+            pk=self.instance.pk
+        )
+        if existing_user.exists():
+            raise serializers.ValidationError(
+                "There already exists a user with this email address."
+            )
+        return normalized_email
+
