@@ -12,6 +12,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
@@ -94,7 +95,11 @@ const formatColleagueCaseDate = (value: string | null | undefined) => {
   return date.toLocaleDateString("en-GB");
 };
 
-function ColleagueCaseList() {
+type ColleagueCaseListProps = {
+  onCaseAssigned?: () => void;
+};
+
+function ColleagueCaseList({ onCaseAssigned }: ColleagueCaseListProps = {}) {
   const [cases, setCases] = useState<ColleagueCaseListItem[]>([]);
   const [colleagues, setColleagues] = useState<ColleagueOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,6 +108,8 @@ function ColleagueCaseList() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [assigneeFilter, setAssigneeFilter] = useState("ALL");
   const [sorting, setSorting] = useState<SortValue>("-id");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     let isActive = true;
@@ -234,6 +241,11 @@ function ColleagueCaseList() {
     setSorting((current) => (current === "status" ? "-status" : "status"));
   };
 
+  const paginatedCases = displayedCases.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+
   return (
     <Card
       elevation={1}
@@ -273,8 +285,14 @@ function ColleagueCaseList() {
           assigneeOptions={assigneeOptions}
           statusLabelId="colleague-cases-status-label"
           assigneeLabelId="colleague-cases-assignee-label"
-          onStatusChange={setStatusFilter}
-          onAssigneeChange={setAssigneeFilter}
+          onStatusChange={(value) => {
+            setStatusFilter(value);
+            setPage(0);
+          }}
+          onAssigneeChange={(value) => {
+            setAssigneeFilter(value);
+            setPage(0);
+          }}
         />
 
         {isLoading ? (
@@ -284,14 +302,7 @@ function ColleagueCaseList() {
         ) : displayedCases.length === 0 ? (
           <CaseListEmptyState />
         ) : (
-          <Box
-            sx={{
-              maxHeight: { xs: 520, md: 640 },
-              overflowY: "auto",
-              px: 1,
-              scrollbarGutter: "stable both-edges",
-            }}
-          >
+          <>
             <TableContainer
               sx={{
                 display: { xs: "none", md: "block" },
@@ -331,7 +342,7 @@ function ColleagueCaseList() {
                 </TableHead>
 
                 <TableBody>
-                  {displayedCases.map((caseItem) => (
+                  {paginatedCases.map((caseItem) => (
                     <TableRow key={caseItem.id} hover>
                       <TableCell>
                         <Typography
@@ -374,6 +385,7 @@ function ColleagueCaseList() {
                           assignedColleagueId={caseItem.assigned_colleague_id}
                           onAssigned={() => {
                             setReloadKey((current) => current + 1);
+                            onCaseAssigned?.();
                           }}
                         />
                       </TableCell>
@@ -384,7 +396,7 @@ function ColleagueCaseList() {
             </TableContainer>
 
             <Stack spacing={1.5} sx={{ display: { xs: "flex", md: "none" } }}>
-              {displayedCases.map((caseItem) => (
+              {paginatedCases.map((caseItem) => (
                 <Card key={caseItem.id} variant="outlined">
                   <CardContent>
                     <Stack spacing={1}>
@@ -404,7 +416,8 @@ function ColleagueCaseList() {
                         Case date: {formatColleagueCaseDate(caseItem.case_date)}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
-                        Flight date: {formatColleagueCaseDate(caseItem.flight_date)}
+                        Flight date:{" "}
+                        {formatColleagueCaseDate(caseItem.flight_date)}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
                         Passenger: {caseItem.passenger_name ?? "-"}
@@ -434,6 +447,7 @@ function ColleagueCaseList() {
                           assignedColleagueId={caseItem.assigned_colleague_id}
                           onAssigned={() => {
                             setReloadKey((current) => current + 1);
+                            onCaseAssigned?.();
                           }}
                         />
                       </Box>
@@ -442,7 +456,20 @@ function ColleagueCaseList() {
                 </Card>
               ))}
             </Stack>
-          </Box>
+
+            <TablePagination
+              component="div"
+              count={displayedCases.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              onRowsPerPageChange={(event) => {
+                setRowsPerPage(parseInt(event.target.value, 10));
+                setPage(0);
+              }}
+            />
+          </>
         )}
       </CardContent>
     </Card>

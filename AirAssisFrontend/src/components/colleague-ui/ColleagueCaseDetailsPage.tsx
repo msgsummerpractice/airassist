@@ -260,6 +260,7 @@ function ColleagueCaseDetailsPage({
     selectedDecision === "AWAITING_DOCUMENTS";
   const canApplyDecision =
     selectedDecision !== "" &&
+    selectedDecision !== details?.status &&
     (!decisionRequiresNote ||
       (normalizedDecisionNote.length > 0 &&
         normalizedDecisionNote.length <= COMMENT_MAX_LENGTH)) &&
@@ -1327,11 +1328,24 @@ function ColleagueCaseDetailsPage({
                                 setDecisionNote("");
                               }}
                             >
-                              <MenuItem value="ELIGIBLE">Eligible</MenuItem>
-                              <MenuItem value="NON_ELIGIBLE">
+                              <MenuItem
+                                value="ELIGIBLE"
+                                disabled={details.status === "ELIGIBLE"}
+                              >
+                                Eligible
+                              </MenuItem>
+                              <MenuItem
+                                value="NON_ELIGIBLE"
+                                disabled={details.status === "NON_ELIGIBLE"}
+                              >
                                 Non-eligible
                               </MenuItem>
-                              <MenuItem value="AWAITING_DOCUMENTS">
+                              <MenuItem
+                                value="AWAITING_DOCUMENTS"
+                                disabled={
+                                  details.status === "AWAITING_DOCUMENTS"
+                                }
+                              >
                                 Awaiting documents
                               </MenuItem>
                             </Select>

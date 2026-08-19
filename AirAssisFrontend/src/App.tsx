@@ -19,6 +19,10 @@ import AdminCasesPage from "./components/admin/AdminCasesPage";
 import AdminSystemOptionsPage from "./components/admin/AdminSystemOptionsPage";
 import Footer from "./components/portal/Footer";
 import BackgroundMusic from "./components/utils/BackgroundMusic";
+import PrivacyPolicy from "./components/legal/PrivacyPolicy/PrivacyPolicy";
+import TermsOfService from "./components/legal/TermsOfService/TermsOfService";
+import Imprint from "./components/legal/Imprint/Imprint";
+import EuInfo from "./components/legal/EuInfo/EuInfo";
 
 function App() {
   const { view, role, resolveView, showCaseEntry, showColleagueDashboard } =
@@ -29,7 +33,11 @@ function App() {
     if (
       pathname === "/reset-password" ||
       pathname.startsWith("/passenger-cases") ||
-      pathname.startsWith("/colleague-cases")
+      pathname.startsWith("/colleague-cases") ||
+      pathname === "/privacy-policy" ||
+      pathname === "/terms-of-service" ||
+      pathname === "/imprint" ||
+      pathname === "/eu-261-2004-info"
     ) {
       return;
     }
@@ -147,6 +155,10 @@ function App() {
               )
             }
           />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/imprint" element={<Imprint />} />
+          <Route path="/eu-261-2004-info" element={<EuInfo />} />
           <Route path="*" element={<Navigate to="/case-entry" replace />} />
         </Routes>
       </main>
