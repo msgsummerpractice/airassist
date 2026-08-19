@@ -44,7 +44,14 @@ class PassengerCaseDocumentSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = CaseDocument
-		fields = ["id", "document_type", "filename", "uploaded_at", "download_url"]
+		fields = [
+			"id",
+			"document_type",
+			"filename",
+			"uploaded_at",
+			"uploaded_by",
+			"download_url",
+		]
 
 	def get_download_url(self, obj):
 		request = self.context.get("request")

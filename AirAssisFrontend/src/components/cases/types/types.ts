@@ -26,6 +26,7 @@ export type CaseDocument = {
   document_type: string;
   filename: string;
   uploaded_at: string;
+  uploaded_by?: "PASSENGER" | "COLLEAGUE" | null;
   download_url?: string | null;
 };
 

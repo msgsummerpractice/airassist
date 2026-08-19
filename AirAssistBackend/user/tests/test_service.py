@@ -101,9 +101,11 @@ class UserServiceTests(TestCase):
 
         self.assertEqual(str(context.exception), "user not found")
 
+
 class UserDeleteServiceTests(TestCase):
     def setUp(self):
-        self.system_admin_role = Role.objects.create(role=Roles.SYSTEM_ADMIN.value)
+        self.system_admin_role = Role.objects.create(
+            role=Roles.SYSTEM_ADMIN.value)
         self.colleague_role = Role.objects.create(role=Roles.COLLEAGUE.value)
         self.passenger_role = Role.objects.create(role=Roles.PASSENGER.value)
 
@@ -161,7 +163,8 @@ class UserDeleteServiceTests(TestCase):
         self.assertEqual(result["deleted_user_role"], Roles.PASSENGER.value)
         self.assertEqual(result["deleted_case_passenger_rows"], 1)
         self.assertFalse(User.objects.filter(id=passenger_user.id).exists())
-        self.assertEqual(Passenger.objects.filter(email__iexact="passenger@example.com").count(), 0)
+        self.assertEqual(Passenger.objects.filter(
+            email__iexact="passenger@example.com").count(), 0)
 
     def test_delete_blocks_self_delete(self):
         with self.assertRaises(ValueError) as context:
@@ -169,7 +172,8 @@ class UserDeleteServiceTests(TestCase):
                 requesting_user_id=self.admin.id,
                 target_user_id=self.admin.id,
             )
-        self.assertEqual(str(context.exception), "You cannot delete your own account.")
+        self.assertEqual(str(context.exception),
+                         "You cannot delete your own account.")
 
     def test_delete_blocks_system_admin_target(self):
         second_admin = User.objects.create_user(
@@ -185,7 +189,8 @@ class UserDeleteServiceTests(TestCase):
                 requesting_user_id=self.admin.id,
                 target_user_id=second_admin.id,
             )
-        self.assertEqual(str(context.exception), "System admin accounts cannot be deleted.")
+        self.assertEqual(str(context.exception),
+                         "System admin accounts cannot be deleted.")
 
     def test_delete_returns_not_found_for_missing_user(self):
         with self.assertRaises(ValueError) as context:
@@ -195,9 +200,11 @@ class UserDeleteServiceTests(TestCase):
             )
         self.assertEqual(str(context.exception), "User not found.")
 
+
 class UserDeleteApiTests(APITestCase):
     def setUp(self):
-        self.system_admin_role = Role.objects.create(role=Roles.SYSTEM_ADMIN.value)
+        self.system_admin_role = Role.objects.create(
+            role=Roles.SYSTEM_ADMIN.value)
         self.colleague_role = Role.objects.create(role=Roles.COLLEAGUE.value)
 
         self.admin = User.objects.create_user(
@@ -225,7 +232,8 @@ class UserDeleteApiTests(APITestCase):
         response = self.client.delete(f"/user/{self.colleague.id}/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data.get("message"), "User account deleted successfully.")
+        self.assertEqual(response.data.get("message"),
+                         "User account deleted successfully.")
         self.assertFalse(User.objects.filter(id=self.colleague.id).exists())
 
     def test_admin_cannot_self_delete(self):
@@ -233,7 +241,8 @@ class UserDeleteApiTests(APITestCase):
         response = self.client.delete(f"/user/{self.admin.id}/")
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data.get("message"), "You cannot delete your own account.")
+        self.assertEqual(response.data.get("message"),
+                         "You cannot delete your own account.")
 
     def test_delete_missing_user_returns_404(self):
         self.client.force_authenticate(user=self.admin)
@@ -241,3 +250,94 @@ class UserDeleteApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data.get("message"), "User not found.")
+
+
+class UserProfileUpdateApiTests(APITestCase):
+    def setUp(self):
+        self.system_admin_role = Role.objects.create(
+            role=Roles.SYSTEM_ADMIN.value)
+        self.colleague_role = Role.objects.create(role=Roles.COLLEAGUE.value)
+        self.passenger_role = Role.objects.create(role=Roles.PASSENGER.value)
+        self.admin = User.objects.create_user(
+            role=self.system_admin_role,
+            firstname="Admin",
+            lastname="One",
+            email="admin@example.com",
+            password="admin-pass",
+        )
+        self.colleague = User.objects.create_user(
+            role=self.colleague_role,
+            firstname="Col",
+            lastname="League",
+            email="colleague@example.com",
+            password="col-pass",
+        )
+        self.passenger = User.objects.create_user(
+            role=self.passenger_role,
+            firstname="Pas",
+            lastname="Senger",
+            email="passenger@example.com",
+            password="pass-pass",
+        )
+
+    def test_admin_can_update_passenger_profile_and_linked_case_passenger(self):
+        case_obj = Case.objects.create()
+        case_passenger = Passenger.objects.create(
+            case=case_obj,
+            first_name="Pas",
+            last_name="Senger",
+            date_of_birth="1990-01-01",
+            email="passenger@example.com",
+        )
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.patch(
+            f"/user/{self.passenger.id}/",
+            {
+                "firstname": "Pat",
+                "lastname": "Smith",
+                "email": "PAT.SMITH@EXAMPLE.COM",
+                "role": Roles.COLLEAGUE.value,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["firstname"], "Pat")
+        self.assertEqual(response.data["lastname"], "Smith")
+        self.assertEqual(response.data["email"], "pat.smith@example.com")
+        self.assertEqual(response.data["role"], Roles.PASSENGER.value)
+
+        self.passenger.refresh_from_db()
+        case_passenger.refresh_from_db()
+        self.assertEqual(self.passenger.email, "pat.smith@example.com")
+        self.assertEqual(case_passenger.first_name, "Pat")
+        self.assertEqual(case_passenger.last_name, "Smith")
+        self.assertEqual(case_passenger.email, "pat.smith@example.com")
+
+    def test_non_admin_cannot_update_user(self):
+        self.client.force_authenticate(user=self.colleague)
+
+        response = self.client.patch(
+            f"/user/{self.passenger.id}/",
+            {"firstname": "Pat", "lastname": "Smith", "email": "pat@example.com"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_cannot_update_user_with_existing_email(self):
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.patch(
+            f"/user/{self.passenger.id}/",
+            {
+                "firstname": "Pat",
+                "lastname": "Smith",
+                "email": self.colleague.email,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("email", response.data)

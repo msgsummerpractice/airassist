@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Divider,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -26,7 +27,6 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  AddCommentOutlined,
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
   DescriptionOutlined,
@@ -58,6 +58,7 @@ import { useAppSnackbar } from "../utils/use_app_snackbar";
 import { validateDocumentFile } from "../wizard/utils/documentUploadStepValidation";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
 import axios from "axios";
+import CommentsCard from "../cases/shared/cards/CommentsCard";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -93,6 +94,7 @@ type CaseDocument = {
   document_type: string;
   filename: string;
   uploaded_at: string;
+  uploaded_by?: "PASSENGER" | "COLLEAGUE" | null;
 };
 
 type CaseComment = {
@@ -149,7 +151,7 @@ const formatDateTime = (value: string | null | undefined) => {
     return value;
   }
 
-  return parsedDate.toLocaleString();
+  return parsedDate.toLocaleString("en-GB");
 };
 
 const formatFilename = (filename: string) => {
@@ -158,6 +160,32 @@ const formatFilename = (filename: string) => {
   }
 
   return `${filename.slice(0, MAX_VISIBLE_FILENAME_LENGTH)}...`;
+};
+
+const parseDownloadFilename = (
+  contentDisposition: string | null,
+  fallbackFilename: string,
+) => {
+  if (!contentDisposition) {
+    return fallbackFilename;
+  }
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]);
+  }
+
+  const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
+  if (quotedMatch?.[1]) {
+    return quotedMatch[1];
+  }
+
+  const bareMatch = contentDisposition.match(/filename=([^;]+)/i);
+  if (bareMatch?.[1]) {
+    return bareMatch[1].trim();
+  }
+
+  return fallbackFilename;
 };
 
 function ColleagueCaseDetailsPage({
@@ -217,11 +245,6 @@ function ColleagueCaseDetailsPage({
   };
 
   const normalizedCommentText = commentText.trim();
-  const canSubmitComment =
-    normalizedCommentText.length > 0 &&
-    normalizedCommentText.length <= COMMENT_MAX_LENGTH &&
-    !isSubmittingComment &&
-    details?.conversation_status === "OPEN";
   const normalizedDecisionNote = decisionNote.trim();
   const decisionRequiresNote =
     selectedDecision === "NON_ELIGIBLE" ||
@@ -243,32 +266,6 @@ function ColleagueCaseDetailsPage({
 
     return accessToken;
   }, [onUnauthorized]);
-
-  const parseDownloadFilename = (
-    contentDisposition: string | null,
-    fallbackFilename: string,
-  ) => {
-    if (!contentDisposition) {
-      return fallbackFilename;
-    }
-
-    const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
-    if (utf8Match?.[1]) {
-      return decodeURIComponent(utf8Match[1]);
-    }
-
-    const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
-    if (quotedMatch?.[1]) {
-      return quotedMatch[1];
-    }
-
-    const bareMatch = contentDisposition.match(/filename=([^;]+)/i);
-    if (bareMatch?.[1]) {
-      return bareMatch[1].trim();
-    }
-
-    return fallbackFilename;
-  };
 
   const handleDocumentFileChange = (file: File | null) => {
     setSelectedFile(file);
@@ -797,7 +794,7 @@ function ColleagueCaseDetailsPage({
                               fontWeight: 400,
                               width: "38%",
                             },
-                            "& td:last-of-type": { pl: 2 },
+                            "& td:last-of-type": { pl: 2, fontWeight: 600 },
                           }}
                         >
                           <TableBody>
@@ -875,7 +872,13 @@ function ColleagueCaseDetailsPage({
                       </Typography>
                     ) : (
                       <TableContainer>
-                        <Table size="small">
+                        <Table
+                          size="small"
+                          sx={{
+                            "& th": { fontWeight: 400 },
+                            "& tbody td": { fontWeight: 600 },
+                          }}
+                        >
                           <TableHead>
                             <TableRow>
                               <TableCell>Flight Date</TableCell>
@@ -927,7 +930,10 @@ function ColleagueCaseDetailsPage({
                       <TableContainer>
                         <Table
                           size="small"
-                          sx={{ "& td:first-of-type": { fontWeight: 400 } }}
+                          sx={{
+                            "& td:first-of-type": { fontWeight: 400 },
+                            "& td:last-of-type": { fontWeight: 600 },
+                          }}
                         >
                           <TableBody>
                             <TableRow>
@@ -1067,7 +1073,9 @@ function ColleagueCaseDetailsPage({
                             <TableRow>
                               <TableCell>Filename</TableCell>
                               <TableCell>Type</TableCell>
+                              <TableCell>Uploaded by</TableCell>
                               <TableCell>Upload Timestamp</TableCell>
+                              <TableCell align="center">Download</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -1093,20 +1101,26 @@ function ColleagueCaseDetailsPage({
                                 </TableCell>
                                 <TableCell>{item.document_type}</TableCell>
                                 <TableCell>
+                                  {item.uploaded_by === "PASSENGER"
+                                    ? "Passenger"
+                                    : item.uploaded_by === "COLLEAGUE"
+                                      ? "Colleague"
+                                      : "Unknown"}
+                                </TableCell>
+                                <TableCell>
                                   {formatDateTime(item.uploaded_at)}
                                 </TableCell>
-                                <TableCell align="right">
-                                  <Button
+                                <TableCell align="center">
+                                  <IconButton
                                     size="small"
-                                    variant="text"
-                                    startIcon={<DownloadOutlined />}
+                                    color="primary"
+                                    aria-label="Download document"
+                                    title="Download"
                                     onClick={() => void downloadDocument(item)}
                                     disabled={downloadingDocumentId === item.id}
                                   >
-                                    {downloadingDocumentId === item.id
-                                      ? "Downloading..."
-                                      : "Download"}
-                                  </Button>
+                                    <DownloadOutlined />
+                                  </IconButton>
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -1117,35 +1131,41 @@ function ColleagueCaseDetailsPage({
                   </CardContent>
                 </Card>
 
-                <Card variant="outlined">
-                  <CardContent>
+                <CommentsCard
+                  comments={details.comments ?? []}
+                  formatDateTime={formatDateTime}
+                  commentText={commentText}
+                  setCommentText={setCommentText}
+                  isSubmitting={isSubmittingComment}
+                  errorMessage={commentSubmitError}
+                  successMessage={commentSubmitSuccess}
+                  submitComment={submitComment}
+                  clearMessages={() => {
+                    if (commentSubmitError) {
+                      setCommentSubmitError("");
+                    }
+                    if (commentSubmitSuccess) {
+                      setCommentSubmitSuccess("");
+                    }
+                  }}
+                  disabled={details.conversation_status === "CLOSED"}
+                  disabledMessage="This conversation is closed. Reopen it to add comments."
+                  headerAction={
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
                       spacing={1.5}
-                      sx={{
-                        alignItems: { sm: "center" },
-                        justifyContent: "space-between",
-                        mb: 2,
-                      }}
+                      sx={{ alignItems: { sm: "center" } }}
                     >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <AddCommentOutlined
-                          sx={{ color: SECTION_ICON_COLOR }}
-                        />
-                        <Typography variant="h5">Add Comment</Typography>
-                        <Chip
-                          size="small"
-                          label={details.conversation_status}
-                          color={
-                            details.conversation_status === "OPEN"
-                              ? "success"
-                              : "default"
-                          }
-                          variant="outlined"
-                        />
-                      </Box>
+                      <Chip
+                        size="small"
+                        label={details.conversation_status}
+                        color={
+                          details.conversation_status === "OPEN"
+                            ? "success"
+                            : "default"
+                        }
+                        variant="outlined"
+                      />
                       <Button
                         size="small"
                         variant="outlined"
@@ -1166,117 +1186,8 @@ function ColleagueCaseDetailsPage({
                             : "Reopen conversation"}
                       </Button>
                     </Stack>
-
-                    {details.conversation_status === "CLOSED" && (
-                      <Alert severity="info" sx={{ mb: 2 }}>
-                        This conversation is closed. Reopen it to add comments.
-                      </Alert>
-                    )}
-
-                    <TextField
-                      fullWidth
-                      multiline
-                      minRows={5}
-                      maxRows={12}
-                      value={commentText}
-                      disabled={details.conversation_status === "CLOSED"}
-                      onChange={(event) => {
-                        setCommentText(event.target.value);
-                        if (commentSubmitError) {
-                          setCommentSubmitError("");
-                        }
-                        if (commentSubmitSuccess) {
-                          setCommentSubmitSuccess("");
-                        }
-                      }}
-                      placeholder="Add your additional information or question here..."
-                      slotProps={{
-                        htmlInput: { maxLength: COMMENT_MAX_LENGTH },
-                      }}
-                    />
-
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={1.5}
-                      sx={{ mt: 1.5, alignItems: { sm: "center" } }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        {commentText.length}/{COMMENT_MAX_LENGTH}
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        onClick={() => void submitComment()}
-                        disabled={!canSubmitComment}
-                      >
-                        {isSubmittingComment ? "Adding..." : "Add Comment"}
-                      </Button>
-                    </Stack>
-
-                    {commentSubmitError && (
-                      <Alert severity="error" sx={{ mt: 2 }}>
-                        {commentSubmitError}
-                      </Alert>
-                    )}
-
-                    {commentSubmitSuccess && (
-                      <Alert severity="success" sx={{ mt: 2 }}>
-                        {commentSubmitSuccess}
-                      </Alert>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography variant="h5" sx={{ mb: 2 }}>
-                      Comment List
-                    </Typography>
-                    {(details.comments ?? []).length === 0 ? (
-                      <Typography variant="body1" color="text.secondary">
-                        No comments yet.
-                      </Typography>
-                    ) : (
-                      <TableContainer>
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>User</TableCell>
-                              <TableCell>Role</TableCell>
-                              <TableCell>Timestamp</TableCell>
-                              <TableCell>Comment</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {(details.comments ?? []).map((comment) => (
-                              <TableRow key={comment.id}>
-                                <TableCell>{comment.author_email}</TableCell>
-                                <TableCell>
-                                  {["PASSENGER", "COLLEAGUE"].includes(
-                                    comment.author_role?.toUpperCase() ?? "",
-                                  ) ? (
-                                    <Chip
-                                      size="small"
-                                      label={comment.author_role}
-                                      color="primary"
-                                    />
-                                  ) : (
-                                    comment.author_role
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {formatDateTime(comment.created_at)}
-                                </TableCell>
-                                <TableCell sx={{ whiteSpace: "pre-wrap" }}>
-                                  {comment.text}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    )}
-                  </CardContent>
-                </Card>
+                  }
+                />
 
                 <Card
                   variant="outlined"

@@ -46,7 +46,10 @@ class ColleagueCaseCreationView(APIView):
                     passenger = case.passengers.first()
                     CaseService.create_passenger_account(passenger)
 
-                    contract_document = CaseContractService.generate_for_case(case)
+                    contract_document = CaseContractService.generate_for_case(
+                        case,
+                        uploaded_by="COLLEAGUE",
+                    )
             except (DatabaseError, CaseContractGenerationError):
                 return Response(
                     {

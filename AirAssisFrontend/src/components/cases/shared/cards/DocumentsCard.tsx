@@ -53,7 +53,9 @@ function DocumentsCard({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState("CONTRACT");
   const [uploadError, setUploadError] = useState("");
-  const [downloadingDocumentId, setDownloadingDocumentId] = useState<number | null>(null);
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<
+    number | null
+  >(null);
   const [isUploading, setIsUploading] = useState(false);
 
   const parseDownloadFilename = (
@@ -118,7 +120,8 @@ function DocumentsCard({
       await onDocumentUploaded?.();
       onUploadSuccess?.(payload.message || "Document uploaded successfully.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not upload document.";
+      const message =
+        error instanceof Error ? error.message : "Could not upload document.";
       setUploadError(message);
     } finally {
       setIsUploading(false);
@@ -153,7 +156,9 @@ function DocumentsCard({
       window.URL.revokeObjectURL(downloadUrl);
       onDownloadSuccess?.("Document downloaded successfully.");
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Could not download document.");
+      setUploadError(
+        error instanceof Error ? error.message : "Could not download document.",
+      );
     } finally {
       setDownloadingDocumentId(null);
     }
@@ -211,7 +216,11 @@ function DocumentsCard({
           </Button>
         </Stack>
       )}
-      {uploadError ? <Alert severity="error" sx={{ mb: 2 }}>{uploadError}</Alert> : null}
+      {uploadError ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {uploadError}
+        </Alert>
+      ) : null}
       {documents.length === 0 ? (
         <Typography color="text.secondary">No documents attached.</Typography>
       ) : (
@@ -221,8 +230,11 @@ function DocumentsCard({
               <TableRow>
                 <TableCell>Filename</TableCell>
                 <TableCell>Type</TableCell>
+                <TableCell>Uploaded by</TableCell>
                 <TableCell>Upload Timestamp</TableCell>
-                {canManageDocuments && <TableCell align="right">Action</TableCell>}
+                {canManageDocuments && (
+                  <TableCell align="right">Action</TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -245,6 +257,13 @@ function DocumentsCard({
                     )}
                   </TableCell>
                   <TableCell>{document.document_type}</TableCell>
+                  <TableCell>
+                    {document.uploaded_by === "PASSENGER"
+                      ? "Passenger"
+                      : document.uploaded_by === "COLLEAGUE"
+                        ? "Colleague"
+                        : "Unknown"}
+                  </TableCell>
                   <TableCell>{formatDateTime(document.uploaded_at)}</TableCell>
                   {canManageDocuments && (
                     <TableCell align="right">
@@ -255,7 +274,9 @@ function DocumentsCard({
                         onClick={() => void handleDownload(document)}
                         disabled={downloadingDocumentId === document.id}
                       >
-                        {downloadingDocumentId === document.id ? "Downloading..." : "Download"}
+                        {downloadingDocumentId === document.id
+                          ? "Downloading..."
+                          : "Download"}
                       </Button>
                     </TableCell>
                   )}

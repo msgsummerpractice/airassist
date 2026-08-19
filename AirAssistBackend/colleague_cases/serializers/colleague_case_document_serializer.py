@@ -35,4 +35,4 @@ class ColleagueCaseDocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CaseDocument
-        fields = ["id", "document_type", "filename", "uploaded_at"]
+        fields = ["id", "document_type", "filename", "uploaded_at", "uploaded_by"]

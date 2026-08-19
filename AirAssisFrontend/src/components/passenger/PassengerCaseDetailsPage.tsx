@@ -9,10 +9,6 @@ import {
   Chip,
   CircularProgress,
   Divider,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -20,40 +16,29 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from "@mui/material";
 import {
-  AddCommentOutlined,
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
-  DownloadOutlined,
   DescriptionOutlined,
   FlightTakeoffOutlined,
   HubOutlined,
   LogoutOutlined,
   PersonOutlineOutlined,
   SummarizeOutlined,
-  UploadFileOutlined,
 } from "@mui/icons-material";
-import {
-  createPassengerCaseComment,
-  type PassengerCaseCommentApiError,
-} from "./PassengerCaseCommentApi";
-import { uploadCaseDocument, type CaseApiError } from "../cases/api";
 import PortalUserHeader from "../portal/PortalUserHeader";
-import { AppSnackbar } from "../utils/app_snackbar";
-import { useAppSnackbar } from "../utils/use_app_snackbar";
 import { getStoredUserIdentity } from "../../utils/auth";
-import { validateDocumentFile } from "../wizard/utils/documentUploadStepValidation";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
+import { createCaseComment, type CaseApiError } from "../cases/api";
+import CommentsCard from "../cases/shared/cards/CommentsCard";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
 const COMMENT_MAX_LENGTH = 1000;
 const SECTION_ICON_COLOR = "#003178";
-const DOCUMENT_TYPE_OPTIONS = ["BOARDING_PASS", "PASSPORT", "CONTRACT"];
 
 type FlightDetails = {
   flight_date: string;
@@ -81,6 +66,7 @@ type CaseDocument = {
   document_type: string;
   filename: string;
   uploaded_at: string;
+  uploaded_by?: "PASSENGER" | "COLLEAGUE" | null;
   download_url?: string;
 };
 
@@ -121,7 +107,7 @@ const formatDate = (value: string | null | undefined) => {
     return value;
   }
 
-  return parsedDate.toLocaleDateString();
+  return parsedDate.toLocaleDateString("en-GB");
 };
 
 const formatDateTime = (value: string | null | undefined) => {
@@ -134,7 +120,7 @@ const formatDateTime = (value: string | null | undefined) => {
     return value;
   }
 
-  return parsedDate.toLocaleString();
+  return parsedDate.toLocaleString("en-GB");
 };
 
 function PassengerCaseDetailsPage({
@@ -146,19 +132,10 @@ function PassengerCaseDetailsPage({
   const navigate = useNavigate();
   const { caseId: routeCaseId } = useParams();
   const currentUser = getStoredUserIdentity();
-  const { snackbar, closeSnackbar, showSuccessSnackbar } = useAppSnackbar();
 
   const [details, setDetails] = useState<PassengerCaseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [documentType, setDocumentType] = useState("BOARDING_PASS");
-  const [documentError, setDocumentError] = useState("");
-  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
-  const [isDraggingOverDropzone, setIsDraggingOverDropzone] = useState(false);
-  const [downloadingDocumentId, setDownloadingDocumentId] = useState<
-    number | null
-  >(null);
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentSubmitError, setCommentSubmitError] = useState("");
@@ -329,7 +306,8 @@ function PassengerCaseDetailsPage({
     setCommentSubmitSuccess("");
 
     try {
-      await createPassengerCaseComment({
+      await createCaseComment({
+        scope: "passenger",
         caseId: resolvedCaseId,
         text: normalizedCommentText,
         accessToken,
@@ -339,7 +317,7 @@ function PassengerCaseDetailsPage({
       setCommentSubmitSuccess("Comment added successfully.");
       await fetchDetails();
     } catch (error) {
-      const apiError = error as Partial<PassengerCaseCommentApiError>;
+      const apiError = error as Partial<CaseApiError>;
       if (apiError.status === 401 || apiError.status === 403) {
         onUnauthorized?.();
         return;
@@ -355,179 +333,75 @@ function PassengerCaseDetailsPage({
     }
   }, [fetchDetails, normalizedCommentText, onUnauthorized, resolvedCaseId]);
 
-  const uploadDocument = useCallback(async () => {
-    const validationError = validateDocumentFile(selectedFile);
-
-    if (validationError || !selectedFile) {
-      setDocumentError(validationError);
-      return;
-    }
-
-    if (resolvedCaseId === null) {
-      setDocumentError("Invalid case id.");
-      return;
-    }
-
-    setDocumentError("");
-    setIsUploadingDocument(true);
-
-    try {
-      const payload = await uploadCaseDocument({
-        scope: "passenger",
-        caseId: resolvedCaseId,
-        file: selectedFile,
-        documentType,
-        accessToken: getAccessToken(),
-      });
-
-      setSelectedFile(null);
-      showSuccessSnackbar(payload.message || "Document uploaded successfully.");
-      await fetchDetails();
-    } catch (error) {
-      const apiError = error as Partial<CaseApiError>;
-      if (apiError.status === 401 || apiError.status === 403) {
-        onUnauthorized?.();
-        return;
-      }
-
-      setDocumentError(
-        error instanceof Error ? error.message : "Could not upload document.",
-      );
-    } finally {
-      setIsUploadingDocument(false);
-    }
-  }, [
-    documentType,
-    fetchDetails,
-    getAccessToken,
-    onUnauthorized,
-    resolvedCaseId,
-    selectedFile,
-    showSuccessSnackbar,
-  ]);
-
-  const downloadDocument = useCallback(
-    async (document: CaseDocument) => {
-      if (resolvedCaseId === null) {
-        setDocumentError("Invalid case id.");
-        return;
-      }
-
-      setDocumentError("");
-      setDownloadingDocumentId(document.id);
-
-      try {
-        const downloadUrl = document.download_url
-          ? document.download_url.startsWith("http")
-            ? document.download_url
-            : `${API_BASE_URL}${document.download_url}`
-          : `${API_BASE_URL}/api/cases/me/${resolvedCaseId}/documents/${document.id}/download/`;
-
-        const response = await fetch(downloadUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${getAccessToken()}`,
-          },
-        });
-
-        if (response.status === 401 || response.status === 403) {
-          onUnauthorized?.();
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error("Could not download document.");
-        }
-
-        const blob = await response.blob();
-        const objectUrl = window.URL.createObjectURL(blob);
-        const link = window.document.createElement("a");
-        link.href = objectUrl;
-        link.download = parseDownloadFilename(
-          response.headers.get("Content-Disposition"),
-          document.filename,
-        );
-        window.document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(objectUrl);
-        showSuccessSnackbar("Document downloaded successfully.");
-      } catch (error) {
-        setDocumentError(
-          error instanceof Error
-            ? error.message
-            : "Could not download document.",
-        );
-      } finally {
-        setDownloadingDocumentId(null);
-      }
-    },
-    [getAccessToken, onUnauthorized, resolvedCaseId, showSuccessSnackbar],
-  );
-
   return (
-    <>
-      <AppSnackbar
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={closeSnackbar}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        px: { xs: 2, md: 4 },
+        py: { xs: 3, md: 5 },
+        backgroundColor: "#ffffff",
+      }}
+    >
+      <PortalUserHeader
+        name={currentUser.name}
+        email={currentUser.email}
+        roleLabel={currentUser.roleLabel}
+        logoutAction={{
+          label: "Log Out",
+          icon: <LogoutOutlined fontSize="small" />,
+          onClick: onLogout,
+        }}
+        actions={[
+          {
+            label: "My Cases",
+            active: true,
+            icon: <AssignmentTurnedInOutlined fontSize="small" />,
+            onClick: () => navigate("/passenger-cases"),
+          },
+          {
+            label: "New Claim",
+            icon: <AddTaskOutlined fontSize="small" />,
+            onClick: () => navigate("/case-entry"),
+          },
+        ]}
       />
-      <Box
+
+      <Card
+        elevation={1}
         sx={{
-          minHeight: "100vh",
-          backgroundColor: "#ffffff",
+          maxWidth: 1080,
+          mx: "auto",
+          mt: 3,
+          border: "1px solid",
+          borderColor: "divider",
+          overflow: "hidden",
         }}
       >
-        <PortalUserHeader
-          name={currentUser.name}
-          email={currentUser.email}
-          roleLabel={currentUser.roleLabel}
-          logoutAction={{
-            label: "Log Out",
-            icon: <LogoutOutlined fontSize="small" />,
-            onClick: onLogout,
-          }}
-          actions={[
-            {
-              label: "My Cases",
-              active: true,
-              icon: <AssignmentTurnedInOutlined fontSize="small" />,
-              onClick: () => navigate("/passenger-cases"),
-            },
-            {
-              label: "New Claim",
-              icon: <AddTaskOutlined fontSize="small" />,
-              onClick: () => navigate("/case-entry"),
-            },
-          ]}
-        />
-
-        <Box
-          sx={{
-            maxWidth: 1080,
-            mx: "auto",
-            px: { xs: 2, md: 4 },
-            py: { xs: 3, md: 5 },
-          }}
-        >
-          <Card
-            elevation={1}
+        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+          <Box
             sx={{
-              maxWidth: 1080,
-              mx: "auto",
-              border: "1px solid",
-              borderColor: "divider",
-              overflow: "hidden",
+              position: "relative",
+              mb: 3,
+              pb: { xs: 1, md: 0 },
             }}
           >
-            <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-              <Box
-                sx={{
-                  position: "relative",
-                  mb: 3,
-                  pb: { xs: 1, md: 0 },
-                }}
+            <Box
+              sx={{
+                width: "100%",
+                textAlign: "center",
+                px: { xs: 0, md: 10 },
+              }}
+            >
+              <Typography variant="caption" color="secondary.main">
+                AIRASSIST PORTAL
+              </Typography>
+              <Typography variant="h2" sx={{ mt: 0.5 }}>
+                Case Details
+              </Typography>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
               >
                 <Box
                   sx={{
@@ -536,19 +410,8 @@ function PassengerCaseDetailsPage({
                     px: { xs: 0, md: 10 },
                   }}
                 >
-                  <Typography variant="caption" color="secondary.main">
-                    AIRASSIST PORTAL
-                  </Typography>
                   <Typography variant="h2" sx={{ mt: 0.5 }}>
                     Case Details
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    color="text.secondary"
-                    sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
-                  >
-                    Review flight, passenger, and attached documents for this
-                    case.
                   </Typography>
                 </Box>
               </Box>
@@ -682,7 +545,7 @@ function PassengerCaseDetailsPage({
                                 fontWeight: 400,
                                 width: "38%",
                               },
-                              "& td:last-of-type": { pl: 2 },
+                              "& td:last-of-type": { pl: 2, fontWeight: 600 },
                             }}
                           >
                             <TableBody>
@@ -760,7 +623,13 @@ function PassengerCaseDetailsPage({
                         </Typography>
                       ) : (
                         <TableContainer>
-                          <Table size="small">
+                          <Table
+                            size="small"
+                            sx={{
+                              "& th": { fontWeight: 400 },
+                              "& tbody td": { fontWeight: 600 },
+                            }}
+                          >
                             <TableHead>
                               <TableRow>
                                 <TableCell>Flight Date</TableCell>
@@ -816,7 +685,10 @@ function PassengerCaseDetailsPage({
                         <TableContainer>
                           <Table
                             size="small"
-                            sx={{ "& td:first-of-type": { fontWeight: 400 } }}
+                            sx={{
+                              "& td:first-of-type": { fontWeight: 400 },
+                              "& td:last-of-type": { fontWeight: 600 },
+                            }}
                           >
                             <TableBody>
                               <TableRow>
@@ -873,11 +745,84 @@ function PassengerCaseDetailsPage({
                   <Card variant="outlined">
                     <CardContent>
                       <Box
+                Review flight, passenger, and attached documents for this case.
+              </Typography>
+            </Box>
+          </Box>
+
+          <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
+            <Button variant="outlined" onClick={handleBack}>
+              Back
+            </Button>
+          </Stack>
+
+          {errorMessage && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {errorMessage}
+            </Alert>
+          )}
+
+          {isLoading ? (
+            <Box
+              sx={{
+                py: 8,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              <CircularProgress size={28} />
+              <Typography variant="body1" color="text.secondary">
+                Loading case details...
+              </Typography>
+            </Box>
+          ) : !details ? (
+            <Box
+              sx={{
+                py: 6,
+                borderRadius: 2,
+                border: "1px dashed",
+                borderColor: "divider",
+                textAlign: "center",
+              }}
+            >
+              <Typography variant="body1" color="text.secondary">
+                No details available for this case.
+              </Typography>
+            </Box>
+          ) : (
+            <Stack spacing={3}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <SummarizeOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">Summary</Typography>
+                  </Box>
+                  <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={2}
+                    sx={{ justifyContent: "space-between" }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="body1">Case ID:</Typography>
+                      <Typography
+                        variant="body1"
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 2,
+                          color: "#003178",
+                          backgroundColor: "rgba(0, 49, 120, 0.04)",
+                          borderRadius: 1,
+                          px: 1,
+                          py: 0.5,
+                          fontWeight: 500,
+                          lineHeight: 1.75,
                         }}
                       >
                         <DescriptionOutlined
@@ -999,8 +944,9 @@ function PassengerCaseDetailsPage({
                               <TableRow>
                                 <TableCell>Filename</TableCell>
                                 <TableCell>Type</TableCell>
+                                <TableCell>Uploaded by</TableCell>
                                 <TableCell>Upload Timestamp</TableCell>
-                                <TableCell align="right">Action</TableCell>
+                                <TableCell align="center">Download</TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
@@ -1009,9 +955,16 @@ function PassengerCaseDetailsPage({
                                   <TableCell>{item.filename}</TableCell>
                                   <TableCell>{item.document_type}</TableCell>
                                   <TableCell>
+                                    {item.uploaded_by === "PASSENGER"
+                                      ? "Passenger"
+                                      : item.uploaded_by === "COLLEAGUE"
+                                        ? "Colleague"
+                                        : "Unknown"}
+                                  </TableCell>
+                                  <TableCell>
                                     {formatDateTime(item.uploaded_at)}
                                   </TableCell>
-                                  <TableCell align="right">
+                                  <TableCell align="center">
                                     <Button
                                       size="small"
                                       variant="text"
@@ -1025,7 +978,7 @@ function PassengerCaseDetailsPage({
                                     >
                                       {downloadingDocumentId === item.id
                                         ? "Downloading..."
-                                        : "Download"}
+                                        : ""}
                                     </Button>
                                   </TableCell>
                                 </TableRow>
@@ -1040,11 +993,51 @@ function PassengerCaseDetailsPage({
                   <Card variant="outlined">
                     <CardContent>
                       <Box
+                        #{details.id}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="body1">Status:</Typography>
+                      <Chip
+                        size="small"
+                        label={getCaseStatusPresentation(details.status).label}
+                        color={getCaseStatusPresentation(details.status).color}
+                        sx={getCaseStatusPresentation(details.status).sx}
+                        variant="outlined"
+                      />
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Typography variant="body1">
+                        Created: {formatDateTime(details.created_at)}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <FlightTakeoffOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">Flight details</Typography>
+                  </Box>
+                  {details.flight ? (
+                    <TableContainer>
+                      <Table
+                        size="small"
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 2,
+                          "& td:first-of-type": {
+                            fontWeight: 400,
+                            width: "38%",
+                          },
+                          "& td:last-of-type": { pl: 2 },
                         }}
                       >
                         <AddCommentOutlined
@@ -1078,101 +1071,248 @@ function PassengerCaseDetailsPage({
                         direction={{ xs: "column", sm: "row" }}
                         spacing={1.5}
                         sx={{ mt: 1.5, alignItems: { sm: "center" } }}
+                        <TableBody>
+                          <TableRow>
+                            <TableCell>Flight date</TableCell>
+                            <TableCell>
+                              {formatDate(details.flight.flight_date)}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Flight Nr.</TableCell>
+                            <TableCell>
+                              {details.flight.flight_number}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Airline</TableCell>
+                            <TableCell>{details.flight.airline}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Reservation Number</TableCell>
+                            <TableCell>
+                              {details.flight.reservation_number}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Departing Airport</TableCell>
+                            <TableCell>
+                              {details.flight.departing_airport}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Destination Airport</TableCell>
+                            <TableCell>
+                              {details.flight.destination_airport}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Planned Departure Time</TableCell>
+                            <TableCell>
+                              {details.flight.planned_departure_time}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Planned Arrival Time</TableCell>
+                            <TableCell>
+                              {details.flight.planned_arrival_time}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Typography variant="body1" color="text.secondary">
+                      Main flight details are not available.
+                    </Typography>
+                  )}
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 1,
+                    }}
+                  >
+                    <HubOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h6">Connecting Flights</Typography>
+                  </Box>
+                  {details.connecting_flights.length === 0 ? (
+                    <Typography variant="body1" color="text.secondary">
+                      None
+                    </Typography>
+                  ) : (
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Flight Date</TableCell>
+                            <TableCell>Flight Nr.</TableCell>
+                            <TableCell>From</TableCell>
+                            <TableCell>To</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {details.connecting_flights.map((flight, index) => (
+                            <TableRow key={`${flight.flight_number}-${index}`}>
+                              <TableCell>
+                                {formatDate(flight.flight_date)}
+                              </TableCell>
+                              <TableCell>{flight.flight_number}</TableCell>
+                              <TableCell>{flight.departing_airport}</TableCell>
+                              <TableCell>
+                                {flight.destination_airport}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <PersonOutlineOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">Passenger details</Typography>
+                  </Box>
+                  {details.passenger ? (
+                    <TableContainer>
+                      <Table
+                        size="small"
+                        sx={{ "& td:first-of-type": { fontWeight: 400 } }}
                       >
-                        <Typography variant="body2" color="text.secondary">
-                          {commentText.length}/{COMMENT_MAX_LENGTH}
-                        </Typography>
-                        <Button
-                          variant="contained"
-                          onClick={() => void submitComment()}
-                          disabled={!canSubmitComment}
-                        >
-                          {isSubmittingComment ? "Adding..." : "Add Comment"}
-                        </Button>
-                      </Stack>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell>Name</TableCell>
+                            <TableCell>
+                              {details.passenger.first_name}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Family Name</TableCell>
+                            <TableCell>{details.passenger.last_name}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Date of Birth</TableCell>
+                            <TableCell>
+                              {formatDate(details.passenger.date_of_birth)}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>E-mail</TableCell>
+                            <TableCell>{details.passenger.email}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Phone</TableCell>
+                            <TableCell>
+                              {details.passenger.phone ?? "-"}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Address</TableCell>
+                            <TableCell>
+                              {details.passenger.address ?? "-"}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Postal Code</TableCell>
+                            <TableCell>
+                              {details.passenger.postal_code ?? "-"}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Typography variant="body1" color="text.secondary">
+                      Passenger details are not available.
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
 
-                      {commentSubmitError && (
-                        <Alert severity="error" sx={{ mt: 2 }}>
-                          {commentSubmitError}
-                        </Alert>
-                      )}
+              <Card variant="outlined">
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <DescriptionOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                    <Typography variant="h5">
+                      Attached Documents List
+                    </Typography>
+                  </Box>
+                  {details.documents.length === 0 ? (
+                    <Typography variant="body1" color="text.secondary">
+                      No documents attached.
+                    </Typography>
+                  ) : (
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Filename</TableCell>
+                            <TableCell>Type</TableCell>
+                            <TableCell>Upload Timestamp</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {details.documents.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell>{item.filename}</TableCell>
+                              <TableCell>{item.document_type}</TableCell>
+                              <TableCell>
+                                {formatDateTime(item.uploaded_at)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+                </CardContent>
+              </Card>
 
-                      {commentSubmitSuccess && (
-                        <Alert severity="success" sx={{ mt: 2 }}>
-                          {commentSubmitSuccess}
-                        </Alert>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h5" sx={{ mb: 2 }}>
-                        Comment List
-                      </Typography>
-                      {(details.comments ?? []).length === 0 ? (
-                        <Typography variant="body1" color="text.secondary">
-                          No comments yet.
-                        </Typography>
-                      ) : (
-                        <TableContainer>
-                          <Table size="small">
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>User</TableCell>
-                                <TableCell>Role</TableCell>
-                                <TableCell>Timestamp</TableCell>
-                                <TableCell>Comment</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {(details.comments ?? []).map((comment) => (
-                                <TableRow key={comment.id}>
-                                  <TableCell>{comment.author_email}</TableCell>
-                                  <TableCell>
-                                    {comment.author_role?.toUpperCase() ===
-                                    "PASSENGER" ? (
-                                      <Box
-                                        component="span"
-                                        sx={{
-                                          display: "inline-block",
-                                          color: "#003178",
-                                          backgroundColor:
-                                            "rgba(0, 49, 120, 0.04)",
-                                          borderRadius: 1,
-                                          px: 1,
-                                          py: 0.5,
-                                          fontWeight: 500,
-                                          lineHeight: 1.75,
-                                        }}
-                                      >
-                                        {comment.author_role}
-                                      </Box>
-                                    ) : (
-                                      comment.author_role
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    {formatDateTime(comment.created_at)}
-                                  </TableCell>
-                                  <TableCell sx={{ whiteSpace: "pre-wrap" }}>
-                                    {comment.text}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Stack>
-              )}
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
-    </>
+              <CommentsCard
+                comments={details.comments ?? []}
+                formatDateTime={formatDateTime}
+                commentText={commentText}
+                setCommentText={setCommentText}
+                isSubmitting={isSubmittingComment}
+                errorMessage={commentSubmitError}
+                successMessage={commentSubmitSuccess}
+                submitComment={submitComment}
+                clearMessages={() => {
+                  if (commentSubmitError) {
+                    setCommentSubmitError("");
+                  }
+                  if (commentSubmitSuccess) {
+                    setCommentSubmitSuccess("");
+                  }
+                }}
+              />
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
 
