@@ -40,6 +40,8 @@ type LoginProps = {
   onPasswordResetSuccess?: () => void;
 };
 
+type PasswordResetMode = "change-password" | "request-reset";
+
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   const responseText = await response.text();
 
@@ -56,6 +58,8 @@ const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
 
 const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
   const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [passwordResetMode, setPasswordResetMode] =
+    useState<PasswordResetMode>("request-reset");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -144,6 +148,7 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
       );
 
       if (loginData?.must_change_password) {
+        setPasswordResetMode("change-password");
         setShowPasswordReset(true);
         return;
       }
@@ -164,6 +169,7 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
   if (showPasswordReset) {
     return (
       <ResetPassword
+        mode={passwordResetMode}
         onPasswordResetSuccess={onPasswordResetSuccess}
         onBackToLogin={() => {
           setShowPasswordReset(false);
@@ -245,6 +251,7 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
                     type="button"
                     variant="text"
                     onClick={() => {
+                      setPasswordResetMode("request-reset");
                       setShowPasswordReset(true);
                       closeSnackbar();
                     }}
