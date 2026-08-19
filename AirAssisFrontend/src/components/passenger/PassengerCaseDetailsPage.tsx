@@ -9,6 +9,10 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -22,11 +26,13 @@ import {
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
   DescriptionOutlined,
+  DownloadOutlined,
   FlightTakeoffOutlined,
   HubOutlined,
   LogoutOutlined,
   PersonOutlineOutlined,
   SummarizeOutlined,
+  UploadFileOutlined,
 } from "@mui/icons-material";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import { getStoredUserIdentity } from "../../utils/auth";
@@ -39,6 +45,14 @@ const API_BASE_URL =
 const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
 const COMMENT_MAX_LENGTH = 1000;
 const SECTION_ICON_COLOR = "#003178";
+const DOCUMENT_TYPE_OPTIONS = [
+  "TICKET",
+  "BOARDING_PASS",
+  "AIRLINE_RECEIPT",
+  "PROOF_OF_PAYMENT",
+  "ID_DOCUMENT",
+  "OTHER",
+];
 
 type FlightDetails = {
   flight_date: string;
@@ -88,6 +102,7 @@ type PassengerCaseDetails = {
   comments?: CaseComment[];
   created_at: string;
   updated_at: string;
+  can_upload_documents?: boolean;
 };
 
 type PassengerCaseDetailsPageProps = {
@@ -140,6 +155,16 @@ function PassengerCaseDetailsPage({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentSubmitError, setCommentSubmitError] = useState("");
   const [commentSubmitSuccess, setCommentSubmitSuccess] = useState("");
+
+  // Document upload states
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [documentType, setDocumentType] = useState("");
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
+  const [documentError, setDocumentError] = useState("");
+  const [isDraggingOverDropzone, setIsDraggingOverDropzone] = useState(false);
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<
+    number | null
+  >(null);
 
   const resolvedCaseId = useMemo(() => {
     if (typeof caseId === "number" && Number.isInteger(caseId)) {
@@ -287,6 +312,136 @@ function PassengerCaseDetailsPage({
     }
   }, [fetchDetails, normalizedCommentText, onUnauthorized, resolvedCaseId]);
 
+  const handleDocumentFileChange = useCallback((file: File | null) => {
+    if (file) {
+      const validTypes = ["application/pdf", "image/jpeg"];
+      const validExtensions = [".pdf", ".jpg", ".jpeg"];
+      const hasValidType = validTypes.includes(file.type);
+      const hasValidExtension = validExtensions.some((ext) =>
+        file.name.toLowerCase().endsWith(ext),
+      );
+
+      if (!hasValidType && !hasValidExtension) {
+        setDocumentError("Only PDF and JPEG files are allowed.");
+        setSelectedFile(null);
+        return;
+      }
+
+      setSelectedFile(file);
+      setDocumentError("");
+    } else {
+      setSelectedFile(null);
+    }
+  }, []);
+
+  const uploadDocument = useCallback(async () => {
+    if (!selectedFile || !documentType) {
+      setDocumentError("Please select both a file and document type.");
+      return;
+    }
+
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+    if (!accessToken) {
+      onUnauthorized?.();
+      return;
+    }
+
+    if (resolvedCaseId === null) {
+      setDocumentError("Invalid case id.");
+      return;
+    }
+
+    setIsUploadingDocument(true);
+    setDocumentError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("document_type", documentType);
+      formData.append("file", selectedFile);
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/cases/me/${resolvedCaseId}/documents/`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: formData,
+        },
+      );
+
+      if (response.status === 401 || response.status === 403) {
+        onUnauthorized?.();
+        return;
+      }
+
+      if (!response.ok) {
+        const responseText = await response.text();
+        throw new Error(responseText || "Could not upload document.");
+      }
+
+      setSelectedFile(null);
+      setDocumentType("");
+      await fetchDetails();
+    } catch (error) {
+      if (error instanceof Error) {
+        setDocumentError(error.message);
+      } else {
+        setDocumentError("Could not upload document.");
+      }
+    } finally {
+      setIsUploadingDocument(false);
+    }
+  }, [
+    selectedFile,
+    documentType,
+    resolvedCaseId,
+    onUnauthorized,
+    fetchDetails,
+  ]);
+
+  const downloadDocument = useCallback(
+    async (item: CaseDocument) => {
+      const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+      if (!accessToken) {
+        onUnauthorized?.();
+        return;
+      }
+
+      setDownloadingDocumentId(item.id);
+
+      try {
+        const response = await fetch(item.download_url || "", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to download document.");
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = item.filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        setDocumentError(
+          error instanceof Error
+            ? error.message
+            : "Failed to download document.",
+        );
+      } finally {
+        setDownloadingDocumentId(null);
+      }
+    },
+    [onUnauthorized],
+  );
+
   return (
     <Box
       sx={{
@@ -357,889 +512,534 @@ function PassengerCaseDetailsPage({
                 color="text.secondary"
                 sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
               >
-                <Box
-                  sx={{
-                    width: "100%",
-                    textAlign: "center",
-                    px: { xs: 0, md: 10 },
-                  }}
-                >
-                  <Typography variant="h2" sx={{ mt: 0.5 }}>
-                    Case Details
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
-                <Button variant="outlined" onClick={handleBack}>
-                  Back
-                </Button>
-              </Stack>
-
-              {errorMessage && (
-                <Alert severity="error" sx={{ mb: 3 }}>
-                  {errorMessage}
-                </Alert>
-              )}
-
-              {isLoading ? (
-                <Box
-                  sx={{
-                    py: 8,
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    gap: 1,
-                  }}
-                >
-                  <CircularProgress size={28} />
-                  <Typography variant="body1" color="text.secondary">
-                    Loading case details...
-                  </Typography>
-                </Box>
-              ) : !details ? (
-                <Box
-                  sx={{
-                    py: 6,
-                    borderRadius: 2,
-                    border: "1px dashed",
-                    borderColor: "divider",
-                    textAlign: "center",
-                  }}
-                >
-                  <Typography variant="body1" color="text.secondary">
-                    No details available for this case.
-                  </Typography>
-                </Box>
-              ) : (
-                <Stack spacing={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 2,
-                        }}
-                      >
-                        <SummarizeOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                        <Typography variant="h5">Summary</Typography>
-                      </Box>
-                      <Stack
-                        direction={{ xs: "column", md: "row" }}
-                        spacing={2}
-                        sx={{ justifyContent: "space-between" }}
-                      >
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Typography variant="body1">Case ID:</Typography>
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              color: "#003178",
-                              backgroundColor: "rgba(0, 49, 120, 0.04)",
-                              borderRadius: 1,
-                              px: 1,
-                              py: 0.5,
-                              fontWeight: 500,
-                              lineHeight: 1.75,
-                            }}
-                          >
-                            #{details.id}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Typography variant="body1">Status:</Typography>
-                          <Chip
-                            size="small"
-                            label={
-                              getCaseStatusPresentation(details.status).label
-                            }
-                            color={
-                              getCaseStatusPresentation(details.status).color
-                            }
-                            sx={getCaseStatusPresentation(details.status).sx}
-                            variant="outlined"
-                          />
-                        </Box>
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <Typography variant="body1">
-                            Created: {formatDateTime(details.created_at)}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </CardContent>
-                  </Card>
-
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 2,
-                        }}
-                      >
-                        <FlightTakeoffOutlined
-                          sx={{ color: SECTION_ICON_COLOR }}
-                        />
-                        <Typography variant="h5">Flight details</Typography>
-                      </Box>
-                      {details.flight ? (
-                        <TableContainer>
-                          <Table
-                            size="small"
-                            sx={{
-                              "& td:first-of-type": {
-                                fontWeight: 400,
-                                width: "38%",
-                              },
-                              "& td:last-of-type": { pl: 2, fontWeight: 600 },
-                            }}
-                          >
-                            <TableBody>
-                              <TableRow>
-                                <TableCell>Flight date</TableCell>
-                                <TableCell>
-                                  {formatDate(details.flight.flight_date)}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Flight Nr.</TableCell>
-                                <TableCell>
-                                  {details.flight.flight_number}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Airline</TableCell>
-                                <TableCell>{details.flight.airline}</TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Reservation Number</TableCell>
-                                <TableCell>
-                                  {details.flight.reservation_number}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Departing Airport</TableCell>
-                                <TableCell>
-                                  {details.flight.departing_airport}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Destination Airport</TableCell>
-                                <TableCell>
-                                  {details.flight.destination_airport}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Planned Departure Time</TableCell>
-                                <TableCell>
-                                  {details.flight.planned_departure_time}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Planned Arrival Time</TableCell>
-                                <TableCell>
-                                  {details.flight.planned_arrival_time}
-                                </TableCell>
-                              </TableRow>
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      ) : (
-                        <Typography variant="body1" color="text.secondary">
-                          Main flight details are not available.
-                        </Typography>
-                      )}
-
-                      <Divider sx={{ my: 2 }} />
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 1,
-                        }}
-                      >
-                        <HubOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                        <Typography variant="h6">Connecting Flights</Typography>
-                      </Box>
-                      {details.connecting_flights.length === 0 ? (
-                        <Typography variant="body1" color="text.secondary">
-                          None
-                        </Typography>
-                      ) : (
-                        <TableContainer>
-                          <Table
-                            size="small"
-                            sx={{
-                              "& th": { fontWeight: 400 },
-                              "& tbody td": { fontWeight: 600 },
-                            }}
-                          >
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>Flight Date</TableCell>
-                                <TableCell>Flight Nr.</TableCell>
-                                <TableCell>From</TableCell>
-                                <TableCell>To</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {details.connecting_flights.map(
-                                (flight, index) => (
-                                  <TableRow
-                                    key={`${flight.flight_number}-${index}`}
-                                  >
-                                    <TableCell>
-                                      {formatDate(flight.flight_date)}
-                                    </TableCell>
-                                    <TableCell>
-                                      {flight.flight_number}
-                                    </TableCell>
-                                    <TableCell>
-                                      {flight.departing_airport}
-                                    </TableCell>
-                                    <TableCell>
-                                      {flight.destination_airport}
-                                    </TableCell>
-                                  </TableRow>
-                                ),
-                              )}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 2,
-                        }}
-                      >
-                        <PersonOutlineOutlined
-                          sx={{ color: SECTION_ICON_COLOR }}
-                        />
-                        <Typography variant="h5">Passenger details</Typography>
-                      </Box>
-                      {details.passenger ? (
-                        <TableContainer>
-                          <Table
-                            size="small"
-                            sx={{
-                              "& td:first-of-type": { fontWeight: 400 },
-                              "& td:last-of-type": { fontWeight: 600 },
-                            }}
-                          >
-                            <TableBody>
-                              <TableRow>
-                                <TableCell>Name</TableCell>
-                                <TableCell>
-                                  {details.passenger.first_name}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Family Name</TableCell>
-                                <TableCell>
-                                  {details.passenger.last_name}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Date of Birth</TableCell>
-                                <TableCell>
-                                  {formatDate(details.passenger.date_of_birth)}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>E-mail</TableCell>
-                                <TableCell>{details.passenger.email}</TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Phone</TableCell>
-                                <TableCell>
-                                  {details.passenger.phone ?? "-"}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Address</TableCell>
-                                <TableCell>
-                                  {details.passenger.address ?? "-"}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Postal Code</TableCell>
-                                <TableCell>
-                                  {details.passenger.postal_code ?? "-"}
-                                </TableCell>
-                              </TableRow>
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      ) : (
-                        <Typography variant="body1" color="text.secondary">
-                          Passenger details are not available.
-                        </Typography>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box
                 Review flight, passenger, and attached documents for this case.
               </Typography>
             </Box>
-          </Box>
 
-          <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
-            <Button variant="outlined" onClick={handleBack}>
-              Back
-            </Button>
-          </Stack>
+            <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
+              <Button variant="outlined" onClick={handleBack}>
+                Back
+              </Button>
+            </Stack>
 
-          {errorMessage && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {errorMessage}
-            </Alert>
-          )}
+            {errorMessage && (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {errorMessage}
+              </Alert>
+            )}
 
-          {isLoading ? (
-            <Box
-              sx={{
-                py: 8,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <CircularProgress size={28} />
-              <Typography variant="body1" color="text.secondary">
-                Loading case details...
-              </Typography>
-            </Box>
-          ) : !details ? (
-            <Box
-              sx={{
-                py: 6,
-                borderRadius: 2,
-                border: "1px dashed",
-                borderColor: "divider",
-                textAlign: "center",
-              }}
-            >
-              <Typography variant="body1" color="text.secondary">
-                No details available for this case.
-              </Typography>
-            </Box>
-          ) : (
-            <Stack spacing={3}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <SummarizeOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                    <Typography variant="h5">Summary</Typography>
-                  </Box>
-                  <Stack
-                    direction={{ xs: "column", md: "row" }}
-                    spacing={2}
-                    sx={{ justifyContent: "space-between" }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="body1">Case ID:</Typography>
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          color: "#003178",
-                          backgroundColor: "rgba(0, 49, 120, 0.04)",
-                          borderRadius: 1,
-                          px: 1,
-                          py: 0.5,
-                          fontWeight: 500,
-                          lineHeight: 1.75,
-                        }}
+            {isLoading ? (
+              <Box
+                sx={{
+                  py: 8,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <CircularProgress size={28} />
+                <Typography variant="body1" color="text.secondary">
+                  Loading case details...
+                </Typography>
+              </Box>
+            ) : !details ? (
+              <Box
+                sx={{
+                  py: 6,
+                  borderRadius: 2,
+                  border: "1px dashed",
+                  borderColor: "divider",
+                  textAlign: "center",
+                }}
+              >
+                <Typography variant="body1" color="text.secondary">
+                  No details available for this case.
+                </Typography>
+              </Box>
+            ) : (
+              <Stack spacing={3}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <SummarizeOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                      <Typography variant="h5">Summary</Typography>
+                    </Box>
+                    <Stack
+                      direction={{ xs: "column", md: "row" }}
+                      spacing={2}
+                      sx={{ justifyContent: "space-between" }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
-                        <DescriptionOutlined
-                          sx={{ color: SECTION_ICON_COLOR }}
-                        />
-                        <Typography variant="h5">
-                          Attached Documents List
-                        </Typography>
-                      </Box>
-                      {details.can_upload_documents ? (
-                        <Box
-                          onDragOver={(event) => {
-                            event.preventDefault();
-                            setIsDraggingOverDropzone(true);
-                          }}
-                          onDragLeave={() => setIsDraggingOverDropzone(false)}
-                          onDrop={(event) => {
-                            event.preventDefault();
-                            setIsDraggingOverDropzone(false);
-                            handleDocumentFileChange(
-                              event.dataTransfer.files?.[0] ?? null,
-                            );
-                          }}
+                        <Typography variant="body1">Case ID:</Typography>
+                        <Typography
+                          variant="body1"
                           sx={{
-                            border: "1px dashed",
-                            borderColor: isDraggingOverDropzone
-                              ? "primary.main"
-                              : "divider",
-                            borderRadius: 2,
-                            p: 2,
-                            mb: 2,
-                            backgroundColor: isDraggingOverDropzone
-                              ? "rgba(0, 49, 120, 0.04)"
-                              : "transparent",
-                            textAlign: "center",
+                            color: "#003178",
+                            backgroundColor: "rgba(0, 49, 120, 0.04)",
+                            borderRadius: 1,
+                            px: 1,
+                            py: 0.5,
+                            fontWeight: 500,
+                            lineHeight: 1.75,
                           }}
                         >
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ mb: 1.5 }}
-                          >
-                            Drag and drop a file here, or browse from your
-                            computer.
-                          </Typography>
-                          <Stack
-                            direction={{ xs: "column", md: "row" }}
-                            spacing={1.5}
-                            sx={{
-                              alignItems: { md: "center" },
-                              justifyContent: "center",
-                            }}
-                          >
-                            <Button
-                              variant="outlined"
-                              component="label"
-                              startIcon={<UploadFileOutlined />}
-                              disabled={isUploadingDocument}
-                            >
-                              {selectedFile
-                                ? selectedFile.name
-                                : "Choose Document"}
-                              <input
-                                hidden
-                                type="file"
-                                accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"
-                                onChange={(event) => {
-                                  handleDocumentFileChange(
-                                    event.target.files?.[0] ?? null,
-                                  );
-                                  event.target.value = "";
-                                }}
-                              />
-                            </Button>
-                            <FormControl size="small" sx={{ minWidth: 180 }}>
-                              <InputLabel id="passenger-document-type-label">
-                                Document Type
-                              </InputLabel>
-                              <Select
-                                labelId="passenger-document-type-label"
-                                label="Document Type"
-                                value={documentType}
-                                onChange={(event) =>
-                                  setDocumentType(event.target.value)
-                                }
-                              >
-                                {DOCUMENT_TYPE_OPTIONS.map((option) => (
-                                  <MenuItem key={option} value={option}>
-                                    {option.replaceAll("_", " ")}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                            <Button
-                              variant="contained"
-                              onClick={() => void uploadDocument()}
-                              disabled={
-                                !selectedFile ||
-                                Boolean(documentError) ||
-                                isUploadingDocument
-                              }
-                            >
-                              {isUploadingDocument ? "Uploading..." : "Upload"}
-                            </Button>
-                          </Stack>
-                        </Box>
-                      ) : (
-                        <Alert severity="info" sx={{ mb: 2 }}>
-                          Document uploads are available after the colleague
-                          requests additional documents.
-                        </Alert>
-                      )}
-                      {documentError && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                          {documentError}
-                        </Alert>
-                      )}
-                      {details.documents.length === 0 ? (
-                        <Typography variant="body1" color="text.secondary">
-                          No documents attached.
+                          #{details.id}
                         </Typography>
-                      ) : (
-                        <TableContainer>
-                          <Table size="small">
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>Filename</TableCell>
-                                <TableCell>Type</TableCell>
-                                <TableCell>Uploaded by</TableCell>
-                                <TableCell>Upload Timestamp</TableCell>
-                                <TableCell align="center">Download</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {details.documents.map((item) => (
-                                <TableRow key={item.id}>
-                                  <TableCell>{item.filename}</TableCell>
-                                  <TableCell>{item.document_type}</TableCell>
-                                  <TableCell>
-                                    {item.uploaded_by === "PASSENGER"
-                                      ? "Passenger"
-                                      : item.uploaded_by === "COLLEAGUE"
-                                        ? "Colleague"
-                                        : "Unknown"}
-                                  </TableCell>
-                                  <TableCell>
-                                    {formatDateTime(item.uploaded_at)}
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <Button
-                                      size="small"
-                                      variant="text"
-                                      startIcon={<DownloadOutlined />}
-                                      onClick={() =>
-                                        void downloadDocument(item)
-                                      }
-                                      disabled={
-                                        downloadingDocumentId === item.id
-                                      }
-                                    >
-                                      {downloadingDocumentId === item.id
-                                        ? "Downloading..."
-                                        : ""}
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card variant="outlined">
-                    <CardContent>
+                      </Box>
                       <Box
-                        #{details.id}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="body1">Status:</Typography>
-                      <Chip
-                        size="small"
-                        label={getCaseStatusPresentation(details.status).label}
-                        color={getCaseStatusPresentation(details.status).color}
-                        sx={getCaseStatusPresentation(details.status).sx}
-                        variant="outlined"
-                      />
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Typography variant="body1">
-                        Created: {formatDateTime(details.created_at)}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Typography variant="body1">Status:</Typography>
+                        <Chip
+                          size="small"
+                          label={
+                            getCaseStatusPresentation(details.status).label
+                          }
+                          color={
+                            getCaseStatusPresentation(details.status).color
+                          }
+                          sx={getCaseStatusPresentation(details.status).sx}
+                          variant="outlined"
+                        />
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Typography variant="body1">
+                          Created: {formatDateTime(details.created_at)}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
 
-              <Card variant="outlined">
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <FlightTakeoffOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                    <Typography variant="h5">Flight details</Typography>
-                  </Box>
-                  {details.flight ? (
-                    <TableContainer>
-                      <Table
-                        size="small"
+                <Card variant="outlined">
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <FlightTakeoffOutlined
+                        sx={{ color: SECTION_ICON_COLOR }}
+                      />
+                      <Typography variant="h5">Flight details</Typography>
+                    </Box>
+                    {details.flight ? (
+                      <TableContainer>
+                        <Table
+                          size="small"
+                          sx={{
+                            "& td:first-of-type": {
+                              fontWeight: 400,
+                              width: "38%",
+                            },
+                            "& td:last-of-type": { pl: 2, fontWeight: 600 },
+                          }}
+                        >
+                          <TableBody>
+                            <TableRow>
+                              <TableCell>Flight date</TableCell>
+                              <TableCell>
+                                {formatDate(details.flight.flight_date)}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Flight Nr.</TableCell>
+                              <TableCell>
+                                {details.flight.flight_number}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Airline</TableCell>
+                              <TableCell>{details.flight.airline}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Reservation Number</TableCell>
+                              <TableCell>
+                                {details.flight.reservation_number}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Departing Airport</TableCell>
+                              <TableCell>
+                                {details.flight.departing_airport}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Destination Airport</TableCell>
+                              <TableCell>
+                                {details.flight.destination_airport}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Planned Departure Time</TableCell>
+                              <TableCell>
+                                {details.flight.planned_departure_time}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Planned Arrival Time</TableCell>
+                              <TableCell>
+                                {details.flight.planned_arrival_time}
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    ) : (
+                      <Typography variant="body1" color="text.secondary">
+                        Main flight details are not available.
+                      </Typography>
+                    )}
+
+                    <Divider sx={{ my: 2 }} />
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
+                      <HubOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                      <Typography variant="h6">Connecting Flights</Typography>
+                    </Box>
+                    {details.connecting_flights.length === 0 ? (
+                      <Typography variant="body1" color="text.secondary">
+                        None
+                      </Typography>
+                    ) : (
+                      <TableContainer>
+                        <Table
+                          size="small"
+                          sx={{
+                            "& th": { fontWeight: 400 },
+                            "& tbody td": { fontWeight: 600 },
+                          }}
+                        >
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Flight Date</TableCell>
+                              <TableCell>Flight Nr.</TableCell>
+                              <TableCell>From</TableCell>
+                              <TableCell>To</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {details.connecting_flights.map((flight, index) => (
+                              <TableRow
+                                key={`${flight.flight_number}-${index}`}
+                              >
+                                <TableCell>
+                                  {formatDate(flight.flight_date)}
+                                </TableCell>
+                                <TableCell>{flight.flight_number}</TableCell>
+                                <TableCell>
+                                  {flight.departing_airport}
+                                </TableCell>
+                                <TableCell>
+                                  {flight.destination_airport}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card variant="outlined">
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <PersonOutlineOutlined
+                        sx={{ color: SECTION_ICON_COLOR }}
+                      />
+                      <Typography variant="h5">Passenger details</Typography>
+                    </Box>
+                    {details.passenger ? (
+                      <TableContainer>
+                        <Table
+                          size="small"
+                          sx={{
+                            "& td:first-of-type": { fontWeight: 400 },
+                            "& td:last-of-type": { fontWeight: 600 },
+                          }}
+                        >
+                          <TableBody>
+                            <TableRow>
+                              <TableCell>Name</TableCell>
+                              <TableCell>
+                                {details.passenger.first_name}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Family Name</TableCell>
+                              <TableCell>
+                                {details.passenger.last_name}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Date of Birth</TableCell>
+                              <TableCell>
+                                {formatDate(details.passenger.date_of_birth)}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>E-mail</TableCell>
+                              <TableCell>{details.passenger.email}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Phone</TableCell>
+                              <TableCell>
+                                {details.passenger.phone ?? "-"}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Address</TableCell>
+                              <TableCell>
+                                {details.passenger.address ?? "-"}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Postal Code</TableCell>
+                              <TableCell>
+                                {details.passenger.postal_code ?? "-"}
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    ) : (
+                      <Typography variant="body1" color="text.secondary">
+                        Passenger details are not available.
+                      </Typography>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card variant="outlined">
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <DescriptionOutlined sx={{ color: SECTION_ICON_COLOR }} />
+                      <Typography variant="h5">
+                        Attached Documents List
+                      </Typography>
+                    </Box>
+
+                    {details.can_upload_documents && (
+                      <Box
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          setIsDraggingOverDropzone(true);
+                        }}
+                        onDragLeave={() => setIsDraggingOverDropzone(false)}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          setIsDraggingOverDropzone(false);
+                          handleDocumentFileChange(
+                            event.dataTransfer.files?.[0] ?? null,
+                          );
+                        }}
                         sx={{
-                          "& td:first-of-type": {
-                            fontWeight: 400,
-                            width: "38%",
-                          },
-                          "& td:last-of-type": { pl: 2 },
+                          border: "1px dashed",
+                          borderColor: isDraggingOverDropzone
+                            ? "primary.main"
+                            : "divider",
+                          borderRadius: 2,
+                          p: 2,
+                          mb: 2,
+                          backgroundColor: isDraggingOverDropzone
+                            ? "rgba(0, 49, 120, 0.04)"
+                            : "transparent",
+                          textAlign: "center",
                         }}
                       >
-                        <TableBody>
-                          <TableRow>
-                            <TableCell>Flight date</TableCell>
-                            <TableCell>
-                              {formatDate(details.flight.flight_date)}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Flight Nr.</TableCell>
-                            <TableCell>
-                              {details.flight.flight_number}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Airline</TableCell>
-                            <TableCell>{details.flight.airline}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Reservation Number</TableCell>
-                            <TableCell>
-                              {details.flight.reservation_number}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Departing Airport</TableCell>
-                            <TableCell>
-                              {details.flight.departing_airport}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Destination Airport</TableCell>
-                            <TableCell>
-                              {details.flight.destination_airport}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Planned Departure Time</TableCell>
-                            <TableCell>
-                              {details.flight.planned_departure_time}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Planned Arrival Time</TableCell>
-                            <TableCell>
-                              {details.flight.planned_arrival_time}
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ) : (
-                    <Typography variant="body1" color="text.secondary">
-                      Main flight details are not available.
-                    </Typography>
-                  )}
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1.5 }}
+                        >
+                          Drag and drop a file here, or browse from your
+                          computer.
+                        </Typography>
+                        <Stack
+                          direction={{ xs: "column", md: "row" }}
+                          spacing={1.5}
+                          sx={{
+                            alignItems: { md: "center" },
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Button
+                            variant="outlined"
+                            component="label"
+                            startIcon={<UploadFileOutlined />}
+                            disabled={isUploadingDocument}
+                          >
+                            {selectedFile
+                              ? selectedFile.name
+                              : "Choose Document"}
+                            <input
+                              hidden
+                              type="file"
+                              accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"
+                              onChange={(event) => {
+                                handleDocumentFileChange(
+                                  event.target.files?.[0] ?? null,
+                                );
+                                event.target.value = "";
+                              }}
+                            />
+                          </Button>
+                          <FormControl size="small" sx={{ minWidth: 180 }}>
+                            <InputLabel id="passenger-document-type-label">
+                              Document Type
+                            </InputLabel>
+                            <Select
+                              labelId="passenger-document-type-label"
+                              label="Document Type"
+                              value={documentType}
+                              onChange={(event) =>
+                                setDocumentType(event.target.value)
+                              }
+                            >
+                              {DOCUMENT_TYPE_OPTIONS.map((option) => (
+                                <MenuItem key={option} value={option}>
+                                  {option.replaceAll("_", " ")}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                          <Button
+                            variant="contained"
+                            onClick={() => void uploadDocument()}
+                            disabled={
+                              !selectedFile ||
+                              Boolean(documentError) ||
+                              isUploadingDocument
+                            }
+                          >
+                            {isUploadingDocument ? "Uploading..." : "Upload"}
+                          </Button>
+                        </Stack>
+                      </Box>
+                    )}
 
-                  <Divider sx={{ my: 2 }} />
+                    {details.can_upload_documents === false && (
+                      <Alert severity="info" sx={{ mb: 2 }}>
+                        Document uploads are available after the colleague
+                        requests additional documents.
+                      </Alert>
+                    )}
 
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 1,
-                    }}
-                  >
-                    <HubOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                    <Typography variant="h6">Connecting Flights</Typography>
-                  </Box>
-                  {details.connecting_flights.length === 0 ? (
-                    <Typography variant="body1" color="text.secondary">
-                      None
-                    </Typography>
-                  ) : (
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Flight Date</TableCell>
-                            <TableCell>Flight Nr.</TableCell>
-                            <TableCell>From</TableCell>
-                            <TableCell>To</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {details.connecting_flights.map((flight, index) => (
-                            <TableRow key={`${flight.flight_number}-${index}`}>
-                              <TableCell>
-                                {formatDate(flight.flight_date)}
-                              </TableCell>
-                              <TableCell>{flight.flight_number}</TableCell>
-                              <TableCell>{flight.departing_airport}</TableCell>
-                              <TableCell>
-                                {flight.destination_airport}
-                              </TableCell>
+                    {documentError && (
+                      <Alert severity="error" sx={{ mb: 2 }}>
+                        {documentError}
+                      </Alert>
+                    )}
+
+                    {details.documents.length === 0 ? (
+                      <Typography variant="body1" color="text.secondary">
+                        No documents attached.
+                      </Typography>
+                    ) : (
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Filename</TableCell>
+                              <TableCell>Type</TableCell>
+                              <TableCell>Uploaded by</TableCell>
+                              <TableCell>Upload Timestamp</TableCell>
+                              <TableCell align="center">Download</TableCell>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  )}
-                </CardContent>
-              </Card>
+                          </TableHead>
+                          <TableBody>
+                            {details.documents.map((item) => (
+                              <TableRow key={item.id}>
+                                <TableCell>{item.filename}</TableCell>
+                                <TableCell>{item.document_type}</TableCell>
+                                <TableCell>
+                                  {item.uploaded_by === "PASSENGER"
+                                    ? "Passenger"
+                                    : item.uploaded_by === "COLLEAGUE"
+                                      ? "Colleague"
+                                      : "Unknown"}
+                                </TableCell>
+                                <TableCell>
+                                  {formatDateTime(item.uploaded_at)}
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Button
+                                    size="small"
+                                    variant="text"
+                                    startIcon={<DownloadOutlined />}
+                                    onClick={() => void downloadDocument(item)}
+                                    disabled={downloadingDocumentId === item.id}
+                                  >
+                                    {downloadingDocumentId === item.id
+                                      ? "Downloading..."
+                                      : ""}
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  </CardContent>
+                </Card>
 
-              <Card variant="outlined">
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <PersonOutlineOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                    <Typography variant="h5">Passenger details</Typography>
-                  </Box>
-                  {details.passenger ? (
-                    <TableContainer>
-                      <Table
-                        size="small"
-                        sx={{ "& td:first-of-type": { fontWeight: 400 } }}
-                      >
-                        <TableBody>
-                          <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell>
-                              {details.passenger.first_name}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Family Name</TableCell>
-                            <TableCell>{details.passenger.last_name}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Date of Birth</TableCell>
-                            <TableCell>
-                              {formatDate(details.passenger.date_of_birth)}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>E-mail</TableCell>
-                            <TableCell>{details.passenger.email}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Phone</TableCell>
-                            <TableCell>
-                              {details.passenger.phone ?? "-"}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Address</TableCell>
-                            <TableCell>
-                              {details.passenger.address ?? "-"}
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell>Postal Code</TableCell>
-                            <TableCell>
-                              {details.passenger.postal_code ?? "-"}
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ) : (
-                    <Typography variant="body1" color="text.secondary">
-                      Passenger details are not available.
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card variant="outlined">
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <DescriptionOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                    <Typography variant="h5">
-                      Attached Documents List
-                    </Typography>
-                  </Box>
-                  {details.documents.length === 0 ? (
-                    <Typography variant="body1" color="text.secondary">
-                      No documents attached.
-                    </Typography>
-                  ) : (
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Filename</TableCell>
-                            <TableCell>Type</TableCell>
-                            <TableCell>Upload Timestamp</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {details.documents.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell>{item.filename}</TableCell>
-                              <TableCell>{item.document_type}</TableCell>
-                              <TableCell>
-                                {formatDateTime(item.uploaded_at)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  )}
-                </CardContent>
-              </Card>
-
-              <CommentsCard
-                comments={details.comments ?? []}
-                formatDateTime={formatDateTime}
-                commentText={commentText}
-                setCommentText={setCommentText}
-                isSubmitting={isSubmittingComment}
-                errorMessage={commentSubmitError}
-                successMessage={commentSubmitSuccess}
-                submitComment={submitComment}
-                clearMessages={() => {
-                  if (commentSubmitError) {
-                    setCommentSubmitError("");
-                  }
-                  if (commentSubmitSuccess) {
-                    setCommentSubmitSuccess("");
-                  }
-                }}
-              />
-            </Stack>
-          )}
+                <CommentsCard
+                  comments={details.comments ?? []}
+                  formatDateTime={formatDateTime}
+                  commentText={commentText}
+                  setCommentText={setCommentText}
+                  isSubmitting={isSubmittingComment}
+                  errorMessage={commentSubmitError}
+                  successMessage={commentSubmitSuccess}
+                  submitComment={submitComment}
+                  clearMessages={() => {
+                    if (commentSubmitError) {
+                      setCommentSubmitError("");
+                    }
+                    if (commentSubmitSuccess) {
+                      setCommentSubmitSuccess("");
+                    }
+                  }}
+                />
+              </Stack>
+            )}
+          </Box>
         </CardContent>
       </Card>
     </Box>
