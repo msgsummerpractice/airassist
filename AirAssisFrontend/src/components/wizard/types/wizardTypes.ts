@@ -47,8 +47,10 @@ import type { Dayjs } from "dayjs";
 export interface Leg {
   departureAirport: string;
   departureIata: string;
+  departureTimezone: string;
   arrivalAirport: string;
   arrivalIata: string;
+  arrivalTimezone: string;
   flightDate: Dayjs | null;
   plannedDepartureTime: Dayjs | null;
   plannedArrivalTime: Dayjs | null;
@@ -101,8 +103,10 @@ export function buildLegs(itinerary: Itinerary): Leg[] {
     legs.push({
       departureAirport: from.name,
       departureIata: from.iata,
+      departureTimezone: from.timezone,
       arrivalAirport: to.name,
       arrivalIata: to.iata,
+      arrivalTimezone: to.timezone,
       flightDate: null,
       plannedDepartureTime: null,
       plannedArrivalTime: null,

@@ -1,15 +1,14 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>AirAssist - Account Created</title>
+    <title>AirAssist - Case Submission Confirmation</title>
   </head>
-
   <body
     style="
       margin: 0;
       padding: 0;
-      background-color: darkblue;
+      background-color: #f4f7fb;
       font-family: Arial, sans-serif;
     "
   >
@@ -17,7 +16,7 @@
       style="
         max-width: 600px;
         margin: 40px auto;
-        background: white;
+        background-color: white;
         border-radius: 10px;
         overflow: hidden;
       "
@@ -29,18 +28,20 @@
           style="max-width: 180px; height: auto"
         />
       </div>
-      <div style="padding: 30px">
-        <h2>Welcome,{{first_name}}</h2>
 
-        <p>Your AirAssist account has been created succesfully</p>
-        <p><strong>User ID: </strong>{{user_id}}</p>
-        <p><strong>Role ID: </strong>{{role_id}}</p>
-        <p><strong>First Name: </strong>{{first_name}}</p>
-        <p><strong>Last Name: </strong>{{last_name}}</p>
-        <p><strong>Email: </strong>{{email}}</p>
-        <p><strong>Password: </strong>{{password}}</p>
+      <div style="padding: 30px; color: #1f2937">
+        <h2 style="margin-top: 0">Case submitted successfully</h2>
 
-        <p>Your password must be changed after your first login.</p>
+        <p>Hello {{ first_name }},</p>
+        <p>Thank you for submitting your case to AirAssist.</p>
+
+        <p><strong>Case ID:</strong> {{ case_id }}</p>
+        <p><strong>Status:</strong> {{ case_status }}</p>
+        <p><strong>Created at:</strong> {{ created_at }}</p>
+
+        {% if contract_attached %}
+        <p>Your case contract PDF is attached to this email.</p>
+        {% endif %}
 
         <p>
           Have a nice day,<br />

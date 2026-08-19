@@ -133,7 +133,7 @@ const toIsoDateTime = (
     dt = dt.add(1, "day");
   }
 
-  return dt.toISOString();
+  return dt.format("YYYY-MM-DDTHH:mm:ss");
 };
 
 const SummarySection = ({

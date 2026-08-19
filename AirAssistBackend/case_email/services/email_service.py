@@ -63,14 +63,14 @@ def _load_logo_attachment():
         Path(settings.BASE_DIR)
         / "case_email"
         / "assets"
-        / "logo_placeholder.png"
+        / "logo.png"
     )
     with logo_path.open("rb") as image_file:
         return {
             "filename": logo_path.name,
             "content": image_file.read(),
             "mimetype": "image/png",
-            "content_id": "logo_placeholder",
+            "content_id": "logo",
             "disposition": "inline",
         }
 
@@ -364,18 +364,19 @@ def send_basic_email(to_email, subject, body, attachments=None):
     )
 
 
-def send_template_email(to_email, subject, template_name, context):
+def send_template_email(to_email, subject, template_name, context, attachments=None):
     email_preset = _get_email_preset()
     html_body = render_to_string(
         template_name,
         _build_template_context(context, email_preset),
     )
+    email_attachments = [_load_logo_attachment(), *(attachments or [])]
     return _send_email(
         to_email=to_email,
         subject=subject,
         body=html_body,
         email_preset=email_preset,
-        attachments=[_load_logo_attachment()],
+        attachments=email_attachments,
         html=True,
     )
 

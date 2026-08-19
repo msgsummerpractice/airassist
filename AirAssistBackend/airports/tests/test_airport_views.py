@@ -419,6 +419,7 @@ class AirportSearchViewTests(TestCase):
             name="Warsaw Chopin Airport",
             city="Warsaw",
             country="Poland",
+            timezone="Europe/Warsaw",
         )
 
         Airport.objects.create(
@@ -427,6 +428,7 @@ class AirportSearchViewTests(TestCase):
             name="Krakow Airport",
             city="Krakow",
             country="Poland",
+            timezone="Europe/Warsaw",
         )
 
         Airport.objects.create(
@@ -435,6 +437,7 @@ class AirportSearchViewTests(TestCase):
             name="Gdansk Airport",
             city="Gdansk",
             country="Poland",
+            timezone="Europe/Warsaw",
         )
 
     def test_search_returns_matching_airports(self):
@@ -459,6 +462,7 @@ class AirportSearchViewTests(TestCase):
                     "iata": "WAW",
                     "name": "Warsaw Chopin Airport",
                     "city": "Warsaw",
+                    "timezone": "Europe/Warsaw",
                 }
             ],
         )
@@ -485,6 +489,7 @@ class AirportSearchViewTests(TestCase):
                     "iata": "WAW",
                     "name": "Warsaw Chopin Airport",
                     "city": "Warsaw",
+                    "timezone": "Europe/Warsaw",
                 }
             ],
         )
@@ -511,6 +516,7 @@ class AirportSearchViewTests(TestCase):
                     "iata": "KRK",
                     "name": "Krakow Airport",
                     "city": "Krakow",
+                    "timezone": "Europe/Warsaw",
                 }
             ],
         )
@@ -537,6 +543,7 @@ class AirportSearchViewTests(TestCase):
                     "iata": "WAW",
                     "name": "Warsaw Chopin Airport",
                     "city": "Warsaw",
+                    "timezone": "Europe/Warsaw",
                 }
             ],
         )
@@ -600,8 +607,44 @@ class AirportSearchViewTests(TestCase):
                     "iata": "WAW",
                     "name": "Warsaw Chopin Airport",
                     "city": "Warsaw",
+                    "timezone": "Europe/Warsaw",
                 }
             ],
+        )
+
+    def test_search_excludes_airports_without_timezone(self):
+        Airport.objects.create(
+            iata="NTZ",
+            name="No Timezone Airport",
+            city="Warsaw",
+            country="Poland",
+            timezone=None,
+        )
+        Airport.objects.create(
+            iata="BTZ",
+            name="Blank Timezone Airport",
+            city="Warsaw",
+            country="Poland",
+            timezone="",
+        )
+
+        request = self.factory.get(
+            "/api/airports/search/",
+            {
+                "q": "timezone",
+            },
+        )
+
+        response = self.view(request)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            response.data,
+            [],
         )
 
     def test_search_returns_maximum_of_ten_results(self):
