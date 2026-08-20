@@ -147,6 +147,10 @@ function CaseEntryForm({
     gdpr,
   ]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
   const handleItineraryNext = (confirmed: Itinerary) => {
     setItinerary(confirmed);
 
