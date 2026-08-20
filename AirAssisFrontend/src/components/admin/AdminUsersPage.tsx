@@ -748,7 +748,7 @@ function AdminUsersPage() {
                         sm: "150px minmax(0, 1fr)",
                       },
                       gap: 1.5,
-                      alignItems: "start",
+                      alignItems: "center",
                     }}
                   >
                     <Typography variant="caption" color="text.secondary">
@@ -760,7 +760,6 @@ function AdminUsersPage() {
                         fullWidth
                         required
                         size="small"
-                        label="First Name"
                         value={editForm.firstname}
                         onChange={(event) =>
                           setEditForm((current) => ({
@@ -784,7 +783,6 @@ function AdminUsersPage() {
                         fullWidth
                         required
                         size="small"
-                        label="Last Name"
                         value={editForm.lastname}
                         onChange={(event) =>
                           setEditForm((current) => ({
@@ -808,7 +806,6 @@ function AdminUsersPage() {
                         fullWidth
                         required
                         size="small"
-                        label="Email"
                         type="email"
                         value={editForm.email}
                         onChange={(event) =>
