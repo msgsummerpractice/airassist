@@ -172,12 +172,15 @@ function PdfHistoryList() {
             <Table
               stickyHeader
               sx={{
+                "& .MuiTableCell-root": {
+                  textAlign: "center",
+                },
                 "& .MuiTableHead-root .MuiTableCell-root": {
-                  fontSize: "1rem",
+                  fontSize: "20px",
                   fontWeight: 700,
                 },
                 "& .MuiTableBody-root .MuiTableCell-root": {
-                  fontSize: "0.875rem",
+                  fontSize: "14px",
                 },
               }}
             >
