@@ -16,6 +16,7 @@ type CaseListFiltersProps = {
   statusOptions: CaseListStatusOption[];
   assigneeFilter: string;
   assigneeOptions: string[];
+  showAssigneeFilter?: boolean;
   statusLabelId: string;
   assigneeLabelId: string;
   onStatusChange: (value: string) => void;
@@ -27,6 +28,7 @@ function CaseListFilters({
   statusOptions,
   assigneeFilter,
   assigneeOptions,
+  showAssigneeFilter = true,
   statusLabelId,
   assigneeLabelId,
   onStatusChange,
@@ -64,26 +66,28 @@ function CaseListFilters({
         </Select>
       </FormControl>
 
-      <FormControl
-        size="small"
-        sx={{ width: { xs: "100%", sm: 220 }, flexShrink: 0 }}
-      >
-        <InputLabel id={assigneeLabelId}>Assignee</InputLabel>
-        <Select
-          labelId={assigneeLabelId}
-          label="Assignee"
-          value={assigneeFilter}
-          onChange={(event) => onAssigneeChange(event.target.value)}
+      {showAssigneeFilter ? (
+        <FormControl
+          size="small"
+          sx={{ width: { xs: "100%", sm: 220 }, flexShrink: 0 }}
         >
-          <MenuItem value="ALL">All</MenuItem>
-          <MenuItem value="UNASSIGNED">Unassigned</MenuItem>
-          {assigneeOptions.map((assigneeName) => (
-            <MenuItem key={assigneeName} value={assigneeName}>
-              {assigneeName}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+          <InputLabel id={assigneeLabelId}>Assignee</InputLabel>
+          <Select
+            labelId={assigneeLabelId}
+            label="Assignee"
+            value={assigneeFilter}
+            onChange={(event) => onAssigneeChange(event.target.value)}
+          >
+            <MenuItem value="ALL">All</MenuItem>
+            <MenuItem value="UNASSIGNED">Unassigned</MenuItem>
+            {assigneeOptions.map((assigneeName) => (
+              <MenuItem key={assigneeName} value={assigneeName}>
+                {assigneeName}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      ) : null}
     </Stack>
   );
 }

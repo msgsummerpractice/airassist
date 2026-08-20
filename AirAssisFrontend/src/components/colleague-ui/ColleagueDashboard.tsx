@@ -29,12 +29,14 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  TableSortLabel,
   Tooltip,
   Typography,
 } from "@mui/material";
 
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
+import CaseListFilters from "../cases/shared/list/CaseListFilters";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import {
   fetchWithAuth,
@@ -69,12 +71,22 @@ type DashboardResponse = {
   };
 };
 
+type SortValue = "-id" | "id" | "status" | "-status";
+
 type ColleagueDashboardProps = {
   onCreateCase: () => void;
 };
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "PENDING", label: "Pending" },
+  { value: "IN_REVIEW", label: "In review" },
+  { value: "ELIGIBLE", label: "Eligible" },
+  { value: "NON_ELIGIBLE", label: "Non-eligible" },
+  { value: "AWAITING_DOCUMENTS", label: "Awaiting documents" },
+];
 
 const readJsonSafely = async <T,>(response: Response): Promise<T | null> => {
   const responseText = await response.text();
@@ -117,6 +129,8 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
   const [dashboardReloadKey, setDashboardReloadKey] = useState(0);
   const [claimsPage, setClaimsPage] = useState(0);
   const [claimsRowsPerPage, setClaimsRowsPerPage] = useState(10);
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sorting, setSorting] = useState<SortValue>("-id");
 
   const { snackbar, closeSnackbar, showErrorSnackbar } = useAppSnackbar();
 
@@ -208,7 +222,40 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
     );
   }, [colleague]);
 
-  const paginatedClaims = claims.slice(
+  const displayedClaims = useMemo(() => {
+    const filteredClaims = claims.filter((claim) =>
+      statusFilter === "ALL" ? true : claim.status === statusFilter,
+    );
+
+    return [...filteredClaims].sort((first, second) => {
+      if (sorting === "id") {
+        return first.case_id - second.case_id;
+      }
+
+      if (sorting === "-id") {
+        return second.case_id - first.case_id;
+      }
+
+      const statusComparison = first.status.localeCompare(second.status);
+
+      return sorting === "status" ? statusComparison : -statusComparison;
+    });
+  }, [claims, sorting, statusFilter]);
+
+  const caseIdSortDirection = sorting === "id" ? "asc" : "desc";
+  const statusSortDirection = sorting === "status" ? "asc" : "desc";
+
+  const handleCaseIdSort = () => {
+    setSorting((current) => (current === "-id" ? "id" : "-id"));
+    setClaimsPage(0);
+  };
+
+  const handleStatusSort = () => {
+    setSorting((current) => (current === "status" ? "-status" : "status"));
+    setClaimsPage(0);
+  };
+
+  const paginatedClaims = displayedClaims.slice(
     claimsPage * claimsRowsPerPage,
     claimsPage * claimsRowsPerPage + claimsRowsPerPage,
   );
@@ -293,6 +340,28 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
 
               <Divider />
 
+              {isClaimsVisible &&
+              !isLoading &&
+              !hasError &&
+              claims.length > 0 ? (
+                <CaseListFilters
+                  statusFilter={statusFilter}
+                  statusOptions={STATUS_FILTER_OPTIONS}
+                  assigneeFilter="ALL"
+                  assigneeOptions={[]}
+                  showAssigneeFilter={false}
+                  statusLabelId="my-assigned-cases-status-label"
+                  assigneeLabelId="my-assigned-cases-assignee-label"
+                  onStatusChange={(value) => {
+                    setStatusFilter(value);
+                    setClaimsPage(0);
+                  }}
+                  onAssigneeChange={() => {
+                    // My Assigned Cases are scoped to the current colleague.
+                  }}
+                />
+              ) : null}
+
               {!isClaimsVisible ? null : isLoading ? (
                 <Stack
                   spacing={1.5}
@@ -311,12 +380,13 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                 <Alert severity="error" variant="outlined">
                   We could not load your active claims right now.
                 </Alert>
-              ) : claims.length === 0 ? (
+              ) : displayedClaims.length === 0 ? (
                 /* Empty */
                 <Box className="colleague-dashboard__empty-state">
                   <Typography variant="body1" color="text.secondary">
-                    When a case is assigned to your account, it will appear
-                    here.
+                    {claims.length === 0
+                      ? "When a case is assigned to your account, it will appear here."
+                      : "No assigned cases match the selected filters."}
                   </Typography>
                 </Box>
               ) : (
@@ -339,11 +409,29 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                         }}
                       >
                         <TableRow>
-                          <TableCell>Claim ID</TableCell>
+                          <TableCell sortDirection={caseIdSortDirection}>
+                            <TableSortLabel
+                              active={sorting === "id" || sorting === "-id"}
+                              direction={caseIdSortDirection}
+                              onClick={handleCaseIdSort}
+                            >
+                              Claim ID
+                            </TableSortLabel>
+                          </TableCell>
 
                           <TableCell>Passenger</TableCell>
 
-                          <TableCell>Status</TableCell>
+                          <TableCell sortDirection={statusSortDirection}>
+                            <TableSortLabel
+                              active={
+                                sorting === "status" || sorting === "-status"
+                              }
+                              direction={statusSortDirection}
+                              onClick={handleStatusSort}
+                            >
+                              Status
+                            </TableSortLabel>
+                          </TableCell>
 
                           <TableCell>Created</TableCell>
 
@@ -429,7 +517,7 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
 
                   <TablePagination
                     component="div"
-                    count={claims.length}
+                    count={displayedClaims.length}
                     page={claimsPage}
                     rowsPerPage={claimsRowsPerPage}
                     rowsPerPageOptions={[5, 10, 25]}
