@@ -398,7 +398,7 @@ function PastCasesView({
                             </TableCell>
                             <TableCell
                               sx={{
-                                fontSize: "1.125rem",
+                                fontSize: "1rem",
                                 textAlign: "center",
                                 display: "table-cell",
                                 verticalAlign: "middle",
@@ -419,7 +419,13 @@ function PastCasesView({
                                   color={
                                     getCaseStatusPresentation(item.status).color
                                   }
-                                  sx={getCaseStatusPresentation(item.status).sx}
+                                  sx={{
+                                    ...getCaseStatusPresentation(item.status)
+                                      .sx,
+                                    "& .MuiChip-label": {
+                                      fontSize: "16px",
+                                    },
+                                  }}
                                   variant="outlined"
                                 />
                               </div>
@@ -483,14 +489,22 @@ function PastCasesView({
                             </Typography>
                             <Typography
                               variant="body1"
-                              sx={{ fontWeight: 600 }}
+                              sx={{ fontWeight: 600, fontSize: "14px" }}
                             >
                               Flight {item.flight_number ?? "-"}
                             </Typography>
-                            <Typography variant="body1" color="text.secondary">
+                            <Typography
+                              variant="body1"
+                              color="text.secondary"
+                              sx={{ fontSize: "14px" }}
+                            >
                               Passenger: {item.passenger_name ?? "-"}
                             </Typography>
-                            <Typography variant="body1" color="text.secondary">
+                            <Typography
+                              variant="body1"
+                              color="text.secondary"
+                              sx={{ fontSize: "14px" }}
+                            >
                               Assignee: {item.assignee ?? "Unassigned"}
                             </Typography>
                             {item.contract_download_url ? (
@@ -520,7 +534,12 @@ function PastCasesView({
                                 color={
                                   getCaseStatusPresentation(item.status).color
                                 }
-                                sx={getCaseStatusPresentation(item.status).sx}
+                                sx={{
+                                  ...getCaseStatusPresentation(item.status).sx,
+                                  "& .MuiChip-label": {
+                                    fontSize: "16px",
+                                  },
+                                }}
                                 variant="outlined"
                               />
                             </Box>

@@ -218,7 +218,18 @@ function AdminCaseList({
           </Stack>
         )}
         {showPdfHistory ? (
-          <PdfHistoryList />
+          <>
+            <Box sx={{ textAlign: "center", mb: 3 }}>
+              <Button
+                variant="outlined"
+                startIcon={<PictureAsPdfOutlinedIcon fontSize="small" />}
+                onClick={() => setShowPdfHistory(false)}
+              >
+                Back to Case List
+              </Button>
+            </Box>
+            <PdfHistoryList />
+          </>
         ) : isLoading ? (
           <CaseListLoadingState label="Loading cases..." />
         ) : hasError ? (
