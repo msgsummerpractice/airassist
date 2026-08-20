@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.tokens import default_token_generator
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework import status
@@ -109,6 +110,33 @@ class PasswordResetViewTests(TestCase):
             },
             format="json",
         )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["message"], "Invalid or expired password reset link.")
+
+    @override_settings(PASSWORD_RESET_TIMEOUT=60 * 10)
+    def test_reset_password_rejects_expired_token_after_ten_minutes(self):
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        issued_at = datetime(2026, 1, 1, 12, 0, 0)
+
+        with patch.object(default_token_generator, "_now", return_value=issued_at):
+            token = default_token_generator.make_token(self.user)
+
+        response = None
+        with patch.object(
+            default_token_generator,
+            "_now",
+            return_value=issued_at + timedelta(minutes=11),
+        ):
+            response = self.client.post(
+                "/user/reset-password/",
+                data={
+                    "uid": uid,
+                    "token": token,
+                    "new_password": "new-password-456",
+                },
+                format="json",
+            )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["message"], "Invalid or expired password reset link.")
