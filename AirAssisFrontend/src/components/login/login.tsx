@@ -36,7 +36,7 @@ type TokenPairResponse = {
 };
 
 type LoginProps = {
-  onLoginSuccess?: () => void;
+  onLoginSuccess?: () => void | Promise<boolean>;
   onPasswordResetSuccess?: () => void;
 };
 
@@ -153,8 +153,15 @@ const Login = ({ onLoginSuccess, onPasswordResetSuccess }: LoginProps) => {
         return;
       }
 
+      const resolved = await onLoginSuccess?.();
+      if (resolved === false) {
+        showErrorSnackbar(
+          "Login succeeded, but we couldn't load your account. Please try again.",
+        );
+        return;
+      }
+
       showSuccessSnackbar("Login successful.");
-      onLoginSuccess?.();
     } catch (error) {
       if (error instanceof Error) {
         showErrorSnackbar(error.message);

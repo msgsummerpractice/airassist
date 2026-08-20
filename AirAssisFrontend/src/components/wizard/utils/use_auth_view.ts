@@ -52,13 +52,13 @@ export const useAuthView = () => {
   });
   const [role, setRole] = useState<string | null>(null);
 
-  const resolveView = useCallback(async () => {
+  const resolveView = useCallback(async (): Promise<boolean> => {
     const accessToken = localStorage.getItem("airassist_access_token");
 
     if (!accessToken) {
       setRole(null);
       setView("login");
-      return;
+      return true;
     }
 
     const userId = readUserIdFromToken(accessToken);
@@ -67,7 +67,7 @@ export const useAuthView = () => {
       clearTokens();
       setRole(null);
       setView("login");
-      return;
+      return false;
     }
 
     try {
@@ -76,6 +76,15 @@ export const useAuthView = () => {
           Authorization: `Bearer ${accessToken}`,
         },
       });
+
+      // Only an invalid/expired token should log the user out — a transient
+      // network error shouldn't silently discard a token that just worked.
+      if (response.status === 401 || response.status === 403) {
+        clearTokens();
+        setRole(null);
+        setView("login");
+        return false;
+      }
 
       if (!response.ok) {
         throw new Error("Could not resolve user role.");
@@ -87,17 +96,16 @@ export const useAuthView = () => {
       setRole(resolvedRole);
       if (data.role === "COLLEAGUE") {
         setView("colleague-dashboard");
-        return;
+        return true;
       }
       if (data.role === "SYSTEM_ADMIN") {
         setView("admin-users");
-        return;
+        return true;
       }
       setView("case-entry");
+      return true;
     } catch {
-      clearTokens();
-      setRole(null);
-      setView("login");
+      return false;
     }
   }, []);
 
