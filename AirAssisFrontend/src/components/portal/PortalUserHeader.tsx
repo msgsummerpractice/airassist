@@ -1,4 +1,7 @@
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
+import FlightTakeoffOutlinedIcon from "@mui/icons-material/FlightTakeoffOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import {
@@ -33,27 +36,27 @@ type PortalUserHeaderProps = {
   onLogoClick?: () => void;
 };
 
-const getAvatarLabel = (name: string) => {
-  const parts = name
-    .split(" ")
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  if (parts.length === 0) {
-    return "G";
+const getAvatarIcon = (roleLabel: string) => {
+  if (roleLabel === "System Administrator") {
+    return <AdminPanelSettingsOutlinedIcon fontSize="small" />;
   }
 
-  if (parts.length === 1) {
-    return parts[0].charAt(0).toUpperCase();
+  if (roleLabel === "Colleague") {
+    return <BadgeOutlinedIcon fontSize="small" />;
   }
 
-  return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+  if (roleLabel === "Passenger") {
+    return <FlightTakeoffOutlinedIcon fontSize="small" />;
+  }
+
+  return <PersonOutlineOutlinedIcon fontSize="small" />;
 };
 
 function PortalUserHeader({
   title = "AIR-ASSIST.EU",
   name,
   email,
+  roleLabel,
   actions,
   authAction,
   logoutAction,
@@ -219,11 +222,7 @@ function PortalUserHeader({
                 color: "primary.main",
               }}
             >
-              {name === "Guest" ? (
-                <PersonOutlineOutlinedIcon fontSize="small" />
-              ) : (
-                getAvatarLabel(name)
-              )}
+              {getAvatarIcon(roleLabel)}
             </Avatar>
 
             {accountAction ? (
@@ -271,11 +270,7 @@ function PortalUserHeader({
                 color: "primary.main",
               }}
             >
-              {name === "Guest" ? (
-                <PersonOutlineOutlinedIcon fontSize="small" />
-              ) : (
-                getAvatarLabel(name)
-              )}
+              {getAvatarIcon(roleLabel)}
             </Avatar>
             <Stack spacing={0.15} sx={{ minWidth: 0, flex: 1 }}>
               <Typography
