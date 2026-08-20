@@ -22,6 +22,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "axios": "^1.19.0",
     "dayjs": "^1.11.21",
+    "motion": "^13.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",

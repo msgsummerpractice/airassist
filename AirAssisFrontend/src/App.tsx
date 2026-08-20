@@ -24,6 +24,7 @@ import TermsOfService from "./components/legal/TermsOfService/TermsOfService";
 import Imprint from "./components/legal/Imprint/Imprint";
 import EuInfo from "./components/legal/EuInfo/EuInfo";
 import MeetTheTeam from "./components/legal/MeetTheTeam/MeetTheTeam";
+import HomePage from "./components/home/HomePage";
 
 function App() {
   const { view, role, resolveView, showCaseEntry, showColleagueDashboard } =
@@ -38,6 +39,7 @@ function App() {
   useEffect(() => {
     const currentPathname = pathname;
     if (
+      (currentPathname === "/" && view === "login") ||
       currentPathname === "/reset-password" ||
       currentPathname.startsWith("/passenger-cases") ||
       currentPathname.startsWith("/colleague-cases") ||
@@ -75,6 +77,7 @@ function App() {
     <div className="app-shell">
       <main className="app-content">
         <Routes>
+          <Route path="/" element={<HomePage onCreateCase={handleShowCaseEntry} />} />
           <Route
             path="/login"
             element={
