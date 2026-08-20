@@ -71,7 +71,7 @@ export const useAuthView = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/user/${userId}/`, {
+      const response = await fetch(`${API_BASE_URL}/user/${userId}/role/`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
