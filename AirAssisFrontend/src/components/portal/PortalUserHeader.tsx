@@ -1,6 +1,17 @@
+import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
+import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import { Avatar, Box, Button, Stack, Typography } from "@mui/material";
-import type { ReactNode } from "react";
+import {
+  Avatar,
+  Box,
+  Button,
+  Divider,
+  Drawer,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { getHomeRouteForCurrentUser } from "../../utils/auth";
 
@@ -50,6 +61,7 @@ function PortalUserHeader({
 }: PortalUserHeaderProps) {
   const accountAction = logoutAction ?? authAction;
   const navigate = useNavigate();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleLogoClick = () => {
     if (onLogoClick) {
@@ -57,6 +69,11 @@ function PortalUserHeader({
       return;
     }
     navigate(getHomeRouteForCurrentUser());
+  };
+
+  const handleDrawerAction = (onClick: () => void) => {
+    setDrawerOpen(false);
+    onClick();
   };
 
   return (
@@ -84,15 +101,26 @@ function PortalUserHeader({
           sx={{
             display: "grid",
             gridTemplateColumns: {
-              xs: "1fr",
+              xs: "auto 1fr auto",
               lg: "minmax(180px, 220px) minmax(0, 1fr) auto",
             },
-            gap: { xs: 2, lg: 3 },
+            gap: { xs: 1.5, lg: 3 },
             alignItems: "center",
             width: "100%",
           }}
         >
-          <Stack spacing={0.25}>
+          <IconButton
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open navigation menu"
+            sx={{
+              display: { xs: "inline-flex", lg: "none" },
+              color: "text.primary",
+            }}
+          >
+            <MenuOutlinedIcon />
+          </IconButton>
+
+          <Stack spacing={0.25} sx={{ order: { xs: 0, lg: -1 } }}>
             <Box
               component="img"
               src="/logo-airassist.png"
@@ -100,12 +128,13 @@ function PortalUserHeader({
               onClick={handleLogoClick}
               sx={{
                 display: "block",
-                width: { xs: 150, md: 175, lg: 190 },
+                width: { xs: 130, md: 175, lg: 190 },
                 maxWidth: "100%",
                 height: "auto",
                 objectFit: "contain",
                 objectPosition: "left center",
                 cursor: "pointer",
+                mx: { xs: "auto", lg: 0 },
               }}
             />
           </Stack>
@@ -122,6 +151,7 @@ function PortalUserHeader({
               },
               alignItems: "center",
               px: { lg: 3 },
+              display: { xs: "none", lg: "flex" },
             }}
           >
             {actions.map((action) => (
@@ -151,12 +181,16 @@ function PortalUserHeader({
             direction="row"
             spacing={{ xs: 1.5, md: 2 }}
             sx={{
-              justifySelf: { xs: "stretch", lg: "end" },
-              justifyContent: { xs: "space-between", sm: "flex-end" },
+              justifySelf: { xs: "end", lg: "end" },
+              justifyContent: "flex-end",
               alignItems: "center",
             }}
           >
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Stack
+              direction="row"
+              spacing={1.5}
+              sx={{ alignItems: "center", display: { xs: "none", sm: "flex" } }}
+            >
               <Stack spacing={0.15} sx={{ textAlign: "right", minWidth: 0 }}>
                 <Typography variant="body1" sx={{ fontWeight: 700 }}>
                   {name}
@@ -175,22 +209,22 @@ function PortalUserHeader({
                   {email}
                 </Typography>
               </Stack>
-
-              <Avatar
-                sx={{
-                  width: 42,
-                  height: 42,
-                  bgcolor: "rgba(0, 49, 120, 0.08)",
-                  color: "primary.main",
-                }}
-              >
-                {name === "Guest" ? (
-                  <PersonOutlineOutlinedIcon fontSize="small" />
-                ) : (
-                  getAvatarLabel(name)
-                )}
-              </Avatar>
             </Stack>
+
+            <Avatar
+              sx={{
+                width: 42,
+                height: 42,
+                bgcolor: "rgba(0, 49, 120, 0.08)",
+                color: "primary.main",
+              }}
+            >
+              {name === "Guest" ? (
+                <PersonOutlineOutlinedIcon fontSize="small" />
+              ) : (
+                getAvatarLabel(name)
+              )}
+            </Avatar>
 
             {accountAction ? (
               <Button
@@ -207,6 +241,7 @@ function PortalUserHeader({
                     ? "primary.contrastText"
                     : "text.primary",
                   whiteSpace: "nowrap",
+                  display: { xs: "none", lg: "inline-flex" },
                 }}
               >
                 {accountAction.label}
@@ -215,6 +250,113 @@ function PortalUserHeader({
           </Stack>
         </Box>
       </Box>
+
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        slotProps={{ paper: { sx: { width: 280 } } }}
+      >
+        <Stack sx={{ height: "100%" }}>
+          <Stack
+            direction="row"
+            spacing={1.5}
+            sx={{ p: 2, alignItems: "center" }}
+          >
+            <Avatar
+              sx={{
+                width: 42,
+                height: 42,
+                bgcolor: "rgba(0, 49, 120, 0.08)",
+                color: "primary.main",
+              }}
+            >
+              {name === "Guest" ? (
+                <PersonOutlineOutlinedIcon fontSize="small" />
+              ) : (
+                getAvatarLabel(name)
+              )}
+            </Avatar>
+            <Stack spacing={0.15} sx={{ minWidth: 0, flex: 1 }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontWeight: 700,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {name}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {email}
+              </Typography>
+            </Stack>
+            <IconButton
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Close navigation menu"
+              size="small"
+            >
+              <CloseOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+
+          <Divider />
+
+          <Stack spacing={0.5} sx={{ p: 1.5, flex: 1 }}>
+            {actions.map((action) => (
+              <Button
+                key={action.label}
+                variant={action.active ? "contained" : "text"}
+                color={action.active ? "primary" : "inherit"}
+                startIcon={action.icon}
+                onClick={() => handleDrawerAction(action.onClick)}
+                fullWidth
+                sx={{
+                  justifyContent: "flex-start",
+                  minHeight: 44,
+                  color: action.active
+                    ? "primary.contrastText"
+                    : "text.primary",
+                }}
+              >
+                {action.label}
+              </Button>
+            ))}
+          </Stack>
+
+          {accountAction ? (
+            <>
+              <Divider />
+              <Stack sx={{ p: 1.5 }}>
+                <Button
+                  variant="text"
+                  color="inherit"
+                  startIcon={accountAction.icon}
+                  onClick={() => handleDrawerAction(accountAction.onClick)}
+                  fullWidth
+                  sx={{
+                    justifyContent: "flex-start",
+                    minHeight: 44,
+                    color: "text.primary",
+                  }}
+                >
+                  {accountAction.label}
+                </Button>
+              </Stack>
+            </>
+          ) : null}
+        </Stack>
+      </Drawer>
     </Box>
   );
 }
