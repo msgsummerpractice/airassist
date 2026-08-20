@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -16,6 +18,20 @@ DECISION_STATUSES = {
     CaseState.NON_ELIGIBLE.value,
     CaseState.AWAITING_DOCUMENTS.value,
 }
+
+logger = logging.getLogger(__name__)
+
+
+def send_status_update_email_safely(passenger, case_id, case_status, note):
+    try:
+        send_case_status_update_email(
+            passenger=passenger,
+            case_id=case_id,
+            case_status=case_status,
+            note=note,
+        )
+    except Exception:
+        logger.exception("Could not send case status update email for case %s.", case_id)
 
 class CaseStatusUpdateView(APIView):
     permission_classes = [IsAuthenticated, IsColleague]
@@ -63,7 +79,12 @@ class CaseStatusUpdateView(APIView):
             
             if passenger and passenger.email:
                 transaction.on_commit(
-                    lambda: send_case_status_update_email(passenger=passenger, case_id=case.id, case_status=new_status, note=note)
+                    lambda: send_status_update_email_safely(
+                        passenger=passenger,
+                        case_id=case.id,
+                        case_status=new_status,
+                        note=note,
+                    )
                 )
 
         return Response({"message": "Case status updated successfully."}, status=status.HTTP_200_OK)
