@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import {
   Box,
+  IconButton,
+  MenuItem,
   Card,
   CardContent,
-  IconButton,
   MenuItem,
   Stack,
   Table,
@@ -89,151 +90,152 @@ function PdfHistoryList() {
   };
 
   return (
-    <Card
-      elevation={1}
-      sx={{ maxWidth: 1220, width: "100%", mx: "auto", mt: 3 }}
-    >
-      <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-        <AppSnackbar
-          open={snackbar.open}
-          message={snackbar.message}
-          severity={snackbar.severity}
-          onClose={closeSnackbar}
+    <Box sx={{ mt: 3 }}>
+      <AppSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
+      <Box sx={{ textAlign: "center", mb: 3 }}>
+        <Typography variant="h2">PDF History</Typography>
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, 1fr)",
+            md: "repeat(3, 1fr)",
+            lg: "repeat(5, 1fr)",
+          },
+          gap: 2,
+          mb: 2,
+        }}
+      >
+        <TextField
+          size="small"
+          label="Case ID"
+          fullWidth
+          onChange={(e) => updateFilter({ caseId: e.target.value })}
         />
-        <Box sx={{ textAlign: "center", mb: 3 }}>
-          <Typography variant="h2">PDF History</Typography>
-        </Box>
-
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{ mb: 2, flexWrap: "wrap", width: "100%" }}
+        <TextField
+          size="small"
+          label="Passenger name"
+          fullWidth
+          onChange={(e) => updateFilter({ passengerName: e.target.value })}
+        />
+        <TextField
+          size="small"
+          select
+          label="Document type"
+          fullWidth
+          defaultValue=""
+          onChange={(e) => updateFilter({ documentType: e.target.value })}
         >
-          <TextField
-            size="small"
-            label="Case ID"
-            sx={{ flex: "1 1 140px", minWidth: 140 }}
-            onChange={(e) => updateFilter({ caseId: e.target.value })}
-          />
-          <TextField
-            size="small"
-            label="Passenger name"
-            sx={{ flex: "2 1 220px", minWidth: 220 }}
-            onChange={(e) => updateFilter({ passengerName: e.target.value })}
-          />
-          <TextField
-            size="small"
-            select
-            label="Document type"
-            sx={{ flex: "1.5 1 190px", minWidth: 190 }}
-            defaultValue=""
-            onChange={(e) => updateFilter({ documentType: e.target.value })}
-          >
-            {DOCUMENT_TYPE_OPTIONS.map((opt) => (
-              <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            size="small"
-            label="From"
-            type="date"
-            sx={{ flex: "1 1 170px", minWidth: 170 }}
-            slotProps={{ inputLabel: { shrink: true } }}
-            onChange={(e) => updateFilter({ uploadedFrom: e.target.value })}
-          />
-          <TextField
-            size="small"
-            label="To"
-            type="date"
-            sx={{ flex: "1 1 170px", minWidth: 170 }}
-            slotProps={{ inputLabel: { shrink: true } }}
-            onChange={(e) => updateFilter({ uploadedTo: e.target.value })}
-          />
-        </Stack>
+          {DOCUMENT_TYPE_OPTIONS.map((opt) => (
+            <MenuItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          size="small"
+          label="From"
+          type="date"
+          fullWidth
+          slotProps={{ inputLabel: { shrink: true } }}
+          onChange={(e) => updateFilter({ uploadedFrom: e.target.value })}
+        />
+        <TextField
+          size="small"
+          label="To"
+          type="date"
+          fullWidth
+          slotProps={{ inputLabel: { shrink: true } }}
+          onChange={(e) => updateFilter({ uploadedTo: e.target.value })}
+        />
+      </Box>
 
-        {isLoading ? (
-          <CaseListLoadingState label="Loading PDF history..." />
-        ) : hasError ? (
-          <CaseListErrorState message="We could not load the PDF history right now." />
-        ) : items.length === 0 ? (
-          <CaseListEmptyState />
-        ) : (
-          <>
-            <TableContainer
+      {isLoading ? (
+        <CaseListLoadingState label="Loading PDF history..." />
+      ) : hasError ? (
+        <CaseListErrorState message="We could not load the PDF history right now." />
+      ) : items.length === 0 ? (
+        <CaseListEmptyState />
+      ) : (
+        <>
+          <TableContainer
+            sx={{
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 1,
+            }}
+          >
+            <Table
+              stickyHeader
               sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 1,
+                "& .MuiTableHead-root .MuiTableCell-root": {
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                },
+                "& .MuiTableBody-root .MuiTableCell-root": {
+                  fontSize: "0.875rem",
+                },
               }}
             >
-              <Table
-                stickyHeader
-                sx={{
-                  "& .MuiTableHead-root .MuiTableCell-root": {
-                    fontSize: "20px",
-                    fontWeight: 700,
-                    textAlign: "center",
-                  },
-                  "& .MuiTableBody-root .MuiTableCell-root": {
-                    fontSize: "14px",
-                    textAlign: "center",
-                  },
-                }}
-              >
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Document Name</TableCell>
-                    <TableCell>Passenger Name</TableCell>
-                    <TableCell>Case ID</TableCell>
-                    <TableCell align="center">Download</TableCell>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Document Name</TableCell>
+                  <TableCell>Passenger Name</TableCell>
+                  <TableCell>Case ID</TableCell>
+                  <TableCell align="center">Download</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {items.map((item) => (
+                  <TableRow key={item.id} hover>
+                    <TableCell>{item.id}</TableCell>
+                    <TableCell>{item.document_name}</TableCell>
+                    <TableCell>{item.passenger_name ?? "-"}</TableCell>
+                    <TableCell>#{item.case_id}</TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="Download PDF">
+                        <IconButton
+                          color="primary"
+                          onClick={() => handleDownload(item)}
+                          aria-label={`Download document ${item.id}`}
+                        >
+                          <DownloadOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {items.map((item) => (
-                    <TableRow key={item.id} hover>
-                      <TableCell>{item.id}</TableCell>
-                      <TableCell>{item.document_name}</TableCell>
-                      <TableCell>{item.passenger_name ?? "-"}</TableCell>
-                      <TableCell>#{item.case_id}</TableCell>
-                      <TableCell align="center">
-                        <Tooltip title="Download PDF">
-                          <IconButton
-                            color="primary"
-                            onClick={() => handleDownload(item)}
-                            aria-label={`Download document ${item.id}`}
-                          >
-                            <DownloadOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              component="div"
-              count={count}
-              page={page}
-              rowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[10, 20, 50]}
-              onPageChange={(_, newPage) => {
-                setIsLoading(true);
-                setPage(newPage);
-              }}
-              onRowsPerPageChange={(e) => {
-                setIsLoading(true);
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-            />
-          </>
-        )}
-      </CardContent>
-    </Card>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            component="div"
+            count={count}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[10, 20, 50]}
+            onPageChange={(_, newPage) => {
+              setIsLoading(true);
+              setPage(newPage);
+            }}
+            onRowsPerPageChange={(e) => {
+              setIsLoading(true);
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+          />
+        </>
+      )}
+    </Box>
   );
 }
 

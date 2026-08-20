@@ -35,6 +35,7 @@ import {
   PersonSearch as PersonSearchIcon,
   Refresh as RefreshIcon,
   SaveOutlined as SaveIcon,
+  ArrowBackOutlined as ArrowBackIcon,
 } from "@mui/icons-material";
 import {
   fetchWithAuth,
@@ -357,10 +358,15 @@ function AdminUsersPage() {
           sx={{
             mb: 3,
             justifyContent: "flex-start",
-            alignItems: { xs: "stretch", sm: "center" },
+            alignItems: "flex-start",
           }}
         >
-          <Button variant="outlined" onClick={() => navigate("/admin/users")}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<ArrowBackIcon fontSize="small" />}
+            onClick={() => navigate("/admin/users")}
+          >
             Back
           </Button>
         </Stack>
@@ -442,7 +448,7 @@ function AdminUsersPage() {
                     label="Search by name"
                     value={nameFilter}
                     onChange={(event) => setNameFilter(event.target.value)}
-                    sx={{ minWidth: 180, flex: "1 1 180px" }}
+                    sx={{ width: { xs: "100%", sm: 180 }, flexShrink: 0 }}
                     slotProps={{
                       input: {
                         startAdornment: (
@@ -451,7 +457,6 @@ function AdminUsersPage() {
                           </InputAdornment>
                         ),
                       },
-                      htmlInput: { style: { textAlign: "center" } },
                     }}
                   />
 
@@ -460,10 +465,7 @@ function AdminUsersPage() {
                     label="Search by email"
                     value={emailFilter}
                     onChange={(event) => setEmailFilter(event.target.value)}
-                    sx={{ minWidth: 220, flex: "1 1 220px" }}
-                    slotProps={{
-                      htmlInput: { style: { textAlign: "center" } },
-                    }}
+                    sx={{ width: { xs: "100%", sm: 220 }, flexShrink: 0 }}
                   />
 
                   <TextField
@@ -473,7 +475,7 @@ function AdminUsersPage() {
                     value={minCasesFilter}
                     onChange={(event) => setMinCasesFilter(event.target.value)}
                     slotProps={{ htmlInput: { min: 0 } }}
-                    sx={{ minWidth: 170, flex: "1 1 170px" }}
+                    sx={{ width: { xs: "100%", sm: 170 }, flexShrink: 0 }}
                   />
                 </Stack>
 
@@ -502,7 +504,15 @@ function AdminUsersPage() {
                             "Assigned Cases",
                             "Actions",
                           ].map((heading) => (
-                            <TableCell key={heading} align="center">
+                            <TableCell
+                              key={heading}
+                              align={
+                                heading === "Assigned Cases" ||
+                                heading === "Actions"
+                                  ? "center"
+                                  : "left"
+                              }
+                            >
                               {heading}
                             </TableCell>
                           ))}
@@ -525,13 +535,13 @@ function AdminUsersPage() {
                         ) : (
                           paginated.map((user) => (
                             <TableRow key={user.id} hover>
-                              <TableCell align="center">
+                              <TableCell>
                                 {user.firstname} {user.lastname}
                               </TableCell>
 
-                              <TableCell align="center">{user.email}</TableCell>
+                              <TableCell>{user.email}</TableCell>
 
-                              <TableCell align="center">
+                              <TableCell>
                                 <Chip
                                   label={user.role}
                                   size="small"
@@ -593,6 +603,98 @@ function AdminUsersPage() {
                       </TableBody>
                     </Table>
                   </TableContainer>
+
+                  <Stack
+                    spacing={1.5}
+                    sx={{ display: { xs: "flex", md: "none" } }}
+                  >
+                    {filtered.length === 0 ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ py: 2, textAlign: "center" }}
+                      >
+                        No users match the current filters.
+                      </Typography>
+                    ) : (
+                      paginated.map((user) => (
+                        <Card key={user.id} variant="outlined">
+                          <CardContent>
+                            <Stack spacing={1}>
+                              <Typography sx={{ fontWeight: 700 }}>
+                                {user.firstname} {user.lastname}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {user.email}
+                              </Typography>
+                              <Box>
+                                <Chip
+                                  label={user.role}
+                                  size="small"
+                                  variant="filled"
+                                  sx={roleChipSx}
+                                  {...roleChipProps(user.role)}
+                                />
+                              </Box>
+                              <Typography variant="body2">
+                                Assigned cases:{" "}
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    color:
+                                      user.assigned_case_count > 0
+                                        ? "primary.main"
+                                        : "text.secondary",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  {user.assigned_case_count}
+                                </Box>
+                              </Typography>
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                sx={{ justifyContent: "flex-end" }}
+                              >
+                                <Tooltip title="View details">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={() => openDetailsDialog(user)}
+                                  >
+                                    <InfoIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+
+                                <Tooltip title="Delete user">
+                                  <span>
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      onClick={() => openDeleteDialog(user)}
+                                      disabled={deletingUserId === user.id}
+                                    >
+                                      {deletingUserId === user.id ? (
+                                        <CircularProgress
+                                          size={16}
+                                          color="inherit"
+                                        />
+                                      ) : (
+                                        <DeleteOutlineIcon fontSize="small" />
+                                      )}
+                                    </IconButton>
+                                  </span>
+                                </Tooltip>
+                              </Stack>
+                            </Stack>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </Stack>
                 </Box>
 
                 <TablePagination

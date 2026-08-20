@@ -40,11 +40,14 @@ function CaseListFilters({
         mb: 3,
         width: "100%",
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: { xs: "stretch", sm: "center" },
         flexWrap: "wrap",
       }}
     >
-      <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
+      <FormControl
+        size="small"
+        sx={{ width: { xs: "100%", sm: 180 }, flexShrink: 0 }}
+      >
         <InputLabel id={statusLabelId}>Status</InputLabel>
         <Select
           labelId={statusLabelId}
@@ -61,7 +64,10 @@ function CaseListFilters({
         </Select>
       </FormControl>
 
-      <FormControl size="small" sx={{ minWidth: 220, flex: "1 1 220px" }}>
+      <FormControl
+        size="small"
+        sx={{ width: { xs: "100%", sm: 220 }, flexShrink: 0 }}
+      >
         <InputLabel id={assigneeLabelId}>Assignee</InputLabel>
         <Select
           labelId={assigneeLabelId}
