@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowBackOutlined,
   AddTaskOutlined,
   AssignmentTurnedInOutlined,
   FolderOutlined,
@@ -173,9 +172,6 @@ function CaseDetailsPage({
           <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
             <Button
               variant="outlined"
-              startIcon={
-                config.scope === "admin" ? <ArrowBackOutlined fontSize="small" /> : undefined
-              }
               onClick={handleBack}
             >
               Back
