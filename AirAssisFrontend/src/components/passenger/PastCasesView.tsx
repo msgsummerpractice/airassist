@@ -19,8 +19,8 @@ import {
 } from "@mui/material";
 import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
-import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
 import { useNavigate } from "react-router-dom";
 
 import PortalUserHeader from "../portal/PortalUserHeader";
@@ -448,7 +448,7 @@ function PastCasesView({
                                   size="small"
                                   variant="text"
                                   endIcon={
-                                    <OpenInNewOutlinedIcon fontSize="small" />
+                                    <DescriptionOutlinedIcon fontSize="small" />
                                   }
                                   sx={{ px: 0, minWidth: 0 }}
                                 ></Button>
@@ -518,7 +518,7 @@ function PastCasesView({
                                   size="small"
                                   variant="outlined"
                                   endIcon={
-                                    <OpenInNewOutlinedIcon fontSize="small" />
+                                    <DescriptionOutlinedIcon fontSize="small" />
                                   }
                                 >
                                   Download contract

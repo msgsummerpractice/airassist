@@ -183,7 +183,7 @@ class CaseContractService:
             "cell": ParagraphStyle(
                 "ContractCell",
                 parent=base_styles["BodyText"],
-                fontName="Helvetica",
+                fontName="Helvetica-Bold",
                 fontSize=body_font_size,
                 leading=body_leading,
                 textColor=colors.HexColor(colors_config["text"]),
@@ -191,7 +191,7 @@ class CaseContractService:
             "label": ParagraphStyle(
                 "ContractLabel",
                 parent=base_styles["BodyText"],
-                fontName="Helvetica-Bold",
+                fontName="Helvetica",
                 fontSize=body_font_size,
                 leading=body_leading,
                 textColor=colors.HexColor(colors_config["title"]),
@@ -351,7 +351,7 @@ class CaseContractService:
     @staticmethod
     def _build_key_value_table(rows, styles, template):
         table_rows = [
-            [Paragraph(f"<b>{label}</b>", styles["label"]), Paragraph(str(value), styles["cell"])]
+            [Paragraph(str(label), styles["label"]), Paragraph(str(value), styles["cell"])]
             for label, value in rows
         ]
         table = Table(table_rows, colWidths=[52 * mm, None], hAlign="LEFT")
@@ -374,7 +374,7 @@ class CaseContractService:
 
     @staticmethod
     def _build_flight_table(flight_data, styles, template):
-        headers = [Paragraph(f"<b>{header}</b>", styles["label"]) for header in flight_data["headers"]]
+        headers = [Paragraph(str(header), styles["label"]) for header in flight_data["headers"]]
         rows = [headers]
         for row in flight_data["rows"]:
             rows.append([Paragraph(str(value), styles["cell"]) for value in row])
