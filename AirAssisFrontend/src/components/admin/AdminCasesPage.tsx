@@ -102,7 +102,7 @@ function AdminCasesPage() {
         >
           <Button
             variant="outlined"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/admin/users")}
           >
             Back
           </Button>
