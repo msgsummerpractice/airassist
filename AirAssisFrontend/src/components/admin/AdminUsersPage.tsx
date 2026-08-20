@@ -85,12 +85,16 @@ function roleChipProps(role: string) {
 }
 
 const roleChipSx = {
+  fontSize: "14px",
   fontWeight: 700,
   letterSpacing: "0.02em",
   "& .MuiChip-icon": { color: "inherit" },
 };
 
 const tableTextSx = {
+  "& .MuiTableCell-root": {
+    textAlign: "center",
+  },
   "& .MuiTableHead-root .MuiTableCell-root": {
     fontSize: "20px",
     fontWeight: 700,
