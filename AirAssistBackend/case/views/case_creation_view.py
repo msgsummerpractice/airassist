@@ -116,14 +116,6 @@ class CaseCreationView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        except ValueError as exc:
-            return Response(
-                {
-                    "success": False,
-                    "message": str(exc)
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
         return Response(
             {

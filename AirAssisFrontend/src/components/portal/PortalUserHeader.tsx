@@ -1,6 +1,8 @@
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import { Avatar, Box, Button, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import { getHomeRouteForCurrentUser } from "../../utils/auth";
 
 type PortalUserHeaderAction = {
   label: string;
@@ -17,6 +19,7 @@ type PortalUserHeaderProps = {
   actions: PortalUserHeaderAction[];
   authAction?: PortalUserHeaderAction;
   logoutAction?: PortalUserHeaderAction;
+  onLogoClick?: () => void;
 };
 
 const getAvatarLabel = (name: string) => {
@@ -43,8 +46,18 @@ function PortalUserHeader({
   actions,
   authAction,
   logoutAction,
+  onLogoClick,
 }: PortalUserHeaderProps) {
   const accountAction = logoutAction ?? authAction;
+  const navigate = useNavigate();
+
+  const handleLogoClick = () => {
+    if (onLogoClick) {
+      onLogoClick();
+      return;
+    }
+    navigate(getHomeRouteForCurrentUser());
+  };
 
   return (
     <Box
@@ -84,6 +97,7 @@ function PortalUserHeader({
               component="img"
               src="/logo-airassist.png"
               alt={title}
+              onClick={handleLogoClick}
               sx={{
                 display: "block",
                 width: { xs: 150, md: 175, lg: 190 },
@@ -91,6 +105,7 @@ function PortalUserHeader({
                 height: "auto",
                 objectFit: "contain",
                 objectPosition: "left center",
+                cursor: "pointer",
               }}
             />
           </Stack>

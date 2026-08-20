@@ -94,7 +94,7 @@ class CaseStatusUpdateApiTests(APITestCase):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data, {"error": "Case not found."})
+        self.assertEqual(response.data, {"message": "Case not found."})
         self.assertEqual(len(mail.outbox), 0)
 
     def test_rejects_non_decision_status_without_updating_or_emailing(self):

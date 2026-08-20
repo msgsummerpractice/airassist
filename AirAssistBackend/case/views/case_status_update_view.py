@@ -6,6 +6,7 @@ from rest_framework import status
 
 from case_email.services.email_service import send_case_status_update_email
 
+from ..custom_exceptions.exceptions import NotFoundAPIException
 from ..enums.case_state_enum import CaseState
 from colleague_cases.permissions import IsColleague
 from ..models.case import Case
@@ -23,7 +24,7 @@ class CaseStatusUpdateView(APIView):
         try:
             case = Case.objects.get(id=case_id)
         except Case.DoesNotExist:
-            return Response({"error": "Case not found."}, status=status.HTTP_404_NOT_FOUND)
+            raise NotFoundAPIException("Case not found.")
 
         new_status = request.data.get("status")
         if new_status not in DECISION_STATUSES:

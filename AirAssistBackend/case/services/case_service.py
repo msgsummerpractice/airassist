@@ -5,6 +5,7 @@ from user.enums.roles import Roles
 from user.service.user_service import UserService
 import secrets
 from ..constants import *
+from ..custom_exceptions.exceptions import BadRequestAPIException
 
 class CaseService:
 
@@ -16,7 +17,7 @@ class CaseService:
         ).first()
 
         if not problem_flight:
-            raise ValueError(
+            raise BadRequestAPIException(
                 "No problem flight found for case"
             )
 

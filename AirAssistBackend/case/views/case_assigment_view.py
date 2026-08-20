@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from user.custom_exceptions.responses import AirAssistResponse
 
+from ..custom_exceptions.exceptions import NotFoundAPIException
 from ..serializers.case_assigment_serializer import CaseAssignmentSerializer
 from ..services.case_state_service import CaseStateService
 from ..models.case import Case
@@ -16,7 +17,7 @@ class CaseAssignmentView(APIView):
         try:
             case = Case.objects.get(id=case_id)
         except Case.DoesNotExist:
-            return airassist_response.status_not_found_with_message("Case not found.")
+            raise NotFoundAPIException("Case not found.")
 
         serializer = CaseAssignmentSerializer(data=request.data)
         
@@ -29,13 +30,9 @@ class CaseAssignmentView(APIView):
                 id=serializer.validated_data["colleague_id"]
             )
         except User.DoesNotExist:
-            return airassist_response.status_not_found_with_message("Colleague not found.")
+            raise NotFoundAPIException("Colleague not found.")
 
-
-        try:
-            case = CaseStateService.mark_case_as_assigned(case, colleague)
-        except ValueError as exc:
-            return airassist_response.status_bad_request_with_message(str(exc))
+        case = CaseStateService.mark_case_as_assigned(case, colleague)
 
         return airassist_response.status_ok(
             {

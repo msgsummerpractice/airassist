@@ -37,6 +37,7 @@ import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import {
+  fetchWithAuth,
   logoutToGuestCaseEntry,
   setStoredUserIdentity,
 } from "../../utils/auth";
@@ -145,11 +146,9 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/cases/colleague/`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = await fetchWithAuth(
+          `${API_BASE_URL}/api/cases/colleague/`,
+        );
 
         const payload = await readJsonSafely<DashboardResponse>(response);
 
@@ -331,7 +330,14 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                     }}
                   >
                     <Table stickyHeader>
-                      <TableHead>
+                      <TableHead
+                        sx={{
+                          "& .MuiTableCell-root": {
+                            fontSize: "20px",
+                            textAlign: "center",
+                          },
+                        }}
+                      >
                         <TableRow>
                           <TableCell>Claim ID</TableCell>
 
@@ -341,11 +347,18 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
 
                           <TableCell>Created</TableCell>
 
-                          <TableCell align="right">Action</TableCell>
+                          <TableCell>Action</TableCell>
                         </TableRow>
                       </TableHead>
 
-                      <TableBody>
+                      <TableBody
+                        sx={{
+                          "& .MuiTableCell-root": {
+                            fontSize: "14px",
+                            textAlign: "center",
+                          },
+                        }}
+                      >
                         {paginatedClaims.map((claim) => (
                           <TableRow key={claim.case_id} hover>
                             <TableCell className="colleague-dashboard__case-id">
@@ -353,24 +366,14 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                             </TableCell>
 
                             <TableCell>
-                              <Stack spacing={0.35}>
-                                <Typography
-                                  variant="body1"
-                                  className="colleague-dashboard__passenger-name"
-                                >
-                                  {claim.passenger_name ||
-                                    "Passenger unavailable"}
-                                </Typography>
-
-                                {claim.reservation_number ? (
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
-                                    Reservation {claim.reservation_number}
-                                  </Typography>
-                                ) : null}
-                              </Stack>
+                              <Typography
+                                variant="body1"
+                                className="colleague-dashboard__passenger-name"
+                                sx={{ fontSize: "14px" }}
+                              >
+                                {claim.passenger_name ||
+                                  "Passenger unavailable"}
+                              </Typography>
                             </TableCell>
 
                             <TableCell>
@@ -382,7 +385,12 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                                   getCaseStatusPresentation(claim.status).color
                                 }
                                 size="small"
-                                sx={getCaseStatusPresentation(claim.status).sx}
+                                sx={{
+                                  ...getCaseStatusPresentation(claim.status).sx,
+                                  "& .MuiChip-label": {
+                                    fontSize: "16px",
+                                  },
+                                }}
                                 variant="outlined"
                               />
                             </TableCell>
@@ -391,7 +399,7 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                               {formatDate(claim.created_at)}
                             </TableCell>
 
-                            <TableCell align="right">
+                            <TableCell>
                               <Tooltip title="Open case details">
                                 <IconButton
                                   size="small"

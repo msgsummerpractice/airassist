@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied
 
+from ..custom_exceptions.exceptions import BadRequestAPIException
 from ..enums.conversation_status_enum import ConversationStatus
 from ..models.case import Case
 
@@ -23,7 +24,7 @@ class CaseConversationService:
         case = CaseConversationService._get_assigned_case(case_id, colleague)
 
         if case.conversation_status == ConversationStatus.CLOSED.value:
-            raise ValueError("Conversation is already closed.")
+            raise BadRequestAPIException("Conversation is already closed.")
 
         case.conversation_status = ConversationStatus.CLOSED.value
         case.conversation_closed_at = timezone.now()
@@ -43,7 +44,7 @@ class CaseConversationService:
         case = CaseConversationService._get_assigned_case(case_id, colleague)
 
         if case.conversation_status == ConversationStatus.OPEN.value:
-            raise ValueError("Conversation is already open.")
+            raise BadRequestAPIException("Conversation is already open.")
 
         case.conversation_status = ConversationStatus.OPEN.value
         case.conversation_closed_at = None
