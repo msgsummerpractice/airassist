@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowBackOutlined as ArrowBackIcon,
   FolderOutlined as FolderIcon,
   GroupOutlined as GroupIcon,
   LogoutOutlined as LogoutOutlinedIcon,
@@ -97,13 +96,12 @@ function AdminCasesPage() {
           spacing={2}
           sx={{
             mb: 3,
-            justifyContent: "flex-end",
+            justifyContent: "flex-start",
             alignItems: { xs: "stretch", sm: "center" },
           }}
         >
           <Button
             variant="outlined"
-            startIcon={<ArrowBackIcon />}
             onClick={() => navigate(-1)}
           >
             Back

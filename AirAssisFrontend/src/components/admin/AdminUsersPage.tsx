@@ -27,7 +27,6 @@ import {
   Toolbar,
 } from "@mui/material";
 import {
-  ArrowBackOutlined as ArrowBackIcon,
   BadgeOutlined as ColleagueRoleIcon,
   InfoOutlined as InfoIcon,
   DeleteOutlined as DeleteOutlineIcon,
@@ -355,19 +354,17 @@ function AdminUsersPage() {
           spacing={2}
           sx={{
             mb: 3,
-            justifyContent: "flex-end",
+            justifyContent: "flex-start",
             alignItems: { xs: "stretch", sm: "center" },
           }}
         >
           <Button
             variant="outlined"
-            startIcon={<ArrowBackIcon />}
             onClick={() => navigate(-1)}
           >
             Back
           </Button>
         </Stack>
-
         <Card
           elevation={1}
           sx={{

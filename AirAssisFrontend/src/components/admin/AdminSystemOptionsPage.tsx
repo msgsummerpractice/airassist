@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  ArrowBackOutlined as ArrowBackIcon,
   CheckBoxOutlineBlankOutlined as UncheckedIcon,
   CheckBoxOutlined as CheckedIcon,
   DescriptionOutlined as DescriptionIcon,
@@ -288,22 +287,13 @@ function AdminSystemOptionsPage() {
         <Stack
           direction={{ xs: "column", lg: "row" }}
           spacing={2}
-          sx={{ alignItems: { xs: "flex-start", lg: "center" }, mb: 3 }}
+          sx={{ alignItems: "flex-start", mb: 3 }}
         >
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h2" sx={{ mb: 0.75 }}>
-              System Options
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Configure outgoing email behaviour and the PDF export preset used by the organisation.
-            </Typography>
-          </Box>
           <Button
             variant="outlined"
-            startIcon={<ArrowBackIcon />}
             onClick={() => navigate("/admin/users")}
           >
-            Back to admin
+            Back
           </Button>
           <Button
             variant="contained"
