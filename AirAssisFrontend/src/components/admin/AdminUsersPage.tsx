@@ -11,6 +11,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   IconButton,
   InputAdornment,
   Stack,
@@ -35,7 +36,6 @@ import {
   PersonSearch as PersonSearchIcon,
   Refresh as RefreshIcon,
   SaveOutlined as SaveIcon,
-  ArrowBackOutlined as ArrowBackIcon,
 } from "@mui/icons-material";
 import {
   fetchWithAuth,
@@ -364,7 +364,6 @@ function AdminUsersPage() {
           <Button
             variant="outlined"
             size="small"
-            startIcon={<ArrowBackIcon fontSize="small" />}
             onClick={() => navigate("/admin/users")}
           >
             Back
@@ -728,6 +727,11 @@ function AdminUsersPage() {
             >
               <DialogTitle>
                 {editingUser ? "Edit User" : "User Details"}
+                {detailUser && (
+                  <Typography variant="body2" color="text.secondary">
+                    ID: {detailUser.id}
+                  </Typography>
+                )}
               </DialogTitle>
 
               <DialogContent dividers>
@@ -743,11 +747,6 @@ function AdminUsersPage() {
                       alignItems: "start",
                     }}
                   >
-                    <Typography variant="caption" color="text.secondary">
-                      ID
-                    </Typography>
-                    <Typography variant="body1">{detailUser.id}</Typography>
-
                     <Typography variant="caption" color="text.secondary">
                       First Name
                     </Typography>
@@ -824,16 +823,9 @@ function AdminUsersPage() {
                       </Typography>
                     )}
 
-                    <Typography variant="caption" color="text.secondary">
-                      Role
-                    </Typography>
-                    <Chip
-                      label={detailUser.role}
-                      size="small"
-                      variant="filled"
-                      sx={{ ...roleChipSx, alignSelf: "flex-start" }}
-                      {...roleChipProps(detailUser.role)}
-                    />
+                    {editingUser && (
+                      <Divider sx={{ gridColumn: "1 / -1", my: 1 }} />
+                    )}
 
                     <Typography variant="caption" color="text.secondary">
                       Assigned Cases
@@ -841,6 +833,17 @@ function AdminUsersPage() {
                     <Typography variant="body1">
                       {detailUser.assigned_case_count}
                     </Typography>
+
+                    <Typography variant="caption" color="text.secondary">
+                      Role
+                    </Typography>
+                    <Chip
+                      label={detailUser.role}
+                      size="small"
+                      variant="filled"
+                      sx={{ ...roleChipSx, justifySelf: "start" }}
+                      {...roleChipProps(detailUser.role)}
+                    />
                   </Box>
                 )}
               </DialogContent>
@@ -871,10 +874,10 @@ function AdminUsersPage() {
                   </>
                 ) : (
                   <>
+                    <Button onClick={closeDetailsDialog}>Close</Button>
                     <Button startIcon={<EditIcon />} onClick={startEditingUser}>
                       Edit
                     </Button>
-                    <Button onClick={closeDetailsDialog}>Close</Button>
                   </>
                 )}
               </DialogActions>
