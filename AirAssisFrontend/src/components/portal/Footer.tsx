@@ -79,26 +79,50 @@ function Footer() {
           sx={{ borderColor: "rgba(0, 49, 120, 0.2)", my: { xs: 2, sm: 2.5 } }}
         />
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={{ xs: 0.25, sm: 1.25 }}
-          sx={{ alignItems: { xs: "flex-start", sm: "center" } }}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 1.5, sm: 2 },
+            alignItems: { xs: "flex-start", sm: "center" },
+            justifyContent: "space-between",
+          }}
         >
-          <Typography
-            color="text.secondary"
-            sx={{ fontSize: "0.75rem" }}
-            variant="caption"
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={{ xs: 0.25, sm: 1.25 }}
+            sx={{ alignItems: { xs: "flex-start", sm: "center" } }}
           >
-            {`© ${new Date().getFullYear()} AIR-ASSIST.EU. All rights reserved.`}
-          </Typography>
-          <Typography
-            color="text.secondary"
-            sx={{ fontSize: "0.75rem" }}
-            variant="caption"
+            <Typography
+              color="text.secondary"
+              sx={{ fontSize: "0.75rem" }}
+              variant="caption"
+            >
+              {`© ${new Date().getFullYear()} AIR-ASSIST.EU. All rights reserved.`}
+            </Typography>
+            <Typography
+              color="text.secondary"
+              sx={{ fontSize: "0.75rem" }}
+              variant="caption"
+            >
+              In accordance with EU Regulation 261/2004.
+            </Typography>
+          </Stack>
+          <Link
+            component={RouterLink}
+            to="/meet-the-team"
+            sx={{
+              color: "primary.main",
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+              mr: { md: 9.5 },
+              whiteSpace: "nowrap",
+            }}
+            underline="hover"
           >
-            In accordance with EU Regulation 261/2004.
-          </Typography>
-        </Stack>
+            Meet the Team
+          </Link>
+        </Box>
       </Box>
     </Box>
   );
