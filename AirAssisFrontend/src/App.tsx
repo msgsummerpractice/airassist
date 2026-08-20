@@ -23,6 +23,7 @@ import PrivacyPolicy from "./components/legal/PrivacyPolicy/PrivacyPolicy";
 import TermsOfService from "./components/legal/TermsOfService/TermsOfService";
 import Imprint from "./components/legal/Imprint/Imprint";
 import EuInfo from "./components/legal/EuInfo/EuInfo";
+import MeetTheTeam from "./components/legal/MeetTheTeam/MeetTheTeam";
 import HomePage from "./components/home/HomePage";
 
 function App() {
@@ -45,7 +46,8 @@ function App() {
       currentPathname === "/privacy-policy" ||
       currentPathname === "/terms-of-service" ||
       currentPathname === "/imprint" ||
-      currentPathname === "/eu-261-2004-info"
+      currentPathname === "/eu-261-2004-info" ||
+      currentPathname === "/meet-the-team"
     ) {
       return;
     }
@@ -172,7 +174,8 @@ function App() {
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/imprint" element={<Imprint />} />
           <Route path="/eu-261-2004-info" element={<EuInfo />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/meet-the-team" element={<MeetTheTeam />} />
+          <Route path="*" element={<Navigate to="/case-entry" replace />} />
         </Routes>
       </main>
       <Footer />
