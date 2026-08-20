@@ -412,7 +412,10 @@ function AdminUsersPage() {
               {loaded ? "Reload Users" : "Load Users"}
             </Button>
 
-            <CreateUserButton onUserCreated={loadUsers} />
+            <CreateUserButton
+              onUserCreated={loadUsers}
+              onCreateSuccess={showSuccessSnackbar}
+            />
           </Stack>
 
           {loadError && (

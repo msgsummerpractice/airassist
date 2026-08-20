@@ -110,7 +110,7 @@ export function isSystemAdmin(): boolean {
 export function getHomeRouteForCurrentUser(): string {
   const role = getTokenRole();
   if (role === "SYSTEM_ADMIN") return "/admin/users";
-  if (role === "COLLEAGUE") return "/colleague-dashboard";
+  if (role === "COLLEAGUE") return "/colleague-cases";
   if (role === "PASSENGER") return "/passenger-cases";
   return "/case-entry";
 }
