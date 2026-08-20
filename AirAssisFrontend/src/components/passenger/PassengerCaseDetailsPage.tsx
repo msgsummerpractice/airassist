@@ -22,6 +22,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
@@ -59,6 +60,7 @@ const ACCESS_TOKEN_STORAGE_KEY = "airassist_access_token";
 const COMMENT_MAX_LENGTH = 1000;
 const SECTION_ICON_COLOR = "#003178";
 const DOCUMENT_TYPE_OPTIONS = ["BOARDING_PASS", "PASSPORT", "CONTRACT"];
+const MAX_VISIBLE_FILENAME_LENGTH = 28;
 const CARD_CONTENT_FONT_SX = {
   "& .MuiTypography-body1": { fontSize: "18px" },
   "& .MuiTypography-body2": { fontSize: "18px" },
@@ -155,6 +157,14 @@ const formatDateTime = (value: string | null | undefined) => {
   }
 
   return parsedDate.toLocaleString("en-GB");
+};
+
+const formatFilename = (filename: string) => {
+  if (filename.length <= MAX_VISIBLE_FILENAME_LENGTH) {
+    return filename;
+  }
+
+  return `${filename.slice(0, MAX_VISIBLE_FILENAME_LENGTH)}...`;
 };
 
 function PassengerCaseDetailsPage({
@@ -1113,7 +1123,24 @@ function PassengerCaseDetailsPage({
                             <TableBody>
                               {details.documents.map((item) => (
                                 <TableRow key={item.id}>
-                                  <TableCell>{item.filename}</TableCell>
+                                  <TableCell>
+                                    <Tooltip title={item.filename} arrow>
+                                      <Typography
+                                        component="span"
+                                        variant="body1"
+                                        sx={{
+                                          maxWidth: { xs: 180, sm: 260 },
+                                          display: "inline-block",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                          verticalAlign: "bottom",
+                                          whiteSpace: "nowrap",
+                                        }}
+                                      >
+                                        {formatFilename(item.filename)}
+                                      </Typography>
+                                    </Tooltip>
+                                  </TableCell>
                                   <TableCell>{item.document_type}</TableCell>
                                   <TableCell>
                                     <Chip
@@ -1146,37 +1173,46 @@ function PassengerCaseDetailsPage({
                                     {formatDateTime(item.uploaded_at)}
                                   </TableCell>
                                   <TableCell align="center">
-                                    <IconButton
-                                      size="small"
-                                      color="primary"
-                                      aria-label="Download document"
-                                      title="Download"
-                                      onClick={() =>
-                                        void downloadDocument(item)
-                                      }
-                                      disabled={
-                                        downloadingDocumentId === item.id
-                                      }
+                                    <Stack
+                                      direction="row"
+                                      spacing={0.5}
+                                      sx={{
+                                        justifyContent: "center",
+                                        flexWrap: "nowrap",
+                                      }}
                                     >
-                                      <DownloadOutlined />
-                                    </IconButton>
-                                    {(item.uploaded_by === "PASSENGER" ||
-                                      item.uploaded_by == null) && (
                                       <IconButton
                                         size="small"
-                                        color="error"
-                                        aria-label="Delete document"
-                                        title="Delete"
+                                        color="primary"
+                                        aria-label="Download document"
+                                        title="Download"
                                         onClick={() =>
-                                          setDocumentToDelete(item)
+                                          void downloadDocument(item)
                                         }
                                         disabled={
-                                          deletingDocumentId === item.id
+                                          downloadingDocumentId === item.id
                                         }
                                       >
-                                        <DeleteOutlined />
+                                        <DownloadOutlined />
                                       </IconButton>
-                                    )}
+                                      {(item.uploaded_by === "PASSENGER" ||
+                                        item.uploaded_by == null) && (
+                                        <IconButton
+                                          size="small"
+                                          color="error"
+                                          aria-label="Delete document"
+                                          title="Delete"
+                                          onClick={() =>
+                                            setDocumentToDelete(item)
+                                          }
+                                          disabled={
+                                            deletingDocumentId === item.id
+                                          }
+                                        >
+                                          <DeleteOutlined />
+                                        </IconButton>
+                                      )}
+                                    </Stack>
                                   </TableCell>
                                 </TableRow>
                               ))}
