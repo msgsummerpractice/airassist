@@ -231,7 +231,19 @@ function AdminCaseList() {
               }}
             >
               <Table stickyHeader>
-                <TableHead>
+                <TableHead
+                  sx={{
+                    "& .MuiTableCell-head": {
+                      fontSize: "20px",
+                      textAlign: "center",
+                    },
+                    "& .MuiTableSortLabel-root": {
+                      fontSize: "20px",
+                      justifyContent: "center",
+                      width: "100%",
+                    },
+                  }}
+                >
                   <TableRow>
                     <TableCell
                       sortDirection={
@@ -281,7 +293,17 @@ function AdminCaseList() {
                     <TableCell align="center">Actions</TableCell>
                   </TableRow>
                 </TableHead>
-                <TableBody>
+                <TableBody
+                  sx={{
+                    "& .MuiTableCell-body": {
+                      fontSize: "14px",
+                      textAlign: "center",
+                    },
+                    "& .MuiChip-root": {
+                      fontSize: "16px",
+                    },
+                  }}
+                >
                   {sortedCases.map((caseItem) => (
                     <TableRow key={caseItem.id} hover>
                       <TableCell>

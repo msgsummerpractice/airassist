@@ -67,7 +67,9 @@ function CommentsCard({
         >
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <AddCommentOutlined sx={{ color: SECTION_ICON_COLOR }} />
-            <Typography variant="h5">Comments</Typography>
+            <Typography variant="h5" sx={{ fontSize: "20px" }}>
+              Comments
+            </Typography>
           </Stack>
           {headerAction}
         </Stack>

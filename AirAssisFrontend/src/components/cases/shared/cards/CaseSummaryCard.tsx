@@ -3,40 +3,8 @@ import SummarizeOutlined from "@mui/icons-material/SummarizeOutlined";
 
 import { SECTION_ICON_COLOR } from "../../constants";
 import type { CaseDetails } from "../../types";
+import { getCaseStatusPresentation } from "../../../../utils/caseStatus";
 import CaseCard from "./CaseCard";
-
-const statusColor = (status: string) => {
-  switch (status) {
-    case "NEW":
-      return "info" as const;
-    case "VALID":
-      return "success" as const;
-    case "ASSIGNED":
-      return "primary" as const;
-    default:
-      return "default" as const;
-  }
-};
-
-const statusSx = (status: string) => {
-  if (status === "NEW") {
-    return {
-      color: "#2563eb",
-      borderColor: "#93c5fd",
-      backgroundColor: "#eff6ff",
-    };
-  }
-
-  if (status === "VALID") {
-    return {
-      color: "#2e7d32",
-      borderColor: "#a5d6a7",
-      backgroundColor: "#f1f8e9",
-    };
-  }
-
-  return undefined;
-};
 
 type CaseSummaryCardProps = {
   details: CaseDetails;
@@ -44,6 +12,8 @@ type CaseSummaryCardProps = {
 };
 
 function CaseSummaryCard({ details, formatDateTime }: CaseSummaryCardProps) {
+  const statusPresentation = getCaseStatusPresentation(details.status);
+
   return (
     <CaseCard
       icon={<SummarizeOutlined sx={{ color: SECTION_ICON_COLOR }} />}
@@ -74,10 +44,10 @@ function CaseSummaryCard({ details, formatDateTime }: CaseSummaryCardProps) {
           <Typography>Status:</Typography>
           <Chip
             size="small"
-            label={details.status}
-            color={statusColor(details.status)}
-            sx={statusSx(details.status)}
-            variant={details.status === "ASSIGNED" ? "filled" : "outlined"}
+            label={statusPresentation.label}
+            color={statusPresentation.color}
+            sx={statusPresentation.sx}
+            variant="outlined"
           />
         </Box>
         <Typography>Created: {formatDateTime(details.created_at)}</Typography>

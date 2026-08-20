@@ -312,7 +312,19 @@ function ColleagueCaseList({ onCaseAssigned }: ColleagueCaseListProps = {}) {
               }}
             >
               <Table stickyHeader>
-                <TableHead>
+                <TableHead
+                  sx={{
+                    "& .MuiTableCell-root": {
+                      fontSize: "20px",
+                      textAlign: "center",
+                    },
+                    "& .MuiTableSortLabel-root": {
+                      fontSize: "20px",
+                      justifyContent: "center",
+                      width: "100%",
+                    },
+                  }}
+                >
                   <TableRow>
                     <TableCell sortDirection={caseIdSortDirection}>
                       <TableSortLabel
@@ -341,7 +353,14 @@ function ColleagueCaseList({ onCaseAssigned }: ColleagueCaseListProps = {}) {
                   </TableRow>
                 </TableHead>
 
-                <TableBody>
+                <TableBody
+                  sx={{
+                    "& .MuiTableCell-root": {
+                      fontSize: "14px",
+                      textAlign: "center",
+                    },
+                  }}
+                >
                   {paginatedCases.map((caseItem) => (
                     <TableRow key={caseItem.id} hover>
                       <TableCell>
@@ -370,7 +389,12 @@ function ColleagueCaseList({ onCaseAssigned }: ColleagueCaseListProps = {}) {
                           color={
                             getCaseStatusPresentation(caseItem.status).color
                           }
-                          sx={getCaseStatusPresentation(caseItem.status).sx}
+                          sx={{
+                            ...getCaseStatusPresentation(caseItem.status).sx,
+                            "& .MuiChip-label": {
+                              fontSize: "16px",
+                            },
+                          }}
                           variant="outlined"
                         />
                       </TableCell>

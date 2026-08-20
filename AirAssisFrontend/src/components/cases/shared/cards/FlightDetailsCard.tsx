@@ -70,12 +70,18 @@ function FlightDetailsCard({ details, formatDate }: FlightDetailsCardProps) {
             <TableBody>
               {details.connecting_flights.map((connectingFlight, index) => (
                 <TableRow key={`${connectingFlight.flight_number}-${index}`}>
-                  <TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>
                     {formatDate(connectingFlight.flight_date)}
                   </TableCell>
-                  <TableCell>{connectingFlight.flight_number}</TableCell>
-                  <TableCell>{connectingFlight.departing_airport}</TableCell>
-                  <TableCell>{connectingFlight.destination_airport}</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>
+                    {connectingFlight.flight_number}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>
+                    {connectingFlight.departing_airport}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>
+                    {connectingFlight.destination_airport}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

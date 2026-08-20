@@ -18,7 +18,7 @@ function CaseDetailsTable({ rows }: CaseDetailsTableProps) {
         size="small"
         sx={{
           "& td:first-of-type": { fontWeight: 400, width: "38%" },
-          "& td:last-of-type": { pl: 2 },
+          "& td:last-of-type": { fontWeight: 700, pl: 2 },
         }}
       >
         <TableBody>
