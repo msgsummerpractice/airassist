@@ -3,7 +3,6 @@ import { Link as RouterLink } from "react-router-dom";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import {
   Box,
-  Button,
   Card,
   CardContent,
   IconButton,
@@ -51,13 +50,9 @@ type SortState = {
 
 type AdminCaseListProps = {
   showPdfHistory: boolean;
-  onShowPdfHistory: (show: boolean) => void;
 };
 
-function AdminCaseList({
-  showPdfHistory,
-  onShowPdfHistory,
-}: AdminCaseListProps) {
+function AdminCaseList({ showPdfHistory }: AdminCaseListProps) {
   const [cases, setCases] = useState<AdminCaseListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -218,18 +213,7 @@ function AdminCaseList({
           </Stack>
         )}
         {showPdfHistory ? (
-          <>
-            <Box sx={{ textAlign: "center", mb: 3 }}>
-              <Button
-                variant="outlined"
-                startIcon={<PictureAsPdfOutlinedIcon fontSize="small" />}
-                onClick={() => setShowPdfHistory(false)}
-              >
-                Back to Case List
-              </Button>
-            </Box>
-            <PdfHistoryList />
-          </>
+          <PdfHistoryList />
         ) : isLoading ? (
           <CaseListLoadingState label="Loading cases..." />
         ) : hasError ? (
