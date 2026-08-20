@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
 import {
   Box,
   Button,
@@ -50,14 +49,21 @@ type SortState = {
   direction: SortDirection;
 };
 
-function AdminCaseList() {
+type AdminCaseListProps = {
+  showPdfHistory: boolean;
+  onShowPdfHistory: (show: boolean) => void;
+};
+
+function AdminCaseList({
+  showPdfHistory,
+  onShowPdfHistory,
+}: AdminCaseListProps) {
   const [cases, setCases] = useState<AdminCaseListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [caseToDelete, setCaseToDelete] = useState<AdminCaseListItem | null>(
     null,
   );
-  const [showPdfHistory, setShowPdfHistory] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sort, setSort] = useState<SortState>({
     field: "id",
@@ -162,54 +168,55 @@ function AdminCaseList() {
           severity={snackbar.severity}
           onClose={closeSnackbar}
         />
-        <Box sx={{ textAlign: "center", mb: 3 }}>
-          <Typography variant="h2">All Cases</Typography>
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfOutlinedIcon fontSize="small" />}
-            onClick={() => setShowPdfHistory((current) => !current)}
-            sx={{ mt: 1.5 }}
-          >
-            {showPdfHistory ? "Back to Case List" : "PDF History"}
-          </Button>
-        </Box>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          sx={{
-            mb: 3,
-            width: "100%",
-            justifyContent: "center",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
-            <InputLabel id="admin-case-status-filter-label">Status</InputLabel>
-            <Select
-              labelId="admin-case-status-filter-label"
-              label="Status"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <MenuItem value="ALL">All</MenuItem>
-              <MenuItem value="NEW">New</MenuItem>
-              <MenuItem value="VALID">Valid</MenuItem>
-              <MenuItem value="ASSIGNED">Assigned</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            size="small"
-            label="Flight date"
-            type="date"
-            value={flightDateFilter}
-            onChange={(event) => setFlightDateFilter(event.target.value)}
-            slotProps={{
-              inputLabel: { shrink: true },
+        {!showPdfHistory && (
+          <Box sx={{ textAlign: "center", mb: 3 }}>
+            <Typography variant="h2">All Cases</Typography>
+          </Box>
+        )}
+        {!showPdfHistory && (
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{
+              mb: 3,
+              width: "100%",
+              justifyContent: "center",
+              alignItems: "center",
+              flexWrap: "wrap",
             }}
-            sx={{ minWidth: 220, flex: "1 1 220px" }}
-          />
-        </Stack>
+          >
+            <FormControl
+              size="small"
+              sx={{ width: { xs: "100%", sm: 180 }, flexShrink: 0 }}
+            >
+              <InputLabel id="admin-case-status-filter-label">
+                Status
+              </InputLabel>
+              <Select
+                labelId="admin-case-status-filter-label"
+                label="Status"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <MenuItem value="ALL">All</MenuItem>
+                <MenuItem value="NEW">New</MenuItem>
+                <MenuItem value="VALID">Valid</MenuItem>
+                <MenuItem value="ASSIGNED">Assigned</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              size="small"
+              label="Flight date"
+              type="date"
+              value={flightDateFilter}
+              onChange={(event) => setFlightDateFilter(event.target.value)}
+              slotProps={{
+                inputLabel: { shrink: true },
+              }}
+              sx={{ width: { xs: "100%", sm: 220 }, flexShrink: 0 }}
+            />
+          </Stack>
+        )}
         {showPdfHistory ? (
           <PdfHistoryList />
         ) : isLoading ? (

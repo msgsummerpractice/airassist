@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import {
+  ArrowBackOutlined as ArrowBackIcon,
   FolderOutlined as FolderIcon,
   GroupOutlined as GroupIcon,
   LogoutOutlined as LogoutOutlinedIcon,
+  PictureAsPdfOutlined as PictureAsPdfIcon,
   SettingsOutlined as SettingsIcon,
 } from "@mui/icons-material";
 import { Box, Button, Stack } from "@mui/material";
@@ -25,6 +27,7 @@ function AdminCasesPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(() =>
     Boolean(localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY)),
   );
+  const [showPdfHistory, setShowPdfHistory] = useState(false);
   const selectedCaseId = useMemo(() => {
     if (!caseId || !/^\d+$/.test(caseId)) return null;
     return Number(caseId);
@@ -96,19 +99,39 @@ function AdminCasesPage() {
           spacing={2}
           sx={{
             mb: 3,
-            justifyContent: "flex-start",
-            alignItems: { xs: "stretch", sm: "center" },
+            justifyContent: "space-between",
+            alignItems: "flex-start",
           }}
         >
           <Button
             variant="outlined"
-            onClick={() => navigate("/admin/users")}
+            size="small"
+            startIcon={<ArrowBackIcon fontSize="small" />}
+            onClick={() =>
+              showPdfHistory
+                ? setShowPdfHistory(false)
+                : navigate("/admin/users")
+            }
           >
-            Back
+            {showPdfHistory ? "Back to Case List" : "Back"}
           </Button>
+
+          {!showPdfHistory && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<PictureAsPdfIcon fontSize="small" />}
+              onClick={() => setShowPdfHistory(true)}
+            >
+              PDF History
+            </Button>
+          )}
         </Stack>
 
-        <AdminCaseList />
+        <AdminCaseList
+          showPdfHistory={showPdfHistory}
+          onShowPdfHistory={setShowPdfHistory}
+        />
       </Box>
     </Box>
   );

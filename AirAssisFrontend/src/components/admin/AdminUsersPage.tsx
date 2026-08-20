@@ -35,6 +35,7 @@ import {
   PersonSearch as PersonSearchIcon,
   Refresh as RefreshIcon,
   SaveOutlined as SaveIcon,
+  ArrowBackOutlined as ArrowBackIcon,
 } from "@mui/icons-material";
 import {
   fetchWithAuth,
@@ -197,9 +198,12 @@ function AdminUsersPage() {
     setDeletingUserId(targetId);
 
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/user/${targetId}/delete/`, {
-        method: "DELETE",
-      });
+      const res = await fetchWithAuth(
+        `${API_BASE_URL}/user/${targetId}/delete/`,
+        {
+          method: "DELETE",
+        },
+      );
 
       const data = await res.json().catch(() => null);
 
@@ -266,11 +270,14 @@ function AdminUsersPage() {
     setSavingUserId(targetId);
 
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/user/${targetId}/profile/`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
-      });
+      const res = await fetchWithAuth(
+        `${API_BASE_URL}/user/${targetId}/profile/`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editForm),
+        },
+      );
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
@@ -282,9 +289,7 @@ function AdminUsersPage() {
         ...(data as Partial<UserEntry>),
       };
       setUsers((currentUsers) =>
-        currentUsers.map((user) =>
-          user.id === targetId ? updatedUser : user,
-        ),
+        currentUsers.map((user) => (user.id === targetId ? updatedUser : user)),
       );
       setDetailUser(updatedUser);
       setEditingUser(false);
@@ -353,11 +358,13 @@ function AdminUsersPage() {
           sx={{
             mb: 3,
             justifyContent: "flex-start",
-            alignItems: { xs: "stretch", sm: "center" },
+            alignItems: "flex-start",
           }}
         >
           <Button
             variant="outlined"
+            size="small"
+            startIcon={<ArrowBackIcon fontSize="small" />}
             onClick={() => navigate("/admin/users")}
           >
             Back
@@ -373,465 +380,569 @@ function AdminUsersPage() {
           }}
         >
           <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-          <AppSnackbar
-            open={snackbar.open}
-            message={snackbar.message}
-            severity={snackbar.severity}
-            onClose={closeSnackbar}
-          />
-
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Typography variant="h2">User Management</Typography>
-          </Box>
-
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{
-              mb: 3,
-              justifyContent: "center",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <Button
-              variant="outlined"
-              startIcon={
-                loading ? (
-                  <CircularProgress size={16} color="inherit" />
-                ) : (
-                  <RefreshIcon />
-                )
-              }
-              onClick={loadUsers}
-              disabled={loading}
-            >
-              {loaded ? "Reload Users" : "Load Users"}
-            </Button>
-
-            <CreateUserButton
-              onUserCreated={loadUsers}
-              onCreateSuccess={showSuccessSnackbar}
+            <AppSnackbar
+              open={snackbar.open}
+              message={snackbar.message}
+              severity={snackbar.severity}
+              onClose={closeSnackbar}
             />
-          </Stack>
 
-          {loadError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {loadError}
-            </Alert>
-          )}
+            <Box sx={{ textAlign: "center", mb: 3 }}>
+              <Typography variant="h2">User Management</Typography>
+            </Box>
 
-          <Toolbar></Toolbar>
-
-          {loaded && (
-            <>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={2}
-                sx={{
-                  mb: 1.5,
-                  width: "100%",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                }}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{
+                mb: 3,
+                justifyContent: "center",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <Button
+                variant="outlined"
+                startIcon={
+                  loading ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <RefreshIcon />
+                  )
+                }
+                onClick={loadUsers}
+                disabled={loading}
               >
-                <TextField
-                  size="small"
-                  label="Search by name"
-                  value={nameFilter}
-                  onChange={(event) => setNameFilter(event.target.value)}
-                  sx={{ minWidth: 180, flex: "1 1 180px" }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <PersonSearchIcon fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
+                {loaded ? "Reload Users" : "Load Users"}
+              </Button>
 
-                <TextField
-                  size="small"
-                  label="Search by email"
-                  value={emailFilter}
-                  onChange={(event) => setEmailFilter(event.target.value)}
-                  sx={{ minWidth: 220, flex: "1 1 220px" }}
-                />
+              <CreateUserButton
+                onUserCreated={loadUsers}
+                onCreateSuccess={showSuccessSnackbar}
+              />
+            </Stack>
 
-                <TextField
-                  size="small"
-                  label="Min. assigned cases"
-                  type="number"
-                  value={minCasesFilter}
-                  onChange={(event) => setMinCasesFilter(event.target.value)}
-                  slotProps={{ htmlInput: { min: 0 } }}
-                  sx={{ minWidth: 170, flex: "1 1 170px" }}
-                />
-              </Stack>
+            {loadError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {loadError}
+              </Alert>
+            )}
 
-              <Box
-                sx={{
-                  maxHeight: { xs: 520, md: 640 },
-                  overflowY: "auto",
-                  px: 1,
-                }}
-              >
-                <TableContainer
+            <Toolbar></Toolbar>
+
+            {loaded && (
+              <>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={2}
                   sx={{
-                    display: { xs: "none", md: "block" },
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 2,
+                    mb: 1.5,
+                    width: "100%",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexWrap: "wrap",
                   }}
                 >
-                  <Table stickyHeader sx={tableTextSx}>
-                    <TableHead>
-                      <TableRow>
-                        {[
-                          "Name",
-                          "Email",
-                          "Role",
-                          "Assigned Cases",
-                          "Actions",
-                        ].map((heading) => (
-                          <TableCell
-                            key={heading}
-                            align={
-                              heading === "Assigned Cases" ||
-                              heading === "Actions"
-                                ? "center"
-                                : "left"
-                            }
-                          >
-                            {heading}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
+                  <TextField
+                    size="small"
+                    label="Search by name"
+                    value={nameFilter}
+                    onChange={(event) => setNameFilter(event.target.value)}
+                    sx={{ width: { xs: "100%", sm: 180 }, flexShrink: 0 }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <PersonSearchIcon fontSize="small" />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
 
-                    <TableBody>
-                      {filtered.length === 0 ? (
+                  <TextField
+                    size="small"
+                    label="Search by email"
+                    value={emailFilter}
+                    onChange={(event) => setEmailFilter(event.target.value)}
+                    sx={{ width: { xs: "100%", sm: 220 }, flexShrink: 0 }}
+                  />
+
+                  <TextField
+                    size="small"
+                    label="Min. assigned cases"
+                    type="number"
+                    value={minCasesFilter}
+                    onChange={(event) => setMinCasesFilter(event.target.value)}
+                    slotProps={{ htmlInput: { min: 0 } }}
+                    sx={{ width: { xs: "100%", sm: 170 }, flexShrink: 0 }}
+                  />
+                </Stack>
+
+                <Box
+                  sx={{
+                    maxHeight: { xs: 520, md: 640 },
+                    overflowY: "auto",
+                    px: 1,
+                  }}
+                >
+                  <TableContainer
+                    sx={{
+                      display: { xs: "none", md: "block" },
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: 2,
+                    }}
+                  >
+                    <Table stickyHeader sx={tableTextSx}>
+                      <TableHead>
                         <TableRow>
-                          <TableCell colSpan={5} align="center">
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{ py: 2 }}
+                          {[
+                            "Name",
+                            "Email",
+                            "Role",
+                            "Assigned Cases",
+                            "Actions",
+                          ].map((heading) => (
+                            <TableCell
+                              key={heading}
+                              align={
+                                heading === "Assigned Cases" ||
+                                heading === "Actions"
+                                  ? "center"
+                                  : "left"
+                              }
                             >
-                              No users match the current filters.
-                            </Typography>
-                          </TableCell>
+                              {heading}
+                            </TableCell>
+                          ))}
                         </TableRow>
-                      ) : (
-                        paginated.map((user) => (
-                          <TableRow key={user.id} hover>
-                            <TableCell>
-                              {user.firstname} {user.lastname}
-                            </TableCell>
+                      </TableHead>
 
-                            <TableCell>{user.email}</TableCell>
-
-                            <TableCell>
-                              <Chip
-                                label={user.role}
-                                size="small"
-                                variant="filled"
-                                sx={roleChipSx}
-                                {...roleChipProps(user.role)}
-                              />
-                            </TableCell>
-
-                            <TableCell align="center">
-                              <Box
-                                component="span"
-                                sx={{
-                                  color:
-                                    user.assigned_case_count > 0
-                                      ? "primary.main"
-                                      : "text.secondary",
-                                }}
+                      <TableBody>
+                        {filtered.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} align="center">
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ py: 2 }}
                               >
-                                {user.assigned_case_count}
-                              </Box>
-                            </TableCell>
-
-                            <TableCell align="center">
-                              <Tooltip title="View details">
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={() => openDetailsDialog(user)}
-                                >
-                                  <InfoIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-
-                              <Tooltip title="Delete user">
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={() => openDeleteDialog(user)}
-                                    disabled={deletingUserId === user.id}
-                                    sx={{ ml: 0.5 }}
-                                  >
-                                    {deletingUserId === user.id ? (
-                                      <CircularProgress
-                                        size={16}
-                                        color="inherit"
-                                      />
-                                    ) : (
-                                      <DeleteOutlineIcon fontSize="small" />
-                                    )}
-                                  </IconButton>
-                                </span>
-                              </Tooltip>
+                                No users match the current filters.
+                              </Typography>
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Box>
+                        ) : (
+                          paginated.map((user) => (
+                            <TableRow key={user.id} hover>
+                              <TableCell>
+                                {user.firstname} {user.lastname}
+                              </TableCell>
 
-              <TablePagination
-                component="div"
-                count={filtered.length}
-                page={page}
-                rowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 25]}
-                onPageChange={(_, newPage) => setPage(newPage)}
-                onRowsPerPageChange={(event) => {
-                  setRowsPerPage(parseInt(event.target.value, 10));
-                  setPage(0);
-                }}
-              />
-            </>
-          )}
+                              <TableCell>{user.email}</TableCell>
 
-          <Dialog
-            open={!!detailUser}
-            onClose={closeDetailsDialog}
-            maxWidth="md"
-            fullWidth
-            slotProps={{
-              paper: {
-                sx: {
-                  width: "min(100% - 32px, 760px)",
-                  maxWidth: "760px",
-                },
-              },
-            }}
-          >
-            <DialogTitle>{editingUser ? "Edit User" : "User Details"}</DialogTitle>
+                              <TableCell>
+                                <Chip
+                                  label={user.role}
+                                  size="small"
+                                  variant="filled"
+                                  sx={roleChipSx}
+                                  {...roleChipProps(user.role)}
+                                />
+                              </TableCell>
 
-            <DialogContent dividers>
-              {detailUser && (
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", sm: "150px minmax(0, 1fr)" },
-                    gap: 1.5,
-                    alignItems: "start",
+                              <TableCell align="center">
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    color:
+                                      user.assigned_case_count > 0
+                                        ? "primary.main"
+                                        : "text.secondary",
+                                  }}
+                                >
+                                  {user.assigned_case_count}
+                                </Box>
+                              </TableCell>
+
+                              <TableCell align="center">
+                                <Tooltip title="View details">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={() => openDetailsDialog(user)}
+                                  >
+                                    <InfoIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+
+                                <Tooltip title="Delete user">
+                                  <span>
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      onClick={() => openDeleteDialog(user)}
+                                      disabled={deletingUserId === user.id}
+                                      sx={{ ml: 0.5 }}
+                                    >
+                                      {deletingUserId === user.id ? (
+                                        <CircularProgress
+                                          size={16}
+                                          color="inherit"
+                                        />
+                                      ) : (
+                                        <DeleteOutlineIcon fontSize="small" />
+                                      )}
+                                    </IconButton>
+                                  </span>
+                                </Tooltip>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  <Stack
+                    spacing={1.5}
+                    sx={{ display: { xs: "flex", md: "none" } }}
+                  >
+                    {filtered.length === 0 ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ py: 2, textAlign: "center" }}
+                      >
+                        No users match the current filters.
+                      </Typography>
+                    ) : (
+                      paginated.map((user) => (
+                        <Card key={user.id} variant="outlined">
+                          <CardContent>
+                            <Stack spacing={1}>
+                              <Typography sx={{ fontWeight: 700 }}>
+                                {user.firstname} {user.lastname}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {user.email}
+                              </Typography>
+                              <Box>
+                                <Chip
+                                  label={user.role}
+                                  size="small"
+                                  variant="filled"
+                                  sx={roleChipSx}
+                                  {...roleChipProps(user.role)}
+                                />
+                              </Box>
+                              <Typography variant="body2">
+                                Assigned cases:{" "}
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    color:
+                                      user.assigned_case_count > 0
+                                        ? "primary.main"
+                                        : "text.secondary",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  {user.assigned_case_count}
+                                </Box>
+                              </Typography>
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                sx={{ justifyContent: "flex-end" }}
+                              >
+                                <Tooltip title="View details">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={() => openDetailsDialog(user)}
+                                  >
+                                    <InfoIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+
+                                <Tooltip title="Delete user">
+                                  <span>
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      onClick={() => openDeleteDialog(user)}
+                                      disabled={deletingUserId === user.id}
+                                    >
+                                      {deletingUserId === user.id ? (
+                                        <CircularProgress
+                                          size={16}
+                                          color="inherit"
+                                        />
+                                      ) : (
+                                        <DeleteOutlineIcon fontSize="small" />
+                                      )}
+                                    </IconButton>
+                                  </span>
+                                </Tooltip>
+                              </Stack>
+                            </Stack>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </Stack>
+                </Box>
+
+                <TablePagination
+                  component="div"
+                  count={filtered.length}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 25]}
+                  onPageChange={(_, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(event) => {
+                    setRowsPerPage(parseInt(event.target.value, 10));
+                    setPage(0);
                   }}
-                >
-                  <Typography variant="caption" color="text.secondary">
-                    ID
-                  </Typography>
-                  <Typography variant="body1">{detailUser.id}</Typography>
+                />
+              </>
+            )}
 
-                  <Typography variant="caption" color="text.secondary">
-                    First Name
-                  </Typography>
-                  {editingUser ? (
-                    <TextField
-                      autoFocus
-                      fullWidth
-                      required
-                      size="small"
-                      label="First Name"
-                      value={editForm.firstname}
-                      onChange={(event) =>
-                        setEditForm((current) => ({
-                          ...current,
-                          firstname: event.target.value,
-                        }))
-                      }
-                      slotProps={{ htmlInput: { maxLength: 20 } }}
-                    />
-                  ) : (
-                    <Typography variant="body1">{detailUser.firstname}</Typography>
-                  )}
+            <Dialog
+              open={!!detailUser}
+              onClose={closeDetailsDialog}
+              maxWidth="md"
+              fullWidth
+              slotProps={{
+                paper: {
+                  sx: {
+                    width: "min(100% - 32px, 760px)",
+                    maxWidth: "760px",
+                  },
+                },
+              }}
+            >
+              <DialogTitle>
+                {editingUser ? "Edit User" : "User Details"}
+              </DialogTitle>
 
-                  <Typography variant="caption" color="text.secondary">
-                    Last Name
-                  </Typography>
-                  {editingUser ? (
-                    <TextField
-                      fullWidth
-                      required
-                      size="small"
-                      label="Last Name"
-                      value={editForm.lastname}
-                      onChange={(event) =>
-                        setEditForm((current) => ({
-                          ...current,
-                          lastname: event.target.value,
-                        }))
-                      }
-                      slotProps={{ htmlInput: { maxLength: 20 } }}
-                    />
-                  ) : (
-                    <Typography variant="body1">{detailUser.lastname}</Typography>
-                  )}
-
-                  <Typography variant="caption" color="text.secondary">
-                    Email
-                  </Typography>
-                  {editingUser ? (
-                    <TextField
-                      fullWidth
-                      required
-                      size="small"
-                      label="Email"
-                      type="email"
-                      value={editForm.email}
-                      onChange={(event) =>
-                        setEditForm((current) => ({
-                          ...current,
-                          email: event.target.value,
-                        }))
-                      }
-                    />
-                  ) : (
-                    <Typography variant="body1" sx={{ overflowWrap: "anywhere" }}>
-                      {detailUser.email}
+              <DialogContent dividers>
+                {detailUser && (
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "150px minmax(0, 1fr)",
+                      },
+                      gap: 1.5,
+                      alignItems: "start",
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      ID
                     </Typography>
-                  )}
+                    <Typography variant="body1">{detailUser.id}</Typography>
 
-                  <Typography variant="caption" color="text.secondary">
-                    Role
-                  </Typography>
-                  <Chip
-                    label={detailUser.role}
-                    size="small"
-                    variant="filled"
-                    sx={{ ...roleChipSx, alignSelf: "flex-start" }}
-                    {...roleChipProps(detailUser.role)}
-                  />
+                    <Typography variant="caption" color="text.secondary">
+                      First Name
+                    </Typography>
+                    {editingUser ? (
+                      <TextField
+                        autoFocus
+                        fullWidth
+                        required
+                        size="small"
+                        label="First Name"
+                        value={editForm.firstname}
+                        onChange={(event) =>
+                          setEditForm((current) => ({
+                            ...current,
+                            firstname: event.target.value,
+                          }))
+                        }
+                        slotProps={{ htmlInput: { maxLength: 20 } }}
+                      />
+                    ) : (
+                      <Typography variant="body1">
+                        {detailUser.firstname}
+                      </Typography>
+                    )}
 
-                  <Typography variant="caption" color="text.secondary">
-                    Assigned Cases
-                  </Typography>
-                  <Typography variant="body1">
-                    {detailUser.assigned_case_count}
-                  </Typography>
-                </Box>
-              )}
-            </DialogContent>
+                    <Typography variant="caption" color="text.secondary">
+                      Last Name
+                    </Typography>
+                    {editingUser ? (
+                      <TextField
+                        fullWidth
+                        required
+                        size="small"
+                        label="Last Name"
+                        value={editForm.lastname}
+                        onChange={(event) =>
+                          setEditForm((current) => ({
+                            ...current,
+                            lastname: event.target.value,
+                          }))
+                        }
+                        slotProps={{ htmlInput: { maxLength: 20 } }}
+                      />
+                    ) : (
+                      <Typography variant="body1">
+                        {detailUser.lastname}
+                      </Typography>
+                    )}
 
-            <DialogActions sx={{ px: 3, py: 2 }}>
-              {editingUser ? (
-                <>
-                  <Button
-                    onClick={() => setEditingUser(false)}
-                    disabled={savingUserId !== null}
+                    <Typography variant="caption" color="text.secondary">
+                      Email
+                    </Typography>
+                    {editingUser ? (
+                      <TextField
+                        fullWidth
+                        required
+                        size="small"
+                        label="Email"
+                        type="email"
+                        value={editForm.email}
+                        onChange={(event) =>
+                          setEditForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                      />
+                    ) : (
+                      <Typography
+                        variant="body1"
+                        sx={{ overflowWrap: "anywhere" }}
+                      >
+                        {detailUser.email}
+                      </Typography>
+                    )}
+
+                    <Typography variant="caption" color="text.secondary">
+                      Role
+                    </Typography>
+                    <Chip
+                      label={detailUser.role}
+                      size="small"
+                      variant="filled"
+                      sx={{ ...roleChipSx, alignSelf: "flex-start" }}
+                      {...roleChipProps(detailUser.role)}
+                    />
+
+                    <Typography variant="caption" color="text.secondary">
+                      Assigned Cases
+                    </Typography>
+                    <Typography variant="body1">
+                      {detailUser.assigned_case_count}
+                    </Typography>
+                  </Box>
+                )}
+              </DialogContent>
+
+              <DialogActions sx={{ px: 3, py: 2 }}>
+                {editingUser ? (
+                  <>
+                    <Button
+                      onClick={() => setEditingUser(false)}
+                      disabled={savingUserId !== null}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={saveUser}
+                      disabled={savingUserId !== null}
+                      startIcon={
+                        savingUserId !== null ? (
+                          <CircularProgress size={16} color="inherit" />
+                        ) : (
+                          <SaveIcon />
+                        )
+                      }
+                    >
+                      {savingUserId !== null ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button startIcon={<EditIcon />} onClick={startEditingUser}>
+                      Edit
+                    </Button>
+                    <Button onClick={closeDetailsDialog}>Close</Button>
+                  </>
+                )}
+              </DialogActions>
+            </Dialog>
+
+            <Dialog
+              open={!!deleteUser}
+              onClose={closeDeleteDialog}
+              maxWidth="xs"
+              fullWidth
+            >
+              <DialogTitle>
+                <Typography variant="h2" component="span">
+                  Delete User
+                </Typography>
+              </DialogTitle>
+
+              <DialogContent dividers>
+                {deleteUser && (
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}
                   >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={saveUser}
-                    disabled={savingUserId !== null}
-                    startIcon={
-                      savingUserId !== null ? (
-                        <CircularProgress size={16} color="inherit" />
-                      ) : (
-                        <SaveIcon />
-                      )
-                    }
-                  >
-                    {savingUserId !== null ? "Saving..." : "Save Changes"}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button startIcon={<EditIcon />} onClick={startEditingUser}>
-                    Edit
-                  </Button>
-                  <Button onClick={closeDetailsDialog}>Close</Button>
-                </>
-              )}
-            </DialogActions>
-          </Dialog>
+                    <Typography variant="body1">
+                      Are you sure you want to delete this user account?
+                    </Typography>
 
-          <Dialog
-            open={!!deleteUser}
-            onClose={closeDeleteDialog}
-            maxWidth="xs"
-            fullWidth
-          >
-            <DialogTitle>
-              <Typography variant="h2" component="span">
-                Delete User
-              </Typography>
-            </DialogTitle>
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      {deleteUser.firstname} {deleteUser.lastname}
+                    </Typography>
 
-            <DialogContent dividers>
-              {deleteUser && (
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}
+                    <Typography variant="body1" color="text.secondary">
+                      {deleteUser.email}
+                    </Typography>
+
+                    <Chip
+                      label={deleteUser.role}
+                      size="small"
+                      variant="filled"
+                      sx={{ ...roleChipSx, alignSelf: "flex-start" }}
+                      {...roleChipProps(deleteUser.role)}
+                    />
+                  </Box>
+                )}
+              </DialogContent>
+
+              <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button
+                  onClick={closeDeleteDialog}
+                  disabled={deletingUserId !== null}
                 >
-                  <Typography variant="body1">
-                    Are you sure you want to delete this user account?
-                  </Typography>
+                  Cancel
+                </Button>
 
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {deleteUser.firstname} {deleteUser.lastname}
-                  </Typography>
-
-                  <Typography variant="body1" color="text.secondary">
-                    {deleteUser.email}
-                  </Typography>
-
-                  <Chip
-                    label={deleteUser.role}
-                    size="small"
-                    variant="filled"
-                    sx={{ ...roleChipSx, alignSelf: "flex-start" }}
-                    {...roleChipProps(deleteUser.role)}
-                  />
-                </Box>
-              )}
-            </DialogContent>
-
-            <DialogActions sx={{ px: 3, py: 2 }}>
-              <Button
-                onClick={closeDeleteDialog}
-                disabled={deletingUserId !== null}
-              >
-                Cancel
-              </Button>
-
-              <Button
-                variant="contained"
-                color="error"
-                onClick={confirmDelete}
-                disabled={deletingUserId !== null}
-                startIcon={
-                  deletingUserId !== null ? (
-                    <CircularProgress size={16} color="inherit" />
-                  ) : undefined
-                }
-              >
-                {deletingUserId !== null ? "Deleting..." : "Delete"}
-              </Button>
-            </DialogActions>
-          </Dialog>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={confirmDelete}
+                  disabled={deletingUserId !== null}
+                  startIcon={
+                    deletingUserId !== null ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : undefined
+                  }
+                >
+                  {deletingUserId !== null ? "Deleting..." : "Delete"}
+                </Button>
+              </DialogActions>
+            </Dialog>
           </CardContent>
         </Card>
       </Box>
