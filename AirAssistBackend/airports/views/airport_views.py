@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from ..models.airport import Airport
 from ..services.airport_gap_service import AirportGapClient 
 from ..services.distance_service import DistanceService
+from ..services.eu_country_service import EuCountryService
 
 class PopulateAirportsView(APIView):
     permission_classes = [IsAdminUser] 
@@ -75,6 +76,16 @@ class CalculateDistanceView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        from_country = Airport.objects.filter(iata=from_airport).values_list("country", flat=True).first()
+        to_country = Airport.objects.filter(iata=to_airport).values_list("country", flat=True).first()
+
+        if not EuCountryService.is_eu_country(from_country) and not EuCountryService.is_eu_country(to_country):
+            return Response(
+                {
+                    "error": "The destination and arrival are not in the EU, so the compensation is not valid in this case."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         distance = DistanceService.calculate_orthodromic_distance(
             from_airport,
@@ -128,5 +139,5 @@ class AirportSearchView(APIView):
         airports = Airport.objects.filter(
             Q(iata__icontains=query) | Q(name__icontains=query) | Q(city__icontains=query),
             timezone__isnull=False,
-        ).exclude(timezone="").values("iata", "name", "city", "timezone")[:10]
+        ).exclude(timezone="").values("iata", "name", "city", "country", "timezone")[:10]
         return Response(list(airports)) 

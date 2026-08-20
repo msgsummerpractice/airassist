@@ -19,7 +19,11 @@ import {
   EU261_MEDIUM_COMPENSATION,
   EU261_LONG_COMPENSATION,
 } from "../../../../constants/eu261";
+import { isEuCountry } from "../../../../constants/euCountries";
 import type { Itinerary } from "../../types/wizardTypes";
+
+const NOT_EU_MESSAGE =
+  "The destination and arrival are not in the EU, so the compensation is not valid in this case.";
 
 type DistanceApiResponse =
   | number
@@ -116,11 +120,22 @@ function FlightItineraryStep({
 
   // Reset results whenever either airport is cleared
   const bothSelected = !!departingIata && !!destinationIata;
-  const displayDistance = bothSelected ? distanceKm : null;
-  const displayCompensation = bothSelected ? compensationAmount : null;
+  const isEuEligible =
+    isEuCountry(departingAirport?.country) ||
+    isEuCountry(destinationAirport?.country);
+  const displayDistance = bothSelected && isEuEligible ? distanceKm : null;
+  const displayCompensation =
+    bothSelected && isEuEligible ? compensationAmount : null;
 
   useEffect(() => {
     if (!departingIata || !destinationIata) {
+      return;
+    }
+
+    if (!isEuEligible) {
+      setDistanceKm(null);
+      setCompensationAmount(null);
+      setCalculationError(NOT_EU_MESSAGE);
       return;
     }
 
@@ -177,7 +192,7 @@ function FlightItineraryStep({
     return () => {
       isActive = false;
     };
-  }, [departingIata, destinationIata]);
+  }, [departingIata, destinationIata, isEuEligible]);
 
   // errors are derived - they appear after first submit attempt and clear as user fixes each field
   const errors = submitted
@@ -209,6 +224,7 @@ function FlightItineraryStep({
     if (
       !departingAirport ||
       !destinationAirport ||
+      !isEuEligible ||
       (flightType === "connecting" &&
         (!connections.every((connection) => connection !== null) ||
           disruptedLeg === null))
@@ -393,6 +409,7 @@ function FlightItineraryStep({
           <Button
             variant="contained"
             onClick={handleNext}
+            disabled={bothSelected && !isEuEligible}
             endIcon={<span>→</span>}
           >
             Next
