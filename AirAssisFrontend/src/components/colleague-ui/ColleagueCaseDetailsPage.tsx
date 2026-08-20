@@ -54,12 +54,11 @@ import {
   type ColleagueCaseCommentApiError,
 } from "./ColleagueCaseCommentApi";
 import PortalUserHeader from "../portal/PortalUserHeader";
-import { getStoredUserIdentity } from "../../utils/auth";
+import { fetchWithAuth, getStoredUserIdentity } from "../../utils/auth";
 import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import { validateDocumentFile } from "../wizard/utils/documentUploadStepValidation";
 import { getCaseStatusPresentation } from "../../utils/caseStatus";
-import axios from "axios";
 import CommentsCard from "../cases/shared/cards/CommentsCard";
 import DeleteDocumentDialog from "../cases/shared/dialogs/DeleteDocumentDialog";
 
@@ -141,6 +140,12 @@ type ColleagueCaseDetailsPageProps = {
 };
 
 type CaseDecision = "ELIGIBLE" | "NON_ELIGIBLE" | "AWAITING_DOCUMENTS";
+
+type CaseStatusUpdateErrorPayload = {
+  detail?: string;
+  error?: string;
+  message?: string;
+};
 
 const formatDate = (value: string | null | undefined) => {
   if (!value) {
@@ -607,13 +612,6 @@ function ColleagueCaseDetailsPage({
 
   const updateCaseStatus = useCallback(
     async (status: CaseDecision, note: string) => {
-      const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-
-      if (!accessToken) {
-        onUnauthorized?.();
-        return;
-      }
-
       if (resolvedCaseId === null) {
         setStatusUpdateError("Invalid case id.");
         return;
@@ -623,47 +621,41 @@ function ColleagueCaseDetailsPage({
       setStatusUpdateError("");
 
       try {
-        if (note) {
-          await createColleagueCaseComment({
-            caseId: resolvedCaseId,
-            text: note,
-            accessToken,
-          });
-        }
-
-        await axios.post(
+        const response = await fetchWithAuth(
           `${API_BASE_URL}/api/cases/${resolvedCaseId}/status/`,
-          { status, note },
           {
+            method: "POST",
             headers: {
-              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
             },
+            body: JSON.stringify({ status, note }),
           },
         );
+
+        if (!response.ok) {
+          const errorPayload = (await response
+            .json()
+            .catch(() => null)) as CaseStatusUpdateErrorPayload | null;
+          setStatusUpdateError(
+            errorPayload?.message ||
+              errorPayload?.error ||
+              errorPayload?.detail ||
+              "Could not update case status.",
+          );
+          return;
+        }
+
         await fetchDetails();
         setSelectedDecision("");
         setDecisionNote("");
         setIsStatusUpdateSuccessOpen(true);
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          if (
-            error.response?.status === 401 ||
-            error.response?.status === 403
-          ) {
-            onUnauthorized?.();
-            return;
-          }
-          setStatusUpdateError(
-            error.response?.data?.message || "Could not update case status.",
-          );
-          return;
-        }
+      } catch {
         setStatusUpdateError("Could not update case status.");
       } finally {
         setIsUpdatingStatus(false);
       }
     },
-    [fetchDetails, onUnauthorized, resolvedCaseId],
+    [fetchDetails, resolvedCaseId],
   );
   return (
     <>
@@ -1492,7 +1484,7 @@ function ColleagueCaseDetailsPage({
           onClose={closeSnackbar}
         />
         <Snackbar
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
           autoHideDuration={4000}
           open={isStatusUpdateSuccessOpen}
           onClose={() => setIsStatusUpdateSuccessOpen(false)}

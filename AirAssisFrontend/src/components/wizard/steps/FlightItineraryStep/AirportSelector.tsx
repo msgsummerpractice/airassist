@@ -9,6 +9,7 @@ interface Props {
   destination: AirportOption | null;
   onDepartingChange: (value: AirportOption | null) => void;
   onDestinationChange: (value: AirportOption | null) => void;
+  onSwap: () => void;
   errors?: string;
   errorDestination?: string;
 }
@@ -18,6 +19,7 @@ function AirportSelector({
   destination,
   onDepartingChange,
   onDestinationChange,
+  onSwap,
   errors,
   errorDestination,
 }: Props) {
@@ -34,10 +36,9 @@ function AirportSelector({
       <IconButton
         size="small"
         sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}
-        onClick={() => {
-          onDepartingChange(destination);
-          onDestinationChange(departing);
-        }}
+        aria-label="Switch airports"
+        title="Switch airports"
+        onClick={onSwap}
       >
         <SwapHorizIcon />
       </IconButton>

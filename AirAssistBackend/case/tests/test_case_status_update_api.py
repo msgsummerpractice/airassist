@@ -3,8 +3,10 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from unittest.mock import patch
 
 from case.enums.case_state_enum import CaseState
+from case.enums.conversation_status_enum import ConversationStatus
 from case.models.case import Case
 from case.models.passengers import Passenger
 from user.enums.roles import Roles
@@ -189,3 +191,54 @@ class CaseStatusUpdateApiTests(APITestCase):
         case.refresh_from_db()
         self.assertEqual(case.status, CaseState.ELIGIBLE.value)
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_updates_status_when_conversation_is_closed(self):
+        # Arrange
+        case, _ = self.create_case_with_passenger()
+        case.conversation_status = ConversationStatus.CLOSED.value
+        case.save(update_fields=["conversation_status"])
+        self.client.force_authenticate(user=self.colleague_user)
+
+        # Act
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                self.status_url(case),
+                {
+                    "status": CaseState.AWAITING_DOCUMENTS.value,
+                    "note": "Please upload your boarding pass.",
+                },
+                format="json",
+            )
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        case.refresh_from_db()
+        self.assertEqual(case.status, CaseState.AWAITING_DOCUMENTS.value)
+        self.assertEqual(
+            case.conversation_status,
+            ConversationStatus.CLOSED.value,
+        )
+
+    @patch("case.views.case_status_update_view.send_case_status_update_email")
+    def test_updates_status_when_notification_email_fails(self, send_email):
+        # Arrange
+        case, _ = self.create_case_with_passenger()
+        send_email.side_effect = RuntimeError("Email delivery failed")
+        self.client.force_authenticate(user=self.colleague_user)
+
+        # Act
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                self.status_url(case),
+                {"status": CaseState.ELIGIBLE.value},
+                format="json",
+            )
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {"message": "Case status updated successfully."},
+        )
+        case.refresh_from_db()
+        self.assertEqual(case.status, CaseState.ELIGIBLE.value)

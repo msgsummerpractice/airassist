@@ -271,6 +271,13 @@ function FlightItineraryStep({
             onDestinationChange={(destinationAirport) =>
               onChange({ ...value, destinationAirport })
             }
+            onSwap={() =>
+              onChange({
+                ...value,
+                departingAirport: destinationAirport,
+                destinationAirport: departingAirport,
+              })
+            }
             errors={errors.departing}
             errorDestination={errors.destination}
           />
