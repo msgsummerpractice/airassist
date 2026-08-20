@@ -1,5 +1,6 @@
 from typing import Optional, Tuple
 
+from ..custom_exceptions.exceptions import BadRequestAPIException
 from ..enums.cancellation_type_enum import CancellationType
 from ..enums.delay_type_enum import DelayType
 from ..enums.denied_boarding_type_enum import DeniedBoardingType
@@ -13,7 +14,7 @@ class CaseEligibilityService:
     def check_case_eligibility(case: Case) -> bool:
         disruption = case.disruptions.order_by("-created_at").first()
         if not disruption:
-            raise ValueError("No disruption found for the case.")
+            raise BadRequestAPIException("No disruption found for the case.")
         is_eligible, _ = CaseEligibilityService.check_disruption_eligibility_with_reason(disruption)
         return is_eligible
 
@@ -21,7 +22,7 @@ class CaseEligibilityService:
     def check_case_eligibility_with_reason(case: Case) -> Tuple[bool, Optional[str]]:
         disruption = case.disruptions.order_by("-created_at").first()
         if not disruption:
-            raise ValueError("No disruption found for the case.")
+            raise BadRequestAPIException("No disruption found for the case.")
         return CaseEligibilityService.check_disruption_eligibility_with_reason(disruption)
 
     @staticmethod

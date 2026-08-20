@@ -44,14 +44,15 @@ class PasswordResetViewTests(TestCase):
         self.assertIn("&token=", reset_url)
 
     @patch("user.service.user_service.send_password_reset_email")
-    def test_request_password_reset_is_silent_for_unknown_email(self, mock_send_email):
+    def test_request_password_reset_returns_not_found_for_unknown_email(self, mock_send_email):
         response = self.client.post(
             "/user/request-password-reset/",
             data={"email": "missing@example.com"},
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("no account", response.data["message"].lower())
         mock_send_email.assert_not_called()
 
     def test_reset_password_with_valid_token_updates_password(self):
@@ -89,7 +90,7 @@ class PasswordResetViewTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data["error"],
+            response.data["message"],
             "New password cannot be the same as the current password.",
         )
         self.user.refresh_from_db()
@@ -110,4 +111,4 @@ class PasswordResetViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], "Invalid or expired password reset link.")
+        self.assertEqual(response.data["message"], "Invalid or expired password reset link.")

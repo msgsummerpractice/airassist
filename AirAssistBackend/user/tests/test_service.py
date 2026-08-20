@@ -4,6 +4,7 @@ from django.contrib.auth.hashers import check_password
 
 from ..models.users import Role, User
 from ..service.user_service import UserService
+from ..custom_exceptions.exceptions import BadRequestAPIException, NotFoundAPIException
 
 from rest_framework.test import APITestCase
 from case.models.case import Case
@@ -45,7 +46,7 @@ class UserServiceTests(TestCase):
         )
 
         # Act / Assert
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(BadRequestAPIException) as context:
             UserService.create_user(
                 role_name="Passenger",
                 firstname="New",
@@ -65,7 +66,7 @@ class UserServiceTests(TestCase):
         role_name = "Passenger"
 
         # Act / Assert
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(BadRequestAPIException) as context:
             UserService.create_user(
                 role_name=role_name,
                 firstname="Jane",
@@ -96,7 +97,7 @@ class UserServiceTests(TestCase):
 
     def test_get_user_role_raises_error_when_user_does_not_exist(self):
         # Act / Assert
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(NotFoundAPIException) as context:
             UserService.get_user_role(9999)
 
         self.assertEqual(str(context.exception), "user not found")
@@ -167,7 +168,7 @@ class UserDeleteServiceTests(TestCase):
             email__iexact="passenger@example.com").count(), 0)
 
     def test_delete_blocks_self_delete(self):
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(BadRequestAPIException) as context:
             UserService.delete_user_account(
                 requesting_user_id=self.admin.id,
                 target_user_id=self.admin.id,
@@ -184,7 +185,7 @@ class UserDeleteServiceTests(TestCase):
             password="admin-pass",
         )
 
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(BadRequestAPIException) as context:
             UserService.delete_user_account(
                 requesting_user_id=self.admin.id,
                 target_user_id=second_admin.id,
@@ -193,7 +194,7 @@ class UserDeleteServiceTests(TestCase):
                          "System admin accounts cannot be deleted.")
 
     def test_delete_returns_not_found_for_missing_user(self):
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(NotFoundAPIException) as context:
             UserService.delete_user_account(
                 requesting_user_id=self.admin.id,
                 target_user_id=999999,

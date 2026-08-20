@@ -65,7 +65,8 @@ SIMPLE_JWT = {
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ]
+    ],
+    'EXCEPTION_HANDLER': 'user.custom_exceptions.handlers.airassist_exception_handler',
 }
 # Application definition
 
@@ -99,6 +100,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'user.middleware.AirAssistBackendExceptionMiddleware',
+    'case.middleware.CaseBackendExceptionMiddleware',
 ]
 
 ROOT_URLCONF = 'AirAssistBackend.urls'

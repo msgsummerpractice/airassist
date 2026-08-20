@@ -10,6 +10,7 @@ from case.models.case import Case
 from case.models.flights import Flight
 from case.serializers.case_creation_serializer import CaseCreationSerializer
 from case.services.case_state_service import CaseStateService
+from case.custom_exceptions.exceptions import BadRequestAPIException
 from user.enums.roles import Roles
 from user.models.users import Role, User
 
@@ -118,7 +119,7 @@ class CaseStateServiceTests(TestCase):
 			status=CaseState.IN_REVIEW.value,
 		)
 
-		with self.assertRaises(ValueError):
+		with self.assertRaises(BadRequestAPIException):
 			CaseStateService.mark_case_as_assigned(case, colleague)
 
 	def test_pending_case_can_be_assigned_for_review(self):

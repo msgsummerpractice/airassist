@@ -12,13 +12,7 @@ class ColleagueCaseConversationCloseView(APIView):
     permission_classes = [IsAuthenticated, IsColleague]
 
     def post(self, request, case_id):
-        try:
-            case = CaseConversationService.close_conversation(case_id, request.user)
-        except ValueError as error:
-            return Response(
-                {"detail": str(error)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        case = CaseConversationService.close_conversation(case_id, request.user)
 
         return Response(
             {
@@ -33,13 +27,7 @@ class ColleagueCaseConversationReopenView(APIView):
     permission_classes = [IsAuthenticated, IsColleague]
 
     def post(self, request, case_id):
-        try:
-            case = CaseConversationService.reopen_conversation(case_id, request.user)
-        except ValueError as error:
-            return Response(
-                {"detail": str(error)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        case = CaseConversationService.reopen_conversation(case_id, request.user)
 
         return Response(
             {

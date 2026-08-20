@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from user.permissions import IsSystemAdmin
 
+from ..custom_exceptions.exceptions import NotFoundAPIException
 from ..models.case import Case
 from ..models.comment import Comment
 from ..models.document import CaseDocument
@@ -50,10 +51,7 @@ class CaseDeletionView(APIView):
         try:
             CaseDeletionService.delete_case(case_id)
         except Case.DoesNotExist:
-            return Response(
-                {"message": "Case not found."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            raise NotFoundAPIException("Case not found.")
 
         return Response(
             {

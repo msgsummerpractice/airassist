@@ -16,6 +16,7 @@ from ..serializers.user_serializer import (
 from ..permissions import IsSystemAdmin
 from rest_framework.permissions import IsAuthenticated
 from ..custom_exceptions.responses import AirAssistResponse
+from ..custom_exceptions.exceptions import NotFoundAPIException
 
 from colleague_cases.permissions import IsColleague
 from ..enums.roles import Roles
@@ -53,19 +54,16 @@ class UserView(APIView):
         serializer = UserSerializer(data=request.data)
         airassist_response = AirAssistResponse()
         if serializer.is_valid():
-            try:
-                user = UserService.create_user(
-                    role_name=serializer.validated_data['role'].role,
-                    firstname=serializer.validated_data['firstname'],
-                    lastname=serializer.validated_data['lastname'],
-                    email=serializer.validated_data['email'],
-                    password=serializer.validated_data['password'],
-                    must_change_password=True
-                )
-                user_data = UserSerializer(user).data
-                return airassist_response.status_create(user_data)
-            except ValueError as e:
-                return airassist_response.status_bad_request_with_message(str(e))
+            user = UserService.create_user(
+                role_name=serializer.validated_data['role'].role,
+                firstname=serializer.validated_data['firstname'],
+                lastname=serializer.validated_data['lastname'],
+                email=serializer.validated_data['email'],
+                password=serializer.validated_data['password'],
+                must_change_password=True
+            )
+            user_data = UserSerializer(user).data
+            return airassist_response.status_create(user_data)
         return airassist_response.status_bad_request(serializer.errors)
 
     def get(self, request):
@@ -88,16 +86,10 @@ class DeleteUserView(APIView):
     permission_classes = [IsSystemAdmin]
 
     def delete(self, request, user_id):
-        try:
-            result = UserService.delete_user_account(
-                requesting_user_id=request.user.id,
-                target_user_id=user_id,
-            )
-        except ValueError as exc:
-            message = str(exc)
-            if message == "User not found.":
-                return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
-            return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+        result = UserService.delete_user_account(
+            requesting_user_id=request.user.id,
+            target_user_id=user_id,
+        )
 
         return Response(
             {
@@ -115,21 +107,18 @@ class UpdateUserProfileView(APIView):
         try:
             target_user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            raise NotFoundAPIException("User not found.")
 
         serializer = UserProfileUpdateSerializer(
             target_user, data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            user = UserService.update_user_profile(
-                requesting_user_id=request.user.id,
-                target_user_id=user_id,
-                **serializer.validated_data,
-            )
-        except ValueError as exc:
-            return Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        user = UserService.update_user_profile(
+            requesting_user_id=request.user.id,
+            target_user_id=user_id,
+            **serializer.validated_data,
+        )
 
         return Response(UserListSerializer(user).data, status=status.HTTP_200_OK)
 
@@ -158,10 +147,7 @@ class ChangePasswordView(APIView):
     def post(self, request):
         new_password = request.data.get("new_password")
 
-        try:
-            UserService.change_password(request.user, new_password)
-        except ValueError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        UserService.change_password(request.user, new_password)
 
         return Response({"message": "Password changed successfully."}, status=status.HTTP_200_OK)
 
@@ -195,14 +181,11 @@ class ResetPasswordView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            UserService.reset_password_with_token(
-                uid=serializer.validated_data["uid"],
-                token=serializer.validated_data["token"],
-                new_password=serializer.validated_data["new_password"],
-            )
-        except ValueError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        UserService.reset_password_with_token(
+            uid=serializer.validated_data["uid"],
+            token=serializer.validated_data["token"],
+            new_password=serializer.validated_data["new_password"],
+        )
 
         return Response(
             {"message": "Password reset successfully."},
