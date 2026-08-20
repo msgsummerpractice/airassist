@@ -1076,7 +1076,13 @@ function PassengerCaseDetailsPage({
                           </Stack>
                         </Box>
                       ) : details.can_upload_documents === false ? (
-                        <Alert severity="info" sx={{ mb: 2 }}>
+                        <Alert
+                          severity="info"
+                          sx={{
+                            mb: 2,
+                            "& .MuiAlert-message": { fontSize: "14px" },
+                          }}
+                        >
                           Document uploads are available after the colleague
                           requests additional documents.
                         </Alert>
@@ -1212,7 +1218,11 @@ function PassengerCaseDetailsPage({
                         size="small"
                         label={conversationStatus}
                         color={
-                          conversationStatus === "OPEN" ? "success" : "default"
+                          conversationStatus === "OPEN"
+                            ? "success"
+                            : conversationStatus === "CLOSED"
+                              ? "error"
+                              : "default"
                         }
                         variant="outlined"
                       />

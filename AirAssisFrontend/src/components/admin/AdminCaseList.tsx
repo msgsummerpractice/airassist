@@ -162,56 +162,76 @@ function AdminCaseList() {
           severity={snackbar.severity}
           onClose={closeSnackbar}
         />
-        <Box sx={{ textAlign: "center", mb: 3 }}>
-          <Typography variant="h2">All Cases</Typography>
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfOutlinedIcon fontSize="small" />}
-            onClick={() => setShowPdfHistory((current) => !current)}
-            sx={{ mt: 1.5 }}
-          >
-            {showPdfHistory ? "Back to Case List" : "PDF History"}
-          </Button>
-        </Box>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          sx={{
-            mb: 3,
-            width: "100%",
-            justifyContent: "center",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <FormControl size="small" sx={{ minWidth: 180, flex: "1 1 180px" }}>
-            <InputLabel id="admin-case-status-filter-label">Status</InputLabel>
-            <Select
-              labelId="admin-case-status-filter-label"
-              label="Status"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
+        {!showPdfHistory && (
+          <>
+            <Box sx={{ textAlign: "center", mb: 3 }}>
+              <Typography variant="h2">All Cases</Typography>
+              <Button
+                variant="outlined"
+                startIcon={<PictureAsPdfOutlinedIcon fontSize="small" />}
+                onClick={() => setShowPdfHistory((current) => !current)}
+                sx={{ mt: 1.5 }}
+              >
+                PDF History
+              </Button>
+            </Box>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{
+                mb: 3,
+                width: "100%",
+                justifyContent: "center",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
             >
-              <MenuItem value="ALL">All</MenuItem>
-              <MenuItem value="NEW">New</MenuItem>
-              <MenuItem value="VALID">Valid</MenuItem>
-              <MenuItem value="ASSIGNED">Assigned</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            size="small"
-            label="Flight date"
-            type="date"
-            value={flightDateFilter}
-            onChange={(event) => setFlightDateFilter(event.target.value)}
-            slotProps={{
-              inputLabel: { shrink: true },
-            }}
-            sx={{ minWidth: 220, flex: "1 1 220px" }}
-          />
-        </Stack>
+              <FormControl
+                size="small"
+                sx={{ minWidth: 180, flex: "1 1 180px" }}
+              >
+                <InputLabel id="admin-case-status-filter-label">
+                  Status
+                </InputLabel>
+                <Select
+                  labelId="admin-case-status-filter-label"
+                  label="Status"
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                >
+                  <MenuItem value="ALL">All</MenuItem>
+                  <MenuItem value="NEW">New</MenuItem>
+                  <MenuItem value="VALID">Valid</MenuItem>
+                  <MenuItem value="ASSIGNED">Assigned</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                size="small"
+                label="Flight date"
+                type="date"
+                value={flightDateFilter}
+                onChange={(event) => setFlightDateFilter(event.target.value)}
+                slotProps={{
+                  inputLabel: { shrink: true },
+                }}
+                sx={{ minWidth: 220, flex: "1 1 220px" }}
+              />
+            </Stack>
+          </>
+        )}
         {showPdfHistory ? (
-          <PdfHistoryList />
+          <>
+            <Box sx={{ textAlign: "center", mb: 3 }}>
+              <Button
+                variant="outlined"
+                startIcon={<PictureAsPdfOutlinedIcon fontSize="small" />}
+                onClick={() => setShowPdfHistory(false)}
+              >
+                Back to Case List
+              </Button>
+            </Box>
+            <PdfHistoryList />
+          </>
         ) : isLoading ? (
           <CaseListLoadingState label="Loading cases..." />
         ) : hasError ? (
