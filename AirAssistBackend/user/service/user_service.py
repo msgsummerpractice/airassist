@@ -14,6 +14,7 @@ from case.models.passengers import Passenger
 from ..enums.roles import Roles
 from django.db import transaction
 from case.models.passengers import Passenger
+from ..custom_exceptions.exceptions import BadRequestAPIException, NotFoundAPIException
 
 
 class UserService:
@@ -23,13 +24,13 @@ class UserService:
         email = email.lower()
 
         if User.objects.filter(email=email).exists():
-            raise ValueError(
+            raise BadRequestAPIException(
                 "There already exists a user with this email address")
 
         try:
             role = Role.objects.get(role=role_name)
         except Role.DoesNotExist:
-            raise ValueError("This role does not exist")
+            raise BadRequestAPIException("This role does not exist")
 
         user = User.objects.create_user(
             role=role,
@@ -53,18 +54,18 @@ class UserService:
             target_user = User.objects.select_related(
                 "role").get(pk=target_user_id)
         except User.DoesNotExist:
-            raise ValueError("User not found.")
+            raise NotFoundAPIException("User not found.")
 
         if requesting_user_id == target_user.id:
-            raise ValueError("You cannot delete your own account.")
+            raise BadRequestAPIException("You cannot delete your own account.")
 
         role_name = getattr(target_user.role, "role", None)
 
         if role_name == Roles.SYSTEM_ADMIN.value:
-            raise ValueError("System admin accounts cannot be deleted.")
+            raise BadRequestAPIException("System admin accounts cannot be deleted.")
 
         if role_name not in {Roles.COLLEAGUE.value, Roles.PASSENGER.value}:
-            raise ValueError(
+            raise BadRequestAPIException(
                 "Only colleague and passenger accounts can be deleted.")
 
         deleted_passenger_rows = 0
@@ -99,14 +100,14 @@ class UserService:
             target_user = User.objects.select_related(
                 "role").get(pk=target_user_id)
         except User.DoesNotExist:
-            raise ValueError("User not found.")
+            raise NotFoundAPIException("User not found.")
 
         if requesting_user_id == target_user.id:
-            raise ValueError("You cannot edit your own account.")
+            raise BadRequestAPIException("You cannot edit your own account.")
 
         role_name = getattr(target_user.role, "role", None)
         if role_name not in {Roles.COLLEAGUE.value, Roles.PASSENGER.value}:
-            raise ValueError(
+            raise BadRequestAPIException(
                 "Only colleague and passenger accounts can be edited.")
 
         previous_email = target_user.email
@@ -131,7 +132,7 @@ class UserService:
             role = user.role
             return role
         except User.DoesNotExist:
-            raise ValueError("user not found")
+            raise NotFoundAPIException("user not found")
 
     @staticmethod
     def authenticate_user(email: str, password: str):
@@ -146,10 +147,10 @@ class UserService:
     @staticmethod
     def change_password(user: User, new_password: str) -> User:
         if not new_password:
-            raise ValueError("New password is required.")
+            raise BadRequestAPIException("New password is required.")
 
         if check_password(new_password, user.password):
-            raise ValueError("New password cannot be the same as the current password.")
+            raise BadRequestAPIException("New password cannot be the same as the current password.")
 
         user.set_password(new_password)
         user.must_change_password = False
@@ -162,7 +163,7 @@ class UserService:
         user = User.objects.filter(email=normalized_email).first()
 
         if user is None:
-            return
+            raise NotFoundAPIException("There is no account with this email address.")
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
@@ -179,10 +180,10 @@ class UserService:
             user_id = force_str(urlsafe_base64_decode(uid))
             user = User.objects.get(pk=user_id)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            raise ValueError("Invalid or expired password reset link.")
+            raise BadRequestAPIException("Invalid or expired password reset link.")
 
         if not default_token_generator.check_token(user, token):
-            raise ValueError("Invalid or expired password reset link.")
+            raise BadRequestAPIException("Invalid or expired password reset link.")
 
         return UserService.change_password(user, new_password)
 
