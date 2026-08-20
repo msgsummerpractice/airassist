@@ -40,6 +40,7 @@ const EMPTY_FORM: FormState = {
 
 interface CreateUserButtonProps {
   onUserCreated: () => void;
+  onCreateSuccess: (message: string) => void;
 }
 
 // Handles DRF field-error dicts {"email": ["already exists"]} and plain message/detail
@@ -60,17 +61,16 @@ function extractApiError(data: unknown, status: number): string {
 
 export default function CreateUserButton({
   onUserCreated,
+  onCreateSuccess,
 }: CreateUserButtonProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const handleOpen = () => {
     setForm(EMPTY_FORM);
     setError(null);
-    setSuccess(false);
     setOpen(true);
   };
 
@@ -94,12 +94,9 @@ export default function CreateUserButton({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(extractApiError(data, res.status));
-      setSuccess(true);
+      setOpen(false);
       onUserCreated();
-      setTimeout(() => {
-        setOpen(false);
-        setSuccess(false);
-      }, 1200);
+      onCreateSuccess("User created successfully.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error.");
     } finally {
@@ -128,9 +125,6 @@ export default function CreateUserButton({
           <DialogContent dividers>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {error && <Alert severity="error">{error}</Alert>}
-              {success && (
-                <Alert severity="success">User created successfully.</Alert>
-              )}
 
               <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
@@ -141,7 +135,7 @@ export default function CreateUserButton({
                   required
                   fullWidth
                   autoFocus
-                  disabled={submitting || success}
+                  disabled={submitting}
                 />
                 <TextField
                   label="Last Name"
@@ -150,7 +144,7 @@ export default function CreateUserButton({
                   onChange={handleChange}
                   required
                   fullWidth
-                  disabled={submitting || success}
+                  disabled={submitting}
                 />
               </Box>
 
@@ -162,7 +156,7 @@ export default function CreateUserButton({
                 onChange={handleChange}
                 required
                 fullWidth
-                disabled={submitting || success}
+                disabled={submitting}
               />
 
               <TextField
@@ -173,7 +167,7 @@ export default function CreateUserButton({
                 onChange={handleChange}
                 required
                 fullWidth
-                disabled={submitting || success}
+                disabled={submitting}
                 helperText="The user will be prompted to change this on first login."
               />
 
@@ -185,7 +179,7 @@ export default function CreateUserButton({
                 onChange={handleChange}
                 required
                 fullWidth
-                disabled={submitting || success}
+                disabled={submitting}
               >
                 {ROLES.map((r) => (
                   <MenuItem key={r} value={r}>
@@ -203,7 +197,7 @@ export default function CreateUserButton({
             <Button
               type="submit"
               variant="contained"
-              disabled={submitting || success}
+              disabled={submitting}
               startIcon={
                 submitting ? (
                   <CircularProgress size={16} color="inherit" />

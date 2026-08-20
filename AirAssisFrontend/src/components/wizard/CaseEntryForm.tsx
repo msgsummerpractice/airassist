@@ -3,7 +3,8 @@ import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurned
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import LoginOutlinedIcon from "@mui/icons-material/LoginOutlined";
 import { Box, Link } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import FlightItineraryStep from "./steps/FlightItineraryStep";
 import FlightDetailsStep from "./steps/FlightDetailsStep";
@@ -52,6 +53,42 @@ const defaultDisruption: DisruptionFormData = {
   incident_description: "",
 };
 
+const CASE_DRAFT_STORAGE_KEY = "airassist-case-draft";
+
+type CaseDraft = {
+  step: number;
+  itinerary: Itinerary;
+  legDetails: Leg[];
+  disruption: DisruptionFormData;
+  passenger: typeof EMPTY_PASSENGER;
+  gdpr: typeof EMPTY_GDPR;
+};
+
+function readCaseDraft(storageKey: string): CaseDraft | null {
+  try {
+    const storedDraft = sessionStorage.getItem(storageKey);
+    if (!storedDraft) return null;
+
+    const draft = JSON.parse(storedDraft) as CaseDraft;
+    return {
+      ...draft,
+      legDetails: draft.legDetails.map((leg) => ({
+        ...leg,
+        flightDate: leg.flightDate ? dayjs(leg.flightDate) : null,
+        plannedDepartureTime: leg.plannedDepartureTime
+          ? dayjs(leg.plannedDepartureTime)
+          : null,
+        plannedArrivalTime: leg.plannedArrivalTime
+          ? dayjs(leg.plannedArrivalTime)
+          : null,
+      })),
+    };
+  } catch {
+    sessionStorage.removeItem(storageKey);
+    return null;
+  }
+}
+
 type CaseEntryFormProps = {
   isColleagueCaseEntry?: boolean;
   onShowColleagueDashboard?: () => void;
@@ -62,15 +99,53 @@ function CaseEntryForm({
   onShowColleagueDashboard,
 }: CaseEntryFormProps) {
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [itinerary, setItinerary] = useState<Itinerary>(EMPTY_ITINERARY);
-  const [legDetails, setLegDetails] = useState<Leg[]>([]);
-  const [disruption, setDisruption] =
-    useState<DisruptionFormData>(defaultDisruption);
-  const [passenger, setPassenger] = useState(EMPTY_PASSENGER);
+  const currentUser = useMemo(() => getStoredUserIdentity(), []);
+  const casesLabel = isColleagueCaseEntry ? "See Cases" : "My Cases";
+  const isGuest = currentUser.isGuest;
+  const draftStorageKey = `${CASE_DRAFT_STORAGE_KEY}:${
+    isColleagueCaseEntry ? "colleague" : "passenger"
+  }:${currentUser.email || "guest"}`;
+
+  const savedDraft = useMemo(
+    () => readCaseDraft(draftStorageKey),
+    [draftStorageKey],
+  );
+  const [step, setStep] = useState(savedDraft?.step ?? 0);
+  const [itinerary, setItinerary] = useState<Itinerary>(
+    savedDraft?.itinerary ?? EMPTY_ITINERARY,
+  );
+  const [legDetails, setLegDetails] = useState<Leg[]>(
+    savedDraft?.legDetails ?? [],
+  );
+  const [disruption, setDisruption] = useState<DisruptionFormData>(
+    savedDraft?.disruption ?? defaultDisruption,
+  );
+  const [passenger, setPassenger] = useState(
+    savedDraft?.passenger ?? EMPTY_PASSENGER,
+  );
   const [documents, setDocuments] = useState(EMPTY_DOCUMENT_UPLOAD);
-  const [gdpr, setGdpr] = useState(EMPTY_GDPR);
+  const [gdpr, setGdpr] = useState(savedDraft?.gdpr ?? EMPTY_GDPR);
   const { snackbar, closeSnackbar, showSuccessSnackbar } = useAppSnackbar();
+
+  useEffect(() => {
+    const draft: CaseDraft = {
+      step,
+      itinerary,
+      legDetails,
+      disruption,
+      passenger,
+      gdpr,
+    };
+    sessionStorage.setItem(draftStorageKey, JSON.stringify(draft));
+  }, [
+    draftStorageKey,
+    step,
+    itinerary,
+    legDetails,
+    disruption,
+    passenger,
+    gdpr,
+  ]);
 
   const handleItineraryNext = (confirmed: Itinerary) => {
     setItinerary(confirmed);
@@ -108,15 +183,12 @@ function CaseEntryForm({
     setStep(1);
   };
 
-  const currentUser = useMemo(() => getStoredUserIdentity(), []);
-  const casesLabel = isColleagueCaseEntry ? "See Cases" : "My Cases";
-  const isGuest = currentUser.isGuest;
-
   const handleLogout = () => {
     logoutToGuestCaseEntry();
   };
 
   const resetForm = () => {
+    sessionStorage.removeItem(draftStorageKey);
     setStep(0);
     setItinerary(EMPTY_ITINERARY);
     setLegDetails([]);
@@ -161,6 +233,7 @@ function CaseEntryForm({
         name={currentUser.name}
         email={currentUser.email}
         roleLabel={currentUser.roleLabel}
+        onLogoClick={isGuest ? () => setStep(0) : undefined}
         authAction={
           isGuest
             ? {

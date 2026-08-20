@@ -37,6 +37,7 @@ import { AppSnackbar } from "../utils/app_snackbar";
 import { useAppSnackbar } from "../utils/use_app_snackbar";
 import PortalUserHeader from "../portal/PortalUserHeader";
 import {
+  fetchWithAuth,
   logoutToGuestCaseEntry,
   setStoredUserIdentity,
 } from "../../utils/auth";
@@ -145,11 +146,9 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/cases/colleague/`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = await fetchWithAuth(
+          `${API_BASE_URL}/api/cases/colleague/`,
+        );
 
         const payload = await readJsonSafely<DashboardResponse>(response);
 

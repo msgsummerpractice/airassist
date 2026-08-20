@@ -53,8 +53,6 @@ import {
   LogoutOutlined as LogoutOutlinedIcon,
 } from "@mui/icons-material";
 
-const USER_DELETE_SUCCESS_HIDE_MS = 15000;
-
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -379,12 +377,6 @@ function AdminUsersPage() {
             open={snackbar.open}
             message={snackbar.message}
             severity={snackbar.severity}
-            autoHideDuration={
-              snackbar.severity === "success" &&
-              snackbar.message === "User account deleted succesfully."
-                ? USER_DELETE_SUCCESS_HIDE_MS
-                : undefined
-            }
             onClose={closeSnackbar}
           />
 
@@ -417,7 +409,10 @@ function AdminUsersPage() {
               {loaded ? "Reload Users" : "Load Users"}
             </Button>
 
-            <CreateUserButton onUserCreated={loadUsers} />
+            <CreateUserButton
+              onUserCreated={loadUsers}
+              onCreateSuccess={showSuccessSnackbar}
+            />
           </Stack>
 
           {loadError && (

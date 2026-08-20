@@ -107,6 +107,14 @@ export function isSystemAdmin(): boolean {
   return getTokenRole() === "SYSTEM_ADMIN";
 }
 
+export function getHomeRouteForCurrentUser(): string {
+  const role = getTokenRole();
+  if (role === "SYSTEM_ADMIN") return "/admin/users";
+  if (role === "COLLEAGUE") return "/colleague-dashboard";
+  if (role === "PASSENGER") return "/passenger-cases";
+  return "/case-entry";
+}
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
