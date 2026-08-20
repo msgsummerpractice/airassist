@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+public/airplane-sprite.svg
 
 # Editor directories and files
 .vscode/*
