@@ -194,9 +194,13 @@ function AdminCaseList({ showPdfHistory }: AdminCaseListProps) {
                 onChange={(event) => setStatusFilter(event.target.value)}
               >
                 <MenuItem value="ALL">All</MenuItem>
-                <MenuItem value="NEW">New</MenuItem>
-                <MenuItem value="VALID">Valid</MenuItem>
-                <MenuItem value="ASSIGNED">Assigned</MenuItem>
+                <MenuItem value="ELIGIBLE">Eligible</MenuItem>
+                <MenuItem value="AWAITING_DOCUMENTS">
+                  Awaiting documents
+                </MenuItem>
+                <MenuItem value="PENDING">Pending</MenuItem>
+                <MenuItem value="IN_REVIEW">In review</MenuItem>
+                <MenuItem value="NON_ELIGIBLE">Non eligible</MenuItem>
               </Select>
             </FormControl>
             <TextField
