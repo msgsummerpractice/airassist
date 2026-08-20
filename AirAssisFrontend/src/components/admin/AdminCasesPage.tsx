@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowBackOutlined as ArrowBackIcon,
   FolderOutlined as FolderIcon,
   GroupOutlined as GroupIcon,
   LogoutOutlined as LogoutOutlinedIcon,
@@ -106,7 +105,6 @@ function AdminCasesPage() {
           <Button
             variant="outlined"
             size="small"
-            startIcon={<ArrowBackIcon fontSize="small" />}
             onClick={() =>
               showPdfHistory
                 ? setShowPdfHistory(false)
