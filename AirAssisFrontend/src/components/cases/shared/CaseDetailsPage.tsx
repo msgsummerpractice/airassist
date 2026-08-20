@@ -53,6 +53,23 @@ const formatDateTime = (value: string | null | undefined) => {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 };
 
+const ADMIN_CARD_TITLE_SX = {
+  "& .MuiTypography-h5": { fontSize: "20px" },
+  "& .MuiTypography-h6": { fontSize: "20px" },
+};
+
+const ADMIN_CARD_CONTENT_SX = {
+  "& .MuiTypography-body1": { fontSize: "18px" },
+  "& .MuiTypography-body2": { fontSize: "18px" },
+  "& .MuiTypography-caption": { fontSize: "18px" },
+  "& .MuiTableCell-root": { fontSize: "18px" },
+  "& .MuiInputBase-input": { fontSize: "18px" },
+  "& .MuiInputLabel-root": { fontSize: "18px" },
+  "& .MuiMenuItem-root": { fontSize: "18px" },
+  "& .MuiButton-root": { fontSize: "18px" },
+  "& .MuiChip-label": { fontSize: "18px" },
+};
+
 function CaseDetailsPage({
   config,
   onLogout,
@@ -80,6 +97,10 @@ function CaseDetailsPage({
     onUnauthorized,
     onCommentCreated: reload,
   });
+  const adminCardSx =
+    config.scope === "admin"
+      ? { ...ADMIN_CARD_TITLE_SX, ...ADMIN_CARD_CONTENT_SX }
+      : undefined;
 
   const handleBack = () => (onBack ? onBack() : navigate(-1));
   const headerActions =
@@ -158,93 +179,112 @@ function CaseDetailsPage({
           }}
         >
           <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Typography variant="h2" sx={{ mt: 0.5 }}>
-              Case Details
-            </Typography>
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
-            >
-              {config.description}
-            </Typography>
-          </Box>
-          <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
-            <Button
-              variant="outlined"
-              startIcon={
-                config.scope === "admin" ? <ArrowBackOutlined fontSize="small" /> : undefined
-              }
-              onClick={handleBack}
-            >
-              Back
-            </Button>
-          </Stack>
-          {errorMessage && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {errorMessage}
-            </Alert>
-          )}
-          {isLoading ? (
-            <Box
-              sx={{
-                py: 8,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <CircularProgress size={28} />
-              <Typography color="text.secondary">
-                Loading case details...
+            <Box sx={{ textAlign: "center", mb: 3 }}>
+              <Typography variant="h2" sx={{ mt: 0.5 }}>
+                Case Details
+              </Typography>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
+              >
+                {config.description}
               </Typography>
             </Box>
-          ) : !details ? (
-            <Box
-              sx={{
-                py: 6,
-                borderRadius: 2,
-                border: "1px dashed",
-                borderColor: "divider",
-                textAlign: "center",
-              }}
-            >
-              <Typography color="text.secondary">
-                No details available for this case.
-              </Typography>
-            </Box>
-          ) : (
-            <Stack spacing={3}>
-              <CaseSummaryCard
-                details={details}
-                formatDateTime={formatDateTime}
-              />
-              <FlightDetailsCard details={details} formatDate={formatDate} />
-              <PassengerDetailsCard
-                passenger={details.passenger}
-                formatDate={formatDate}
-              />
-              <DocumentsCard
-                caseId={details.id}
-                documents={details.documents}
-                formatDateTime={formatDateTime}
-                canManageDocuments={config.scope === "colleague"}
-                onDocumentUploaded={reload}
-                onUploadSuccess={showSuccessSnackbar}
-                onDownloadSuccess={showSuccessSnackbar}
-                onUnauthorized={onUnauthorized}
-              />
-              {config.canAddComments !== false && (
-                <AddCommentCard {...comment} />
-              )}
-              <CommentListCard
-                comments={details.comments ?? []}
-                formatDateTime={formatDateTime}
-              />
+            <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
+              <Button
+                variant="outlined"
+                startIcon={
+                  config.scope === "admin" ? (
+                    <ArrowBackOutlined fontSize="small" />
+                  ) : undefined
+                }
+                onClick={handleBack}
+              >
+                Back
+              </Button>
             </Stack>
-          )}
+            {errorMessage && (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {errorMessage}
+              </Alert>
+            )}
+            {isLoading ? (
+              <Box
+                sx={{
+                  py: 8,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <CircularProgress size={28} />
+                <Typography color="text.secondary">
+                  Loading case details...
+                </Typography>
+              </Box>
+            ) : !details ? (
+              <Box
+                sx={{
+                  py: 6,
+                  borderRadius: 2,
+                  border: "1px dashed",
+                  borderColor: "divider",
+                  textAlign: "center",
+                }}
+              >
+                <Typography color="text.secondary">
+                  No details available for this case.
+                </Typography>
+              </Box>
+            ) : (
+              <Stack spacing={3}>
+                <Box sx={adminCardSx}>
+                  <CaseSummaryCard
+                    details={details}
+                    formatDateTime={formatDateTime}
+                  />
+                </Box>
+                <Box sx={adminCardSx}>
+                  <FlightDetailsCard
+                    details={details}
+                    formatDate={formatDate}
+                  />
+                </Box>
+                <Box sx={adminCardSx}>
+                  <PassengerDetailsCard
+                    passenger={details.passenger}
+                    formatDate={formatDate}
+                  />
+                </Box>
+                <Box sx={adminCardSx}>
+                  <DocumentsCard
+                    caseId={details.id}
+                    documents={details.documents}
+                    formatDateTime={formatDateTime}
+                    canManageDocuments={config.scope === "colleague"}
+                    onDocumentUploaded={reload}
+                    onUploadSuccess={showSuccessSnackbar}
+                    onDownloadSuccess={showSuccessSnackbar}
+                    onUnauthorized={onUnauthorized}
+                  />
+                </Box>
+                {config.canAddComments !== false && (
+                  <AddCommentCard {...comment} />
+                )}
+                <Box
+                  sx={
+                    config.scope === "admin" ? ADMIN_CARD_TITLE_SX : undefined
+                  }
+                >
+                  <CommentListCard
+                    comments={details.comments ?? []}
+                    formatDateTime={formatDateTime}
+                  />
+                </Box>
+              </Stack>
+            )}
           </CardContent>
         </Card>
       </Box>

@@ -10,6 +10,33 @@ const CASE_STATUS_PRESENTATION: Record<
     sx: { color: string; borderColor: string; backgroundColor: string };
   }
 > = {
+  NEW: {
+    label: "New",
+    color: "info",
+    sx: {
+      color: "#2563eb",
+      borderColor: "#93c5fd",
+      backgroundColor: "#eff6ff",
+    },
+  },
+  VALID: {
+    label: "Valid",
+    color: "success",
+    sx: {
+      color: "#2e7d32",
+      borderColor: "#a5d6a7",
+      backgroundColor: "#f1f8e9",
+    },
+  },
+  ASSIGNED: {
+    label: "Assigned",
+    color: "primary",
+    sx: {
+      color: "#003178",
+      borderColor: "#90caf9",
+      backgroundColor: "#e3f2fd",
+    },
+  },
   PENDING: {
     label: "Pending",
     color: "default",

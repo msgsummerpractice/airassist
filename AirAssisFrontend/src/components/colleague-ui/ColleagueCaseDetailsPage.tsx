@@ -70,6 +70,17 @@ const COMMENT_MAX_LENGTH = 1000;
 const SECTION_ICON_COLOR = "#003178";
 const DOCUMENT_TYPE_OPTIONS = ["BOARDING_PASS", "PASSPORT", "CONTRACT"];
 const MAX_VISIBLE_FILENAME_LENGTH = 28;
+const CARD_CONTENT_FONT_SX = {
+  "& .MuiTypography-body1": { fontSize: "18px" },
+  "& .MuiTypography-body2": { fontSize: "18px" },
+  "& .MuiTypography-caption": { fontSize: "18px" },
+  "& .MuiTableCell-root": { fontSize: "18px" },
+  "& .MuiInputBase-input": { fontSize: "18px" },
+  "& .MuiInputLabel-root": { fontSize: "18px" },
+  "& .MuiMenuItem-root": { fontSize: "18px" },
+  "& .MuiButton-root": { fontSize: "18px" },
+  "& .MuiChip-label": { fontSize: "18px" },
+};
 
 type FlightDetails = {
   flight_date: string;
@@ -766,7 +777,7 @@ function ColleagueCaseDetailsPage({
               ) : (
                 <Stack spacing={3}>
                   <Card variant="outlined">
-                    <CardContent>
+                    <CardContent sx={CARD_CONTENT_FONT_SX}>
                       <Box
                         sx={{
                           display: "flex",
@@ -776,7 +787,9 @@ function ColleagueCaseDetailsPage({
                         }}
                       >
                         <SummarizeOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                        <Typography variant="h5">Summary</Typography>
+                        <Typography variant="h5" sx={{ fontSize: "20px" }}>
+                          Summary
+                        </Typography>
                       </Box>
                       <Stack
                         direction={{ xs: "column", md: "row" }}
@@ -828,7 +841,7 @@ function ColleagueCaseDetailsPage({
                   </Card>
 
                   <Card variant="outlined">
-                    <CardContent>
+                    <CardContent sx={CARD_CONTENT_FONT_SX}>
                       <Box
                         sx={{
                           display: "flex",
@@ -840,7 +853,9 @@ function ColleagueCaseDetailsPage({
                         <FlightTakeoffOutlined
                           sx={{ color: SECTION_ICON_COLOR }}
                         />
-                        <Typography variant="h5">Flight details</Typography>
+                        <Typography variant="h5" sx={{ fontSize: "20px" }}>
+                          Flight details
+                        </Typography>
                       </Box>
                       {details.flight ? (
                         <TableContainer>
@@ -921,7 +936,9 @@ function ColleagueCaseDetailsPage({
                         }}
                       >
                         <HubOutlined sx={{ color: SECTION_ICON_COLOR }} />
-                        <Typography variant="h6">Connecting Flights</Typography>
+                        <Typography variant="h6" sx={{ fontSize: "20px" }}>
+                          Connecting Flights
+                        </Typography>
                       </Box>
                       {details.connecting_flights.length === 0 ? (
                         <Typography variant="body1" color="text.secondary">
@@ -973,7 +990,7 @@ function ColleagueCaseDetailsPage({
                   </Card>
 
                   <Card variant="outlined">
-                    <CardContent>
+                    <CardContent sx={CARD_CONTENT_FONT_SX}>
                       <Box
                         sx={{
                           display: "flex",
@@ -985,7 +1002,9 @@ function ColleagueCaseDetailsPage({
                         <PersonOutlineOutlined
                           sx={{ color: SECTION_ICON_COLOR }}
                         />
-                        <Typography variant="h5">Passenger details</Typography>
+                        <Typography variant="h5" sx={{ fontSize: "20px" }}>
+                          Passenger details
+                        </Typography>
                       </Box>
                       {details.passenger ? (
                         <TableContainer>
@@ -1049,7 +1068,7 @@ function ColleagueCaseDetailsPage({
                   </Card>
 
                   <Card variant="outlined">
-                    <CardContent>
+                    <CardContent sx={CARD_CONTENT_FONT_SX}>
                       <Box
                         sx={{
                           display: "flex",
@@ -1061,7 +1080,7 @@ function ColleagueCaseDetailsPage({
                         <DescriptionOutlined
                           sx={{ color: SECTION_ICON_COLOR }}
                         />
-                        <Typography variant="h5">
+                        <Typography variant="h5" sx={{ fontSize: "20px" }}>
                           Attached Documents List
                         </Typography>
                       </Box>
@@ -1300,10 +1319,15 @@ function ColleagueCaseDetailsPage({
                       backgroundColor: "background.default",
                     }}
                   >
-                    <CardContent sx={{ py: { xs: 5, md: 5 } }}>
+                    <CardContent
+                      sx={{
+                        py: { xs: 5, md: 5 },
+                        ...CARD_CONTENT_FONT_SX,
+                      }}
+                    >
                       <Stack spacing={2.5} sx={{ alignItems: "center" }}>
                         <Box sx={{ textAlign: "center" }}>
-                          <Typography variant="h5">
+                          <Typography variant="h5" sx={{ fontSize: "20px" }}>
                             Eligibility decision
                           </Typography>
                         </Box>
