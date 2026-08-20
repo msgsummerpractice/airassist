@@ -161,6 +161,7 @@ function CaseEntryForm({
         name={currentUser.name}
         email={currentUser.email}
         roleLabel={currentUser.roleLabel}
+        onLogoClick={isGuest ? () => setStep(0) : undefined}
         authAction={
           isGuest
             ? {

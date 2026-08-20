@@ -25,11 +25,13 @@ function App() {
     useAuthView();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
   useEffect(() => {
+    const currentPathname = pathname;
     if (
-      pathname === "/reset-password" ||
-      pathname.startsWith("/passenger-cases") ||
-      pathname.startsWith("/colleague-cases")
+      currentPathname === "/reset-password" ||
+      currentPathname.startsWith("/passenger-cases") ||
+      currentPathname.startsWith("/colleague-cases")
     ) {
       return;
     }
@@ -39,16 +41,20 @@ function App() {
       return;
     }
     if (view === "case-entry") {
-      if (pathname !== "/case-entry") {
+      if (currentPathname !== "/case-entry") {
         navigate("/case-entry", { replace: true });
       }
       return;
     }
-    if (view === "admin-users" && !pathname.startsWith("/admin/")) {
+    if (view === "admin-users" && !currentPathname.startsWith("/admin/")) {
       navigate("/admin/users", { replace: true });
       return;
     }
-  }, [view, navigate, pathname]);
+    // Only re-run when the resolved view itself changes (e.g. right after
+    // login) — re-running on pathname/navigate changes would fight manual
+    // in-app navigation such as the logo click.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
 
   if (view === "resolving") return null;
   return (

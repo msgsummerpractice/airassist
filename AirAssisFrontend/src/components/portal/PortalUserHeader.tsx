@@ -19,6 +19,7 @@ type PortalUserHeaderProps = {
   actions: PortalUserHeaderAction[];
   authAction?: PortalUserHeaderAction;
   logoutAction?: PortalUserHeaderAction;
+  onLogoClick?: () => void;
 };
 
 const getAvatarLabel = (name: string) => {
@@ -45,11 +46,16 @@ function PortalUserHeader({
   actions,
   authAction,
   logoutAction,
+  onLogoClick,
 }: PortalUserHeaderProps) {
   const accountAction = logoutAction ?? authAction;
   const navigate = useNavigate();
 
   const handleLogoClick = () => {
+    if (onLogoClick) {
+      onLogoClick();
+      return;
+    }
     navigate(getHomeRouteForCurrentUser());
   };
 
