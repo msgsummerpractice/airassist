@@ -368,6 +368,7 @@ function ColleagueCaseList({ onCaseAssigned }: ColleagueCaseListProps = {}) {
                           component="span"
                           variant="button"
                           color="primary"
+                          sx={{ fontSize: "14px" }}
                         >
                           #{caseItem.id}
                         </Typography>
@@ -429,6 +430,7 @@ function ColleagueCaseList({ onCaseAssigned }: ColleagueCaseListProps = {}) {
                           component="span"
                           variant="button"
                           color="primary"
+                          sx={{ fontSize: "14px" }}
                         >
                           CASE #{caseItem.id}
                         </Typography>

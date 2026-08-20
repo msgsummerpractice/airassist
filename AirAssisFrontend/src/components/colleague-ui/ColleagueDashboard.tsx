@@ -361,8 +361,15 @@ function ColleagueDashboard({ onCreateCase }: ColleagueDashboardProps) {
                       >
                         {paginatedClaims.map((claim) => (
                           <TableRow key={claim.case_id} hover>
-                            <TableCell className="colleague-dashboard__case-id">
-                              #{claim.case_id}
+                            <TableCell>
+                              <Typography
+                                component="span"
+                                variant="button"
+                                color="primary"
+                                sx={{ fontSize: "14px" }}
+                              >
+                                #{claim.case_id}
+                              </Typography>
                             </TableCell>
 
                             <TableCell>

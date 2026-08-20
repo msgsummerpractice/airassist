@@ -75,7 +75,10 @@ function CommentsCard({
         </Stack>
 
         {disabled && disabledMessage && (
-          <Alert severity="info" sx={{ mb: 2 }}>
+          <Alert
+            severity="info"
+            sx={{ mb: 2, "& .MuiAlert-message": { fontSize: "14px" } }}
+          >
             {disabledMessage}
           </Alert>
         )}

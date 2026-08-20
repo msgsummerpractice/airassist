@@ -1285,7 +1285,9 @@ function ColleagueCaseDetailsPage({
                           color={
                             details.conversation_status === "OPEN"
                               ? "success"
-                              : "default"
+                              : details.conversation_status === "CLOSED"
+                                ? "error"
+                                : "default"
                           }
                           variant="outlined"
                         />
