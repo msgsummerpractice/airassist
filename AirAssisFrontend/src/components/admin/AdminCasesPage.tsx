@@ -128,10 +128,7 @@ function AdminCasesPage() {
           )}
         </Stack>
 
-        <AdminCaseList
-          showPdfHistory={showPdfHistory}
-          onShowPdfHistory={setShowPdfHistory}
-        />
+        <AdminCaseList showPdfHistory={showPdfHistory} />
       </Box>
     </Box>
   );
