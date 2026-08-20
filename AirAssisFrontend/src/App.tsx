@@ -19,19 +19,31 @@ import AdminCasesPage from "./components/admin/AdminCasesPage";
 import AdminSystemOptionsPage from "./components/admin/AdminSystemOptionsPage";
 import Footer from "./components/portal/Footer";
 import BackgroundMusic from "./components/utils/BackgroundMusic";
+import PrivacyPolicy from "./components/legal/PrivacyPolicy/PrivacyPolicy";
+import TermsOfService from "./components/legal/TermsOfService/TermsOfService";
+import Imprint from "./components/legal/Imprint/Imprint";
+import EuInfo from "./components/legal/EuInfo/EuInfo";
 
 function App() {
   const { view, role, resolveView, showCaseEntry, showColleagueDashboard } =
     useAuthView();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const handleShowCaseEntry = () => {
+    showCaseEntry();
+    navigate("/case-entry");
+  };
 
   useEffect(() => {
     const currentPathname = pathname;
     if (
       currentPathname === "/reset-password" ||
       currentPathname.startsWith("/passenger-cases") ||
-      currentPathname.startsWith("/colleague-cases")
+      currentPathname.startsWith("/colleague-cases") ||
+      currentPathname === "/privacy-policy" ||
+      currentPathname === "/terms-of-service" ||
+      currentPathname === "/imprint" ||
+      currentPathname === "/eu-261-2004-info"
     ) {
       return;
     }
@@ -81,7 +93,7 @@ function App() {
             element={
               <ColleagueCasesPage
                 isAllowed={role === "COLLEAGUE"}
-                onCreateCase={showCaseEntry}
+                onCreateCase={handleShowCaseEntry}
               />
             }
           />
@@ -90,7 +102,7 @@ function App() {
             element={
               <ColleagueCasesPage
                 isAllowed={role === "COLLEAGUE"}
-                onCreateCase={showCaseEntry}
+                onCreateCase={handleShowCaseEntry}
               />
             }
           />
@@ -107,7 +119,7 @@ function App() {
             path="/colleague-dashboard"
             element={
               role === "COLLEAGUE" ? (
-                <ColleagueDashboard onCreateCase={showCaseEntry} />
+                <ColleagueDashboard onCreateCase={handleShowCaseEntry} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -153,6 +165,10 @@ function App() {
               )
             }
           />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/imprint" element={<Imprint />} />
+          <Route path="/eu-261-2004-info" element={<EuInfo />} />
           <Route path="*" element={<Navigate to="/case-entry" replace />} />
         </Routes>
       </main>
