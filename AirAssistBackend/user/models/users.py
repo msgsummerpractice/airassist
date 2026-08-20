@@ -18,7 +18,6 @@ class CustomUserManager(BaseUserManager):
             raise ValueError("The Email field must be set")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
-        # set_password hashes the password before saving
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -33,7 +32,7 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
 
-        # Automatically get or create the "Admin" role
+    
         admin_role, created = Role.objects.get_or_create(role="Admin")
         extra_fields.setdefault('role', admin_role)
 

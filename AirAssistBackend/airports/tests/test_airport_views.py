@@ -296,6 +296,9 @@ class CalculateDistanceViewTests(TestCase):
         "DistanceService.calculate_orthodromic_distance"
     )
     def test_distance_success(self, mock_calculate):
+        Airport.objects.create(iata="WAW", country="Poland")
+        Airport.objects.create(iata="KRK", country="Poland")
+
         mock_calculate.return_value = {
             "distance": 293.2,
             "unit": "km",
@@ -328,6 +331,36 @@ class CalculateDistanceViewTests(TestCase):
         mock_calculate.assert_called_once_with(
             "WAW",
             "KRK",
+        )
+
+    def test_distance_rejects_when_neither_airport_is_in_eu(self):
+        Airport.objects.create(iata="JFK", country="United States")
+        Airport.objects.create(iata="NRT", country="Japan")
+
+        request = self.factory.post(
+            "/api/airports/distance/",
+            {
+                "from": "JFK",
+                "to": "NRT",
+            },
+            format="json",
+        )
+
+        response = self.view(request)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertEqual(
+            response.data,
+            {
+                "error": (
+                    "The destination and arrival are not in the EU, "
+                    "so the compensation is not valid in this case."
+                )
+            },
         )
 
 
@@ -462,6 +495,7 @@ class AirportSearchViewTests(TestCase):
                     "iata": "WAW",
                     "name": "Warsaw Chopin Airport",
                     "city": "Warsaw",
+                    "country": "Poland",
                     "timezone": "Europe/Warsaw",
                 }
             ],
@@ -489,6 +523,7 @@ class AirportSearchViewTests(TestCase):
                     "iata": "WAW",
                     "name": "Warsaw Chopin Airport",
                     "city": "Warsaw",
+                    "country": "Poland",
                     "timezone": "Europe/Warsaw",
                 }
             ],
@@ -516,6 +551,7 @@ class AirportSearchViewTests(TestCase):
                     "iata": "KRK",
                     "name": "Krakow Airport",
                     "city": "Krakow",
+                    "country": "Poland",
                     "timezone": "Europe/Warsaw",
                 }
             ],
@@ -543,6 +579,7 @@ class AirportSearchViewTests(TestCase):
                     "iata": "WAW",
                     "name": "Warsaw Chopin Airport",
                     "city": "Warsaw",
+                    "country": "Poland",
                     "timezone": "Europe/Warsaw",
                 }
             ],
@@ -607,6 +644,7 @@ class AirportSearchViewTests(TestCase):
                     "iata": "WAW",
                     "name": "Warsaw Chopin Airport",
                     "city": "Warsaw",
+                    "country": "Poland",
                     "timezone": "Europe/Warsaw",
                 }
             ],
