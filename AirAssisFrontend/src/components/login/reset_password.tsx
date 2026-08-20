@@ -268,7 +268,14 @@ const ResetPassword = ({
 
       showSuccessSnackbar(data?.message || "Password changed successfully.");
 
-      onPasswordResetSuccess?.();
+      if (onPasswordResetSuccess) {
+        onPasswordResetSuccess();
+      } else {
+        // Give the user a moment to see the confirmation before leaving the page.
+        window.setTimeout(() => {
+          navigate("/login", { replace: true });
+        }, 1500);
+      }
     } catch (error) {
       if (error instanceof Error) {
         showErrorSnackbar(error.message);
