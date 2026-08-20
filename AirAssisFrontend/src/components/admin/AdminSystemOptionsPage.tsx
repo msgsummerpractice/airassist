@@ -566,17 +566,31 @@ function AdminSystemOptionsPage() {
                     <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
                       Exported fields
                     </Typography>
-                    <Stack
-                      direction={{ xs: "column", md: "row" }}
-                      spacing={{ xs: 0.5, md: 2 }}
-                      useFlexGap
-                      sx={{ flexWrap: "wrap" }}
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: {
+                          xs: "1fr",
+                          sm: "repeat(2, minmax(0, 1fr))",
+                          md: "repeat(5, minmax(0, 1fr))",
+                        },
+                        columnGap: 2,
+                        rowGap: 1,
+                        alignItems: "start",
+                      }}
                     >
                       {PDF_FIELD_OPTIONS.map((field) => {
                         const checked = settings.pdf_preset.exported_fields.includes(field.value);
                         return (
                           <FormControlLabel
                             key={field.value}
+                            sx={{
+                              m: 0,
+                              alignItems: "center",
+                              "& .MuiFormControlLabel-label": {
+                                lineHeight: 1.2,
+                              },
+                            }}
                             control={
                               <Checkbox
                                 checked={checked}
@@ -589,7 +603,7 @@ function AdminSystemOptionsPage() {
                           />
                         );
                       })}
-                    </Stack>
+                    </Box>
                     {validationErrors.exported_fields ? (
                       <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
                         {validationErrors.exported_fields}
