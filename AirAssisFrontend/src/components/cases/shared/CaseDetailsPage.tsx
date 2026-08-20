@@ -178,44 +178,9 @@ function CaseDetailsPage({
           }}
         >
           <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Typography variant="h2" sx={{ mt: 0.5 }}>
-              Case Details
-            </Typography>
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{ mt: 0.5, maxWidth: 720, mx: "auto" }}
-            >
-              {config.description}
-            </Typography>
-          </Box>
-          <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
-            <Button
-              variant="outlined"
-              onClick={handleBack}
-            >
-              Back
-            </Button>
-          </Stack>
-          {errorMessage && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {errorMessage}
-            </Alert>
-          )}
-          {isLoading ? (
-            <Box
-              sx={{
-                py: 8,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <CircularProgress size={28} />
-              <Typography color="text.secondary">
-                Loading case details...
+            <Box sx={{ textAlign: "center", mb: 3 }}>
+              <Typography variant="h2" sx={{ mt: 0.5 }}>
+                Case Details
               </Typography>
               <Typography
                 variant="body1"
@@ -226,15 +191,7 @@ function CaseDetailsPage({
               </Typography>
             </Box>
             <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
-              <Button
-                variant="outlined"
-                startIcon={
-                  config.scope === "admin" ? (
-                    <ArrowBackOutlined fontSize="small" />
-                  ) : undefined
-                }
-                onClick={handleBack}
-              >
+              <Button variant="outlined" onClick={handleBack}>
                 Back
               </Button>
             </Stack>
@@ -281,10 +238,7 @@ function CaseDetailsPage({
                   />
                 </Box>
                 <Box sx={adminCardSx}>
-                  <FlightDetailsCard
-                    details={details}
-                    formatDate={formatDate}
-                  />
+                  <FlightDetailsCard details={details} formatDate={formatDate} />
                 </Box>
                 <Box sx={adminCardSx}>
                   <PassengerDetailsCard
