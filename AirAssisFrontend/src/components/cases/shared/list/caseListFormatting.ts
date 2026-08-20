@@ -1,4 +1,10 @@
-export type CaseStatus = "NEW" | "VALID" | "ASSIGNED" | string;
+export type CaseStatus =
+  | "PENDING"
+  | "IN_REVIEW"
+  | "ELIGIBLE"
+  | "NON_ELIGIBLE"
+  | "AWAITING_DOCUMENTS"
+  | string;
 
 export const formatStatusLabel = (status: CaseStatus) =>
   status.charAt(0) + status.slice(1).toLowerCase();
