@@ -200,7 +200,7 @@ function AdminUsersPage() {
     setDeletingUserId(targetId);
 
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/user/${targetId}/`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/user/${targetId}/delete/`, {
         method: "DELETE",
       });
 
@@ -269,7 +269,7 @@ function AdminUsersPage() {
     setSavingUserId(targetId);
 
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/user/${targetId}/`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/user/${targetId}/profile/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),

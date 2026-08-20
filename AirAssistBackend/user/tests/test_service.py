@@ -224,12 +224,12 @@ class UserDeleteApiTests(APITestCase):
 
     def test_non_admin_cannot_delete_user(self):
         self.client.force_authenticate(user=self.colleague)
-        response = self.client.delete(f"/user/{self.admin.id}/")
+        response = self.client.delete(f"/user/{self.admin.id}/delete/")
         self.assertEqual(response.status_code, 403)
 
     def test_admin_can_delete_colleague(self):
         self.client.force_authenticate(user=self.admin)
-        response = self.client.delete(f"/user/{self.colleague.id}/")
+        response = self.client.delete(f"/user/{self.colleague.id}/delete/")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data.get("message"),
@@ -238,7 +238,7 @@ class UserDeleteApiTests(APITestCase):
 
     def test_admin_cannot_self_delete(self):
         self.client.force_authenticate(user=self.admin)
-        response = self.client.delete(f"/user/{self.admin.id}/")
+        response = self.client.delete(f"/user/{self.admin.id}/delete/")
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data.get("message"),
@@ -246,7 +246,7 @@ class UserDeleteApiTests(APITestCase):
 
     def test_delete_missing_user_returns_404(self):
         self.client.force_authenticate(user=self.admin)
-        response = self.client.delete("/user/999999/")
+        response = self.client.delete("/user/999999/delete/")
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data.get("message"), "User not found.")
@@ -292,7 +292,7 @@ class UserProfileUpdateApiTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.patch(
-            f"/user/{self.passenger.id}/",
+            f"/user/{self.passenger.id}/profile/",
             {
                 "firstname": "Pat",
                 "lastname": "Smith",
@@ -319,7 +319,7 @@ class UserProfileUpdateApiTests(APITestCase):
         self.client.force_authenticate(user=self.colleague)
 
         response = self.client.patch(
-            f"/user/{self.passenger.id}/",
+            f"/user/{self.passenger.id}/profile/",
             {"firstname": "Pat", "lastname": "Smith", "email": "pat@example.com"},
             format="json",
         )
@@ -330,7 +330,7 @@ class UserProfileUpdateApiTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
         response = self.client.patch(
-            f"/user/{self.passenger.id}/",
+            f"/user/{self.passenger.id}/profile/",
             {
                 "firstname": "Pat",
                 "lastname": "Smith",

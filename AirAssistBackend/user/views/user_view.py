@@ -75,16 +75,17 @@ class UserView(APIView):
         return airassist_response.status_ok(serializer.data)
 
 
-class UserRoleView(APIView):
-    def get_permissions(self):
-        if self.request.method in {"DELETE", "PATCH"}:
-            return [IsSystemAdmin()]
-        return [IsAuthenticated()]
+class GetUserRoleView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
         role = UserService.get_user_role(user_id)
         serializer = UserRoleSerializer(role)
         return Response(serializer.data)
+
+
+class DeleteUserView(APIView):
+    permission_classes = [IsSystemAdmin]
 
     def delete(self, request, user_id):
         try:
@@ -105,6 +106,10 @@ class UserRoleView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class UpdateUserProfileView(APIView):
+    permission_classes = [IsSystemAdmin]
 
     def patch(self, request, user_id):
         try:
